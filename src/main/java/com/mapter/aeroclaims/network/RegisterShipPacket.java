@@ -1,9 +1,9 @@
 package com.mapter.aeroclaims.network;
 
 import com.mapter.aeroclaims.Aeroclaims;
-import com.mapter.aeroclaims.ship.RegisteredShipsManager;
-import com.mapter.aeroclaims.ship.SableShipUtils;
-import com.mapter.aeroclaims.ship.UnregisteredShipsManager;
+import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
+import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -58,8 +58,8 @@ public record RegisterShipPacket(BlockPos pos) implements CustomPacketPayload {
                 return;
             }
 
-            RegisteredShipsManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
-            UnregisteredShipsManager.removeShip(shipId);
+            RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
+            UnregisteredSublevelManager.removeShip(shipId);
             player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_registered", shipName));
         });
     }

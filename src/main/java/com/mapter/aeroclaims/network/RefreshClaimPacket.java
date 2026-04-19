@@ -4,11 +4,11 @@ import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
-import com.mapter.aeroclaims.claim.VsClaimManager;
+import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
-import com.mapter.aeroclaims.ship.RegisteredShipsManager;
-import com.mapter.aeroclaims.ship.SableShipUtils;
-import com.mapter.aeroclaims.ship.UnregisteredShipsManager;
+import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
+import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -51,7 +51,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             if (ClaimManager.countShipBlocks(player.serverLevel(), msg.center, maxSize) > maxSize) {
                 int exact = ClaimManager.countShipBlocksExact(player.serverLevel(), msg.center);
                 if (claim.isActive()) {
-                    VsClaimManager.releaseShipClaimSlot(player.serverLevel(), claim.getOwner());
+                    AeroClaimManager.releaseShipClaimSlot(player.serverLevel(), claim.getOwner());
                 }
                 ClaimManager.deactivateClaim(player.serverLevel(), msg.center);
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", exact, maxSize));
@@ -61,7 +61,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             }
 
             if (!claim.isActive()) {
-                boolean consumed = VsClaimManager.consumeShipClaimSlot(
+                boolean consumed = AeroClaimManager.consumeShipClaimSlot(
                         player.serverLevel(), player.getUUID());
                 if (!consumed) {
                     player.sendSystemMessage(Component.translatable("message.aeroclaims.no_ship_slots"));
@@ -76,8 +76,8 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             String shipId = SableShipUtils.getShipId(ship);
             if (shipId != null) {
                 String shipName = SableShipUtils.getShipName(ship);
-                RegisteredShipsManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
-                UnregisteredShipsManager.removeShip(shipId);
+                RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
+                UnregisteredSublevelManager.removeShip(shipId);
                 claim.setShipId(shipId);
                 ClaimSavedData.get(player.serverLevel()).setDirty();
             }

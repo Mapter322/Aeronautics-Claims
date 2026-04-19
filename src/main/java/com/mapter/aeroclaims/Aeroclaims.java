@@ -4,12 +4,14 @@ import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.registry.ModBlocks;
 import com.mapter.aeroclaims.registry.ModMenus;
+import com.mapter.aeroclaims.sublevel.SableSubLevelEventHandler;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 
 @Mod(Aeroclaims.MODID)
@@ -22,10 +24,19 @@ public class Aeroclaims {
         ModMenus.register(modBus);
 
         modBus.addListener(Aeroclaims::addCreative);
+        modBus.addListener(Aeroclaims::onCommonSetup);
 
         modContainer.registerConfig(ModConfig.Type.SERVER, AeroClaimsConfig.SPEC);
 
         ClaimManager.init(ModList.get().isLoaded("openpartiesandclaims"));
+
+        // RegisteredSubLevelsManager, UnregisteredSubLevelsManager and SubLevelWorldScanner
+        // are registered automatically via @EventBusSubscriber.
+        // SableSubLevelEventHandler is registered via Sable API in onCommonSetup.
+    }
+
+    private static void onCommonSetup(FMLCommonSetupEvent event) {
+        SableSubLevelEventHandler.register();
     }
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {

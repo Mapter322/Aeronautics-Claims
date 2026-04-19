@@ -11,12 +11,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class VsClaimSavedData extends SavedData {
+public class AeroClaimSavedData extends SavedData {
 
-    private static final String DATA_NAME = "vsclaims_ship_slots";
-    private static final Factory<VsClaimSavedData> FACTORY = new Factory<>(
-            VsClaimSavedData::new,
-            VsClaimSavedData::load,
+    private static final String DATA_NAME = "aeroclaims_sublevels_slots";
+    private static final Factory<AeroClaimSavedData> FACTORY = new Factory<>(
+            AeroClaimSavedData::new,
+            AeroClaimSavedData::load,
             null
     );
 
@@ -26,14 +26,14 @@ public class VsClaimSavedData extends SavedData {
     // Player UUID -> number of used claims (active claim blocks)
     private final Map<UUID, Integer> usedSlots = new HashMap<>();
 
-    public static VsClaimSavedData get(ServerLevel level) {
+    public static AeroClaimSavedData get(ServerLevel level) {
         // Use overworld to make data global for the server
         ServerLevel overworld = level.getServer().overworld();
         return overworld.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
     }
 
-    public static VsClaimSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
-        VsClaimSavedData data = new VsClaimSavedData();
+    public static AeroClaimSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
+        AeroClaimSavedData data = new AeroClaimSavedData();
 
         ListTag migrated = tag.getList("migrated", Tag.TAG_COMPOUND);
         for (Tag t : migrated) {

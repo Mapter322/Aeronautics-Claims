@@ -14,9 +14,9 @@ import xaero.pac.common.server.player.config.api.PlayerConfigOptions;
 import java.util.UUID;
 
 
-public class VsClaimManager {
+public class AeroClaimManager {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(VsClaimManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AeroClaimManager.class);
 
     public enum TransferResult {
         SUCCESS,
@@ -66,12 +66,12 @@ public class VsClaimManager {
             }
 
             // Add claims to our mod
-            VsClaimSavedData data = VsClaimSavedData.get(player.serverLevel());
+            AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
             data.addMigratedSlots(playerId, amount);
 
             return TransferResult.SUCCESS;
         } catch (Exception e) {
-            LOGGER.error("[VSClaims] transfer: exception during transfer", e);
+            LOGGER.error("[Aeroclaims] transfer: exception during transfer", e);
             return TransferResult.API_ERROR;
         }
     }
@@ -80,7 +80,7 @@ public class VsClaimManager {
      //Attempts to consume 1 ship claim (on claim block activation).
      //Returns true if the claim was successfully consumed.
     public static boolean consumeShipClaimSlot(ServerLevel level, UUID playerId) {
-        VsClaimSavedData data = VsClaimSavedData.get(level);
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
         if (data.getFreeSlots(playerId) <= 0) {
             return false;
         }
@@ -91,23 +91,23 @@ public class VsClaimManager {
 
      //Release 1 ship claim (on claim block removal).
     public static void releaseShipClaimSlot(ServerLevel level, UUID playerId) {
-        VsClaimSavedData data = VsClaimSavedData.get(level);
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
         data.decrementUsedSlots(playerId);
     }
 
      //Get the number of transferred claims (maximum).
     public static int getMigratedSlots(ServerLevel level, UUID playerId) {
-        return VsClaimSavedData.get(level).getMigratedSlots(playerId);
+        return AeroClaimSavedData.get(level).getMigratedSlots(playerId);
     }
 
      //Get the number of used claims.
     public static int getUsedSlots(ServerLevel level, UUID playerId) {
-        return VsClaimSavedData.get(level).getUsedSlots(playerId);
+        return AeroClaimSavedData.get(level).getUsedSlots(playerId);
     }
 
      //Get the number of free claims.
     public static int getFreeSlots(ServerLevel level, UUID playerId) {
-        return VsClaimSavedData.get(level).getFreeSlots(playerId);
+        return AeroClaimSavedData.get(level).getFreeSlots(playerId);
     }
 
 
@@ -134,7 +134,7 @@ public class VsClaimManager {
 
             return Math.max(0, baseLimit + bonusLimit - usedClaims);
         } catch (Exception e) {
-            LOGGER.error("[VSClaims] getFreeOpacClaims: exception", e);
+            LOGGER.error("[Aeroclaims] getFreeOpacClaims: exception", e);
             return -1;
         }
     }
@@ -158,7 +158,7 @@ public class VsClaimManager {
             IPlayerConfigAPI config = configManager.getLoadedConfig(playerId);
             if (config == null) return TransferResult.API_ERROR;
 
-            VsClaimSavedData data = VsClaimSavedData.get(player.serverLevel());
+            AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
             int freeShipClaims = data.getFreeSlots(playerId);
 
             if (freeShipClaims < amount) {
@@ -181,7 +181,7 @@ public class VsClaimManager {
 
             return TransferResult.SUCCESS;
         } catch (Exception e) {
-            LOGGER.error("[VSClaims] transfer back: exception during transfer to OPAC", e);
+            LOGGER.error("[Aeroclaims] transfer back: exception during transfer to OPAC", e);
             return TransferResult.API_ERROR;
         }
     }

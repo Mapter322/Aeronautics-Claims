@@ -1,4 +1,4 @@
-package com.mapter.aeroclaims.ship;
+package com.mapter.aeroclaims.sublevel;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @EventBusSubscriber(modid = Aeroclaims.MODID)
-public class RegisteredShipsManager {
+public class RegisteredSublevelManager {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Type LEGACY_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
@@ -52,12 +52,12 @@ public class RegisteredShipsManager {
     public static void onServerStarting(ServerStartingEvent event) {
         MinecraftServer server = event.getServer();
         File worldDir = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toFile();
-        File vsclaimsDir = new File(worldDir, "vsclaims");
+        File vsclaimsDir = new File(worldDir, "aeroclaims");
         try {
             Files.createDirectories(vsclaimsDir.toPath());
         } catch (IOException ignored) {}
 
-        shipsDataFile = new File(vsclaimsDir, "claimed_ships.json");
+        shipsDataFile = new File(vsclaimsDir, "claimed_sublevels.json");
         loadRegisteredShips();
     }
 

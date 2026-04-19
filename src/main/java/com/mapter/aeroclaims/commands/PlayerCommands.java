@@ -1,7 +1,7 @@
 package com.mapter.aeroclaims.commands;
 
-import com.mapter.aeroclaims.claim.VsClaimManager;
-import com.mapter.aeroclaims.ship.RegisteredShipsManager;
+import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
@@ -26,13 +26,13 @@ public class PlayerCommands {
                                         return 0;
                                     }
 
-                                    Map<String, String> ships = RegisteredShipsManager.getRegisteredShips(player.getUUID());
+                                    Map<String, String> ships = RegisteredSublevelManager.getRegisteredShips(player.getUUID());
                                     int current = ships.size();
                                     UUID playerId = player.getUUID();
 
-                                    int migratedSlots = VsClaimManager.getMigratedSlots(player.serverLevel(), playerId);
-                                    int usedSlots     = VsClaimManager.getUsedSlots(player.serverLevel(), playerId);
-                                    int freeOpac = VsClaimManager.getFreeOpacClaims(player);
+                                    int migratedSlots = AeroClaimManager.getMigratedSlots(player.serverLevel(), playerId);
+                                    int usedSlots     = AeroClaimManager.getUsedSlots(player.serverLevel(), playerId);
+                                    int freeOpac = AeroClaimManager.getFreeOpacClaims(player);
 
                                     source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots", usedSlots, migratedSlots), false);
                                     if (freeOpac >= 0) {
@@ -60,7 +60,7 @@ public class PlayerCommands {
 
                         // /aeroclaims transfer vs <amount>
                         .then(Commands.literal("transfer")
-                                .then(Commands.literal("vs")
+                                .then(Commands.literal("aero")
                                                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                                         .executes(ctx -> {
                                                             CommandSourceStack source = ctx.getSource();
@@ -70,16 +70,16 @@ public class PlayerCommands {
                                                             }
 
                                                             int amount = IntegerArgumentType.getInteger(ctx, "amount");
-                                                            int freeOpac = VsClaimManager.getFreeOpacClaims(player);
+                                                            int freeOpac = AeroClaimManager.getFreeOpacClaims(player);
 
-                                                            VsClaimManager.TransferResult result =
-                                                                    VsClaimManager.transferFromOpac(player, amount);
+                                                            AeroClaimManager.TransferResult result =
+                                                                    AeroClaimManager.transferFromOpac(player, amount);
 
                                                             switch (result) {
                                                                 case SUCCESS -> {
                                                                     UUID playerId = player.getUUID();
-                                                                    int newMigrated = VsClaimManager.getMigratedSlots(player.serverLevel(), playerId);
-                                                                    int newUsed     = VsClaimManager.getUsedSlots(player.serverLevel(), playerId);
+                                                                    int newMigrated = AeroClaimManager.getMigratedSlots(player.serverLevel(), playerId);
+                                                                    int newUsed     = AeroClaimManager.getUsedSlots(player.serverLevel(), playerId);
                                                                     source.sendSuccess(() -> Component.translatable(
                                                                             "commands.aeroclaims.transfer.success",
                                                                             amount, newUsed, newMigrated
@@ -96,7 +96,7 @@ public class PlayerCommands {
                                                                         source.sendFailure(Component.translatable("commands.aeroclaims.transfer.error"));
                                                             }
 
-                                                            return result == VsClaimManager.TransferResult.SUCCESS ? 1 : 0;
+                                                            return result == AeroClaimManager.TransferResult.SUCCESS ? 1 : 0;
                                                         })))
 
                                 // /aeroclaims transfer opac <amount>
@@ -110,16 +110,16 @@ public class PlayerCommands {
                                                     }
 
                                                     int amount = IntegerArgumentType.getInteger(ctx, "amount");
-                                                    int freeShipClaims = VsClaimManager.getFreeSlots(player.serverLevel(), player.getUUID());
+                                                    int freeShipClaims = AeroClaimManager.getFreeSlots(player.serverLevel(), player.getUUID());
 
-                                                    VsClaimManager.TransferResult result =
-                                                            VsClaimManager.transferToOpac(player, amount);
+                                                    AeroClaimManager.TransferResult result =
+                                                            AeroClaimManager.transferToOpac(player, amount);
 
                                                     switch (result) {
                                                         case SUCCESS -> {
                                                             UUID playerId = player.getUUID();
-                                                            int newMigrated = VsClaimManager.getMigratedSlots(player.serverLevel(), playerId);
-                                                            int newUsed     = VsClaimManager.getUsedSlots(player.serverLevel(), playerId);
+                                                            int newMigrated = AeroClaimManager.getMigratedSlots(player.serverLevel(), playerId);
+                                                            int newUsed     = AeroClaimManager.getUsedSlots(player.serverLevel(), playerId);
                                                             source.sendSuccess(() -> Component.translatable(
                                                                     "commands.aeroclaims.transfer_back.success",
                                                                     amount, newUsed, newMigrated
@@ -136,7 +136,7 @@ public class PlayerCommands {
                                                                 source.sendFailure(Component.translatable("commands.aeroclaims.transfer.error"));
                                                     }
 
-                                                    return result == VsClaimManager.TransferResult.SUCCESS ? 1 : 0;
+                                                    return result == AeroClaimManager.TransferResult.SUCCESS ? 1 : 0;
                                                 }))))
 
         );

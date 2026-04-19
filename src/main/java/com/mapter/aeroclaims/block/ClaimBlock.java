@@ -1,13 +1,13 @@
 package com.mapter.aeroclaims.block;
 
-import com.mapter.aeroclaims.ship.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mojang.serialization.MapCodec;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
-import com.mapter.aeroclaims.claim.VsClaimManager;
+import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.screen.ClaimSettingsMenu;
-import com.mapter.aeroclaims.ship.RegisteredShipsManager;
-import com.mapter.aeroclaims.ship.UnregisteredShipsManager;
+import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
+import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -101,13 +101,13 @@ public class ClaimBlock extends BaseEntityBlock {
 
             if (shipId != null) {
                 String shipName = SableShipUtils.getShipName(ship);
-                RegisteredShipsManager.unregisterShip(shipId);
-                UnregisteredShipsManager.addShip(shipId, shipName);
+                RegisteredSublevelManager.unregisterShip(shipId);
+                UnregisteredSublevelManager.addShip(shipId, shipName);
             }
 
             Claim claim = ClaimManager.getClaimByCenter((ServerLevel) level, pos);
             if (claim != null && claim.isActive()) {
-                VsClaimManager.releaseShipClaimSlot((ServerLevel) level, claim.getOwner());
+                AeroClaimManager.releaseShipClaimSlot((ServerLevel) level, claim.getOwner());
             }
 
             ClaimManager.removeClaim((ServerLevel) level, pos);

@@ -22,7 +22,7 @@ public class ClaimSavedData extends SavedData {
     private final List<Claim> claims = new ArrayList<>();
 
     public static ClaimSavedData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(FACTORY, "vsclaims_data");
+        return level.getDataStorage().computeIfAbsent(FACTORY, "aeroclaims_data");
     }
 
     public static ClaimSavedData load(CompoundTag tag, HolderLookup.Provider registries) {

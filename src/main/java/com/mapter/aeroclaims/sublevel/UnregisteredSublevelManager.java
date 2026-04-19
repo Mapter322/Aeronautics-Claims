@@ -1,4 +1,4 @@
-package com.mapter.aeroclaims.ship;
+package com.mapter.aeroclaims.sublevel;
 
 import com.google.gson.*;
 import com.mapter.aeroclaims.Aeroclaims;
@@ -18,11 +18,11 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 @EventBusSubscriber(modid = Aeroclaims.MODID)
-public class UnregisteredShipsManager {
+public class UnregisteredSublevelManager {
 
-    private static final Logger LOGGER = LogManager.getLogger("vsclaims/UnregisteredShipsManager");
+    private static final Logger LOGGER = LogManager.getLogger("aeroclaims/UnregisteredShipsManager");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String FILE_NAME = "unclaimed_ships.json";
+    private static final String FILE_NAME = "unclaimed_sublevelss.json";
 
     private static final Map<String, UnregisteredShip> ships = new ConcurrentHashMap<>();
     private static Path saveFile = null;
@@ -55,11 +55,11 @@ public class UnregisteredShipsManager {
     public static void onServerStarted(ServerStartedEvent event) {
         MinecraftServer server = event.getServer();
         Path dataDir = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
-                .toAbsolutePath().resolve("vsclaims");
+                .toAbsolutePath().resolve("aeroclaims");
         try {
             Files.createDirectories(dataDir);
         } catch (IOException e) {
-            LOGGER.error("Failed to create vsclaims directory: {}", e.toString());
+            LOGGER.error("Failed to create aeroclaims directory: {}", e.toString());
         }
         saveFile = dataDir.resolve(FILE_NAME);
         load();

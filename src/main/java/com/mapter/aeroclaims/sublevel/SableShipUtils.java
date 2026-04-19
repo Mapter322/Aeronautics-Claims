@@ -1,4 +1,4 @@
-package com.mapter.aeroclaims.ship;
+package com.mapter.aeroclaims.sublevel;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.sublevel.SubLevel;

@@ -4,7 +4,7 @@ import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.registry.ModBlocks;
-import com.mapter.aeroclaims.ship.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
