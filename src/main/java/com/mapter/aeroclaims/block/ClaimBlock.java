@@ -138,9 +138,12 @@ public class ClaimBlock extends BaseEntityBlock {
             level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
 
+        SubLevel ship = SableShipUtils.getShipAt(serverPlayer.serverLevel(), pos);
+        String shipName = SableShipUtils.getShipName(ship);
         serverPlayer.openMenu(getMenuProvider(state, level, pos), buf -> {
             buf.writeBlockPos(pos);
             buf.writeUUID(claim.getOwner());
+            buf.writeUtf(shipName != null ? shipName : "");
             buf.writeBoolean(claim.isActive());
             buf.writeBoolean(claim.isAllowParty());
             buf.writeBoolean(claim.isAllowAllies());
@@ -157,7 +160,7 @@ public class ClaimBlock extends BaseEntityBlock {
         if (claim == null) return null;
         return new SimpleMenuProvider(
                 (containerId, inv, p) -> new ClaimSettingsMenu(
-                        containerId, inv, pos, claim.getOwner(),
+                        containerId, inv, pos, claim.getOwner(), "",
                         claim.isActive(),
                         claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers()),
                 Component.translatable("screen.aeroclaims.claim_settings.title")

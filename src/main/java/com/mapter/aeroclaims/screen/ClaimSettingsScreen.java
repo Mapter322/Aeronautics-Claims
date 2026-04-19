@@ -176,21 +176,17 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         } catch (Exception ignored) {}
 
         // Ship
-        if (ship != null) {
-            try {
-                String slug = (String) ship.getClass().getMethod("getSlug").invoke(ship);
-                if (slug != null && !slug.isEmpty()) {
-                    Component shipText = Component.translatable("screen.aeroclaims.claim_settings.ship", slug);
-                    int x = 10;
-                    int y = 146;
-                    int maxWidth = this.imageWidth - 20;
-                    int line = 0;
-                    for (FormattedCharSequence seq : this.font.split(shipText, maxWidth)) {
-                        g.drawString(this.font, seq, x, y + (line * this.font.lineHeight), COLOR_LABEL, false);
-                        line++;
-                    }
-                }
-            } catch (Exception ignored) {}
+        String shipName = this.menu.getShipName();
+        if (shipName != null && !shipName.isEmpty()) {
+            Component shipText = Component.translatable("screen.aeroclaims.claim_settings.ship", shipName);
+            int x = 10;
+            int y = 146;
+            int maxWidth = this.imageWidth - 20;
+            int line = 0;
+            for (FormattedCharSequence seq : this.font.split(shipText, maxWidth)) {
+                g.drawString(this.font, seq, x, y + (line * this.font.lineHeight), COLOR_LABEL, false);
+                line++;
+            }
         }
     }
 
