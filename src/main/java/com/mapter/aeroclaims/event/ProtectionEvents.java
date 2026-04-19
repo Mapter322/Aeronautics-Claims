@@ -51,7 +51,7 @@ public class ProtectionEvents {
         if (claim == null) return;
         if (!ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
             event.setCanceled(true);
-            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.vsclaims.foreign_territory"));
+            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
         }
     }
 
@@ -69,7 +69,7 @@ public class ProtectionEvents {
             event.setCancellationResult(InteractionResult.FAIL);
             event.setUseItem(TriState.FALSE);
             event.setUseBlock(TriState.FALSE);
-            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.vsclaims.no_access_use_block"));
+            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.aeroclaims.no_access_use_block"));
         }
     }
 
@@ -100,13 +100,13 @@ public class ProtectionEvents {
         Claim claim = getClaimAtWithMargin(level, event.getPos());
         if (claim != null && !ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
             event.setCanceled(true);
-            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.vsclaims.foreign_territory"));
+            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
             return;
         }
         if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK.get()) return;
         if (!SableShipUtils.isOnShip(level, event.getPos())) {
             event.setCanceled(true);
-            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.vsclaims.claim_block_only_on_ship"));
+            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_block_only_on_ship"));
         }
     }
 
@@ -119,7 +119,7 @@ public class ProtectionEvents {
         if (claim == null) return;
         if (!ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
             event.setCanceled(true);
-            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.vsclaims.foreign_territory"));
+            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
         }
     }
 }

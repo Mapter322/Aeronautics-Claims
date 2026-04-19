@@ -16,13 +16,13 @@ public class PlayerCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                Commands.literal("vsclaims")
-                        // /vsclaims info
+                Commands.literal("aeroclaims")
+                        // /aeroclaims info
                         .then(Commands.literal("info")
                                 .executes(ctx -> {
                                     CommandSourceStack source = ctx.getSource();
                                     if (!(source.getEntity() instanceof ServerPlayer player)) {
-                                        source.sendFailure(Component.translatable("commands.vsclaims.only_player"));
+                                        source.sendFailure(Component.translatable("commands.aeroclaims.only_player"));
                                         return 0;
                                     }
 
@@ -34,38 +34,38 @@ public class PlayerCommands {
                                     int usedSlots     = VsClaimManager.getUsedSlots(player.serverLevel(), playerId);
                                     int freeOpac = VsClaimManager.getFreeOpacClaims(player);
 
-                                    source.sendSuccess(() -> Component.translatable("commands.vsclaims.info.ship_slots", usedSlots, migratedSlots), false);
+                                    source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots", usedSlots, migratedSlots), false);
                                     if (freeOpac >= 0) {
                                         source.sendSuccess(() -> Component.translatable(
-                                                "commands.vsclaims.claim_info.opac_free",
+                                                "commands.aeroclaims.claim_info.opac_free",
                                                 freeOpac
                                         ), false);
                                     } else {
                                         source.sendSuccess(() -> Component.translatable(
-                                                "commands.vsclaims.claim_info.opac_unavailable"
+                                                "commands.aeroclaims.claim_info.opac_unavailable"
                                         ), false);
                                     }
 
-                                    source.sendSuccess(() -> Component.translatable("commands.vsclaims.info.registered_count", current), false);
+                                    source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.registered_count", current), false);
                                     if (ships.isEmpty()) {
-                                        source.sendSuccess(() -> Component.translatable("commands.vsclaims.info.empty"), false);
+                                        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.empty"), false);
                                     } else {
                                         for (String name : ships.values()) {
-                                            source.sendSuccess(() -> Component.translatable("commands.vsclaims.info.entry", name), false);
+                                            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.entry", name), false);
                                         }
                                     }
 
                                     return 1;
                                 }))
 
-                        // /vsclaims transfer vs <amount>
+                        // /aeroclaims transfer vs <amount>
                         .then(Commands.literal("transfer")
                                 .then(Commands.literal("vs")
                                                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                                         .executes(ctx -> {
                                                             CommandSourceStack source = ctx.getSource();
                                                             if (!(source.getEntity() instanceof ServerPlayer player)) {
-                                                                source.sendFailure(Component.translatable("commands.vsclaims.only_player"));
+                                                                source.sendFailure(Component.translatable("commands.aeroclaims.only_player"));
                                                                 return 0;
                                                             }
 
@@ -81,31 +81,31 @@ public class PlayerCommands {
                                                                     int newMigrated = VsClaimManager.getMigratedSlots(player.serverLevel(), playerId);
                                                                     int newUsed     = VsClaimManager.getUsedSlots(player.serverLevel(), playerId);
                                                                     source.sendSuccess(() -> Component.translatable(
-                                                                            "commands.vsclaims.transfer.success",
+                                                                            "commands.aeroclaims.transfer.success",
                                                                             amount, newUsed, newMigrated
                                                                     ), false);
                                                                 }
                                                                 case OPAC_NOT_LOADED ->
-                                                                        source.sendFailure(Component.translatable("commands.vsclaims.transfer.opac_not_loaded"));
+                                                                        source.sendFailure(Component.translatable("commands.aeroclaims.transfer.opac_not_loaded"));
                                                                 case NOT_ENOUGH_FREE ->
                                                                         source.sendFailure(Component.translatable(
-                                                                                "commands.vsclaims.transfer.not_enough",
+                                                                                "commands.aeroclaims.transfer.not_enough",
                                                                                 freeOpac, amount
                                                                         ));
                                                                 case API_ERROR ->
-                                                                        source.sendFailure(Component.translatable("commands.vsclaims.transfer.error"));
+                                                                        source.sendFailure(Component.translatable("commands.aeroclaims.transfer.error"));
                                                             }
 
                                                             return result == VsClaimManager.TransferResult.SUCCESS ? 1 : 0;
                                                         })))
 
-                                // /vsclaims transfer opac <amount>
+                                // /aeroclaims transfer opac <amount>
                                 .then(Commands.literal("opac")
                                         .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                                 .executes(ctx -> {
                                                     CommandSourceStack source = ctx.getSource();
                                                     if (!(source.getEntity() instanceof ServerPlayer player)) {
-                                                        source.sendFailure(Component.translatable("commands.vsclaims.only_player"));
+                                                        source.sendFailure(Component.translatable("commands.aeroclaims.only_player"));
                                                         return 0;
                                                     }
 
@@ -121,19 +121,19 @@ public class PlayerCommands {
                                                             int newMigrated = VsClaimManager.getMigratedSlots(player.serverLevel(), playerId);
                                                             int newUsed     = VsClaimManager.getUsedSlots(player.serverLevel(), playerId);
                                                             source.sendSuccess(() -> Component.translatable(
-                                                                    "commands.vsclaims.transfer_back.success",
+                                                                    "commands.aeroclaims.transfer_back.success",
                                                                     amount, newUsed, newMigrated
                                                             ), false);
                                                         }
                                                         case OPAC_NOT_LOADED ->
-                                                                source.sendFailure(Component.translatable("commands.vsclaims.transfer.opac_not_loaded"));
+                                                                source.sendFailure(Component.translatable("commands.aeroclaims.transfer.opac_not_loaded"));
                                                         case NOT_ENOUGH_FREE ->
                                                                 source.sendFailure(Component.translatable(
-                                                                        "commands.vsclaims.transfer_back.not_enough",
+                                                                        "commands.aeroclaims.transfer_back.not_enough",
                                                                         freeShipClaims, amount
                                                                 ));
                                                         case API_ERROR ->
-                                                                source.sendFailure(Component.translatable("commands.vsclaims.transfer.error"));
+                                                                source.sendFailure(Component.translatable("commands.aeroclaims.transfer.error"));
                                                     }
 
                                                     return result == VsClaimManager.TransferResult.SUCCESS ? 1 : 0;

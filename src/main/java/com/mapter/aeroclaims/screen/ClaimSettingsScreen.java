@@ -75,13 +75,13 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             sendUpdate();
         }).bounds(btnX, this.topPos + 68, btnW, 18).build();
 
-        this.refreshButton = Button.builder(Component.translatable("screen.vsclaims.claim_settings.refresh"), btn -> sendRefresh())
+        this.refreshButton = Button.builder(Component.translatable("screen.aeroclaims.claim_settings.refresh"), btn -> sendRefresh())
                 .bounds(btnX, this.topPos + 90, btnW, 18).build();
 
         // Restore the button state if the cooldown is still active
         if (isOnCooldown()) {
             refreshButton.active = false;
-            refreshButton.setMessage(Component.translatable("screen.vsclaims.claim_settings.refresh_wait"));
+            refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
         }
 
         this.addRenderableWidget(this.partyButton);
@@ -99,20 +99,20 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     private Component getPartyText() {
         return Component.translatable(this.menu.isAllowParty()
-                ? "screen.vsclaims.claim_settings.party.allowed"
-                : "screen.vsclaims.claim_settings.party.denied");
+                ? "screen.aeroclaims.claim_settings.party.allowed"
+                : "screen.aeroclaims.claim_settings.party.denied");
     }
 
     private Component getAlliesText() {
         return Component.translatable(this.menu.isAllowAllies()
-                ? "screen.vsclaims.claim_settings.allies.allowed"
-                : "screen.vsclaims.claim_settings.allies.denied");
+                ? "screen.aeroclaims.claim_settings.allies.allowed"
+                : "screen.aeroclaims.claim_settings.allies.denied");
     }
 
     private Component getOthersText() {
         return Component.translatable(this.menu.isAllowOthers()
-                ? "screen.vsclaims.claim_settings.others.allowed"
-                : "screen.vsclaims.claim_settings.others.denied");
+                ? "screen.aeroclaims.claim_settings.others.allowed"
+                : "screen.aeroclaims.claim_settings.others.denied");
     }
 
     private void sendUpdate() {
@@ -134,7 +134,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         PacketDistributor.sendToServer(new RefreshClaimPacket(this.menu.getCenter()));
         REFRESH_COOLDOWNS.put(menu.getCenter(), System.currentTimeMillis());
         refreshButton.active = false;
-        refreshButton.setMessage(Component.translatable("screen.vsclaims.claim_settings.refresh_wait"));
+        refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
     }
 
     @Override
@@ -145,7 +145,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     @Override
     protected void renderLabels(net.minecraft.client.gui.GuiGraphics g, int mx, int my) {
         // Centered title
-        String title = Component.translatable("screen.vsclaims.claim_settings.title").getString();
+        String title = Component.translatable("screen.aeroclaims.claim_settings.title").getString();
         g.drawString(this.font, title,
                 (this.imageWidth - this.font.width(title)) / 2, 7, COLOR_TITLE, false);
 
@@ -157,10 +157,10 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
         // Claim status
         String statusText = Component.translatable(this.menu.isClaimActive()
-                ? "screen.vsclaims.claim_settings.status.active"
-                : "screen.vsclaims.claim_settings.status.disabled").getString();
+                ? "screen.aeroclaims.claim_settings.status.active"
+                : "screen.aeroclaims.claim_settings.status.disabled").getString();
         int statusColor = this.menu.isClaimActive() ? 0x22AA22 : 0xCC3333;
-        String privacyPrefix = Component.translatable("screen.vsclaims.claim_settings.privacy_prefix").getString();
+        String privacyPrefix = Component.translatable("screen.aeroclaims.claim_settings.privacy_prefix").getString();
         int prefixWidth = this.font.width(privacyPrefix);
         g.drawString(this.font, privacyPrefix, 10, 120, COLOR_LABEL, false);
         g.drawString(this.font, statusText, 10 + prefixWidth, 120, statusColor, false);
@@ -172,7 +172,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
                     .getPlayerInfo(menu.getOwner())
                     .getProfile()
                     .getName();
-            g.drawString(this.font, Component.translatable("screen.vsclaims.claim_settings.owner", name).getString(), 10, 132, COLOR_LABEL, false);
+            g.drawString(this.font, Component.translatable("screen.aeroclaims.claim_settings.owner", name).getString(), 10, 132, COLOR_LABEL, false);
         } catch (Exception ignored) {}
 
         // Ship
@@ -180,7 +180,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             try {
                 String slug = (String) ship.getClass().getMethod("getSlug").invoke(ship);
                 if (slug != null && !slug.isEmpty()) {
-                    Component shipText = Component.translatable("screen.vsclaims.claim_settings.ship", slug);
+                    Component shipText = Component.translatable("screen.aeroclaims.claim_settings.ship", slug);
                     int x = 10;
                     int y = 146;
                     int maxWidth = this.imageWidth - 20;
@@ -204,7 +204,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         if (!refreshButton.active && !isOnCooldown()) {
             REFRESH_COOLDOWNS.remove(menu.getCenter());
             refreshButton.active = true;
-            refreshButton.setMessage(Component.translatable("screen.vsclaims.claim_settings.refresh"));
+            refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh"));
         }
     }
 }

@@ -13,7 +13,7 @@ public class AdminCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
-                Commands.literal("vsclaims")
+                Commands.literal("aeroclaims")
                         .then(Commands.literal("ships")
                                 .then(Commands.literal("unclaimed")
                                     .requires(source -> source.hasPermission(2))
@@ -23,7 +23,7 @@ public class AdminCommands {
 
                                                 int total = UnregisteredShipsManager.getCount();
                                                 if (total == 0) {
-                                                    source.sendSuccess(() -> Component.translatable("commands.vsclaims.ships.clear.none"), true);
+                                                    source.sendSuccess(() -> Component.translatable("commands.aeroclaims.ships.clear.none"), true);
                                                     return 1;
                                                 }
 
@@ -43,7 +43,7 @@ public class AdminCommands {
                                             int finalDeleted = deleted;
                                             int finalFailed = failed;
                                             source.sendSuccess(
-                                                    () -> Component.translatable("commands.vsclaims.ships.clear.done", finalDeleted, finalFailed, total),
+                                                    () -> Component.translatable("commands.aeroclaims.ships.clear.done", finalDeleted, finalFailed, total),
                                                     true
                                             );
                                             return 1;
