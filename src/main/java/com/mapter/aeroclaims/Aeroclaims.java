@@ -29,10 +29,6 @@ public class Aeroclaims {
         modContainer.registerConfig(ModConfig.Type.SERVER, AeroClaimsConfig.SPEC);
 
         ClaimManager.init(ModList.get().isLoaded("openpartiesandclaims"));
-
-        // RegisteredSubLevelsManager, UnregisteredSubLevelsManager and SubLevelWorldScanner
-        // are registered automatically via @EventBusSubscriber.
-        // SableSubLevelEventHandler is registered via Sable API in onCommonSetup.
     }
 
     private static void onCommonSetup(FMLCommonSetupEvent event) {

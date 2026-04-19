@@ -25,8 +25,6 @@ public class AeroClaimManager {
         API_ERROR
     }
 
-     //Attempts to transfer amount OPAC claims to ship claims in this mod.
-     //Bonus claims are consumed first; if insufficient, base claims are used too.
     public static TransferResult transferFromOpac(ServerPlayer player, int amount) {
         if (amount <= 0) return TransferResult.API_ERROR;
 
@@ -49,23 +47,17 @@ public class AeroClaimManager {
 
             IServerPlayerClaimInfoAPI playerInfo = claimsManager.getPlayerInfo(playerId);
             int usedClaims = playerInfo != null ? playerInfo.getClaimCount() : 0;
-
-            // Total free claims (base + bonus - used)
             int totalLimit  = baseLimit + bonusLimit;
             int freeClaims  = Math.max(0, totalLimit - usedClaims);
 
             if (freeClaims < amount) {
                 return TransferResult.NOT_ENOUGH_FREE;
             }
-
-            // Decrease BONUS_CHUNK_CLAIMS (may go negative, borrowing from base)
             int newBonus = bonusLimit - amount;
             IPlayerConfigAPI.SetResult setResult = config.tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
             if (setResult != IPlayerConfigAPI.SetResult.SUCCESS) {
                 return TransferResult.API_ERROR;
             }
-
-            // Add claims to our mod
             AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
             data.addMigratedSlots(playerId, amount);
 
@@ -76,9 +68,6 @@ public class AeroClaimManager {
         }
     }
 
-
-     //Attempts to consume 1 ship claim (on claim block activation).
-     //Returns true if the claim was successfully consumed.
     public static boolean consumeShipClaimSlot(ServerLevel level, UUID playerId) {
         AeroClaimSavedData data = AeroClaimSavedData.get(level);
         if (data.getFreeSlots(playerId) <= 0) {
@@ -88,31 +77,23 @@ public class AeroClaimManager {
         return true;
     }
 
-
-     //Release 1 ship claim (on claim block removal).
     public static void releaseShipClaimSlot(ServerLevel level, UUID playerId) {
         AeroClaimSavedData data = AeroClaimSavedData.get(level);
         data.decrementUsedSlots(playerId);
     }
 
-     //Get the number of transferred claims (maximum).
     public static int getMigratedSlots(ServerLevel level, UUID playerId) {
         return AeroClaimSavedData.get(level).getMigratedSlots(playerId);
     }
 
-     //Get the number of used claims.
     public static int getUsedSlots(ServerLevel level, UUID playerId) {
         return AeroClaimSavedData.get(level).getUsedSlots(playerId);
     }
 
-     //Get the number of free claims.
     public static int getFreeSlots(ServerLevel level, UUID playerId) {
         return AeroClaimSavedData.get(level).getFreeSlots(playerId);
     }
 
-
-     //Get the number of free OPAC claims available for transfer (base + bonus - used).
-     //Returns -1 if OPAC is not loaded.
     public static int getFreeOpacClaims(ServerPlayer player) {
         try {
             OpenPACServerAPI api = OpenPACServerAPI.get(player.server);
@@ -139,8 +120,6 @@ public class AeroClaimManager {
         }
     }
 
-    //Transfer ship claims back to OPAC bonus claims.
-    //Only free ship claims (transferred - used) can be transferred back.
     public static TransferResult transferToOpac(ServerPlayer player, int amount) {
         if (amount <= 0) return TransferResult.API_ERROR;
 
@@ -164,17 +143,12 @@ public class AeroClaimManager {
             if (freeShipClaims < amount) {
                 return TransferResult.NOT_ENOUGH_FREE;
             }
-
-            // Decrease transferred slots in our mod
             int currentMigrated = data.getMigratedSlots(playerId);
             data.setMigratedSlots(playerId, currentMigrated - amount);
-
-            // Increase BONUS_CHUNK_CLAIMS in OPAC
             int bonusLimit = config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
             int newBonus = bonusLimit + amount;
             IPlayerConfigAPI.SetResult setResult = config.tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
             if (setResult != IPlayerConfigAPI.SetResult.SUCCESS) {
-                // Rollback on failure
                 data.setMigratedSlots(playerId, currentMigrated);
                 return TransferResult.API_ERROR;
             }

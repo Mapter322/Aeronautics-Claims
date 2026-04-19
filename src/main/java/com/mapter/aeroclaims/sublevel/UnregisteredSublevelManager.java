@@ -27,9 +27,6 @@ public class UnregisteredSublevelManager {
     private static final Map<String, UnregisteredShip> ships = new ConcurrentHashMap<>();
     private static Path saveFile = null;
 
-
-    // Record structure
-
     public static class UnregisteredShip {
         public final String name;
         public final String createdAt;
@@ -44,9 +41,6 @@ public class UnregisteredSublevelManager {
             this.createdAt = createdAt;
         }
     }
-
-
-    // Forge events
 
     @SubscribeEvent
     public static void onServerStarted(ServerStartedEvent event) {
@@ -67,9 +61,6 @@ public class UnregisteredSublevelManager {
     public static void onServerStopping(ServerStoppingEvent event) {
         save();
     }
-
-
-    // Public API
 
     public static void addShip(String shipId, String name) {
         if (ships.containsKey(shipId)) return;
@@ -101,9 +92,6 @@ public class UnregisteredSublevelManager {
         return ships.size();
     }
 
-
-    // Save / load
-
     public static void save() {
         if (saveFile == null) return;
         try {
@@ -129,7 +117,6 @@ public class UnregisteredSublevelManager {
             String content = Files.readString(saveFile);
             JsonElement element = JsonParser.parseString(content);
             if (element.isJsonArray()) {
-                // Legacy array format
                 JsonArray array = element.getAsJsonArray();
                 for (JsonElement el : array) {
                     JsonObject obj = el.getAsJsonObject();
@@ -139,7 +126,6 @@ public class UnregisteredSublevelManager {
                     ships.put(shipId, new UnregisteredShip(name, createdAt));
                 }
             } else if (element.isJsonObject()) {
-                // New object format
                 JsonObject obj = element.getAsJsonObject();
                 for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                     String shipId = entry.getKey();

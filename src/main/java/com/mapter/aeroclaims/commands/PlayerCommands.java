@@ -17,7 +17,6 @@ public class PlayerCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 Commands.literal("aeroclaims")
-                        // /aeroclaims info
                         .then(Commands.literal("info")
                                 .executes(ctx -> {
                                     CommandSourceStack source = ctx.getSource();
@@ -58,7 +57,6 @@ public class PlayerCommands {
                                     return 1;
                                 }))
 
-                        // /aeroclaims transfer vs <amount>
                         .then(Commands.literal("transfer")
                                 .then(Commands.literal("aero")
                                                 .then(Commands.argument("amount", IntegerArgumentType.integer(1))
@@ -99,7 +97,6 @@ public class PlayerCommands {
                                                             return result == AeroClaimManager.TransferResult.SUCCESS ? 1 : 0;
                                                         })))
 
-                                // /aeroclaims transfer opac <amount>
                                 .then(Commands.literal("opac")
                                         .then(Commands.argument("amount", IntegerArgumentType.integer(1))
                                                 .executes(ctx -> {

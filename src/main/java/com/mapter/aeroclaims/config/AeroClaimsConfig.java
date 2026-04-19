@@ -7,9 +7,6 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec SPEC;
 
     public static final ModConfigSpec.IntValue MAX_SHIP_BLOCKS;
-
-    // Interval for scanning all ships in the world (in ticks).
-    // 20 ticks = 1 second. Default 100 (every 5 seconds).
     public static final ModConfigSpec.IntValue SCAN_INTERVAL_TICKS;
 
     static {

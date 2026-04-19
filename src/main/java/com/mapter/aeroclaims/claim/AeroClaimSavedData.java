@@ -20,14 +20,10 @@ public class AeroClaimSavedData extends SavedData {
             null
     );
 
-    // Player UUID -> number of migrated claims (maximum for this mod)
     private final Map<UUID, Integer> migratedSlots = new HashMap<>();
-
-    // Player UUID -> number of used claims (active claim blocks)
     private final Map<UUID, Integer> usedSlots = new HashMap<>();
 
     public static AeroClaimSavedData get(ServerLevel level) {
-        // Use overworld to make data global for the server
         ServerLevel overworld = level.getServer().overworld();
         return overworld.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
     }
@@ -77,8 +73,6 @@ public class AeroClaimSavedData extends SavedData {
         return tag;
     }
 
-    //  Migrated claims (maximum)
-
     public int getMigratedSlots(UUID playerId) {
         return migratedSlots.getOrDefault(playerId, 0);
     }
@@ -91,8 +85,6 @@ public class AeroClaimSavedData extends SavedData {
     public void addMigratedSlots(UUID playerId, int amount) {
         setMigratedSlots(playerId, getMigratedSlots(playerId) + amount);
     }
-
-    // Used claims (consumed)
 
     public int getUsedSlots(UUID playerId) {
         return usedSlots.getOrDefault(playerId, 0);
@@ -110,8 +102,6 @@ public class AeroClaimSavedData extends SavedData {
     public void decrementUsedSlots(UUID playerId) {
         setUsedSlots(playerId, getUsedSlots(playerId) - 1);
     }
-
-    //  Convenience method: free claims
 
     public int getFreeSlots(UUID playerId) {
         return Math.max(0, getMigratedSlots(playerId) - getUsedSlots(playerId));

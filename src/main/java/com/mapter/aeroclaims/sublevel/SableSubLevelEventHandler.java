@@ -37,17 +37,14 @@ public class SableSubLevelEventHandler {
                 String shipId = subLevel.getUniqueId().toString();
                 String shipName = subLevel.getName() != null ? subLevel.getName() : "ship";
 
-                // Already tracked - do nothing
                 if (RegisteredSublevelManager.getRegisteredName(shipId) != null
                         || UnregisteredSublevelManager.contains(shipId)) {
                     return;
                 }
 
-                // Find claim whose ClaimBlock is physically located in this sub-level
                 Claim matchedClaim = findClaimOnSubLevel(serverLevel, container, subLevel);
 
                 if (matchedClaim != null) {
-                    // Ship already claimed - synchronize shipId if changed
                     String oldId = matchedClaim.getShipId();
                     if (!shipId.equals(oldId)) {
                         LOGGER.info("Ship reassembled: claim at {} updated shipId {} -> {}",
@@ -67,7 +64,6 @@ public class SableSubLevelEventHandler {
                         matchedClaim.setShipId(shipId);
                         ClaimSavedData.get(serverLevel).setDirty();
                     }
-                    // Register in manager if not yet (e.g. after restart)
                     if (RegisteredSublevelManager.getRegisteredName(shipId) == null) {
                         RegisteredSublevelManager.registerShip(shipId, shipName,
                                 matchedClaim.getOwner(), null);
@@ -76,7 +72,6 @@ public class SableSubLevelEventHandler {
                     return;
                 }
 
-                // Claim not found - ship without owner
                 UnregisteredSublevelManager.addShip(shipId, shipName);
             }
 
@@ -85,13 +80,11 @@ public class SableSubLevelEventHandler {
                 String shipId = subLevel.getUniqueId().toString();
 
                 if (reason != SubLevelRemovalReason.REMOVED) {
-                    // Temporary unload (teleport, chunk unload) - don't touch claim
                     LOGGER.debug("Ship {} temporarily unloaded (reason={}), keeping claim", shipId, reason);
                     UnregisteredSublevelManager.removeShip(shipId);
                     return;
                 }
 
-                // Real removal - clean everything
                 UnregisteredSublevelManager.removeShip(shipId);
 
                 RegisteredSublevelManager.ShipRegistration reg =
@@ -116,19 +109,14 @@ public class SableSubLevelEventHandler {
         });
     }
 
-    // Finds Claim whose ClaimBlock is physically located inside the given sub-level.
-    // Checks first by saved shipId (fast), then spatially.
-    // Package-visible - reused in ShipWorldScanner.
     static Claim findClaimOnSubLevel(ServerLevel level, SubLevelContainer container, SubLevel subLevel) {
         String shipId = subLevel.getUniqueId().toString();
 
         for (Claim claim : ClaimSavedData.get(level).getClaims()) {
-            // Fast path: shipId already saved in claim
             if (shipId.equals(claim.getShipId())) {
                 return claim;
             }
 
-            // Spatial check
             net.minecraft.core.BlockPos center = claim.getCenter();
             if (container.inBounds(center)) {
                 LevelPlot plot = container.getPlot(center.getX() >> 4, center.getZ() >> 4);

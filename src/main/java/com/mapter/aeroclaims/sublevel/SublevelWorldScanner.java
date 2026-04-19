@@ -16,9 +16,6 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
-// Periodically scans all SubLevels via ServerSubLevelContainer.getAllSubLevels()
-// and distributes them to claimed / unclaimed if they are not yet listed there.
-// Covers ships loaded before mod initialization and cold start cases.
 @EventBusSubscriber(modid = Aeroclaims.MODID)
 public class SublevelWorldScanner {
 
@@ -53,13 +50,11 @@ public class SublevelWorldScanner {
         String shipId = subLevel.getUniqueId().toString();
         String shipName = subLevel.getName() != null ? subLevel.getName() : "ship";
 
-        // Already tracked - skip
         if (RegisteredSublevelManager.getRegisteredName(shipId) != null
                 || UnregisteredSublevelManager.contains(shipId)) {
             return;
         }
 
-        // Reuse claim finding logic from SableShipEventHandler
         Claim claim = SableSubLevelEventHandler.findClaimOnSubLevel(level, container, subLevel);
 
         if (claim != null) {

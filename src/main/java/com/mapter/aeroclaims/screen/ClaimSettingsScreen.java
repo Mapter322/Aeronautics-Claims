@@ -22,7 +22,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private static final int COLOR_TITLE = 0x222222;
     private static final int COLOR_LABEL = 0x555555;
 
-    // Cooldown is stored statically per block position and survives GUI reopen/close cycles
     private static final java.util.Map<net.minecraft.core.BlockPos, Long> REFRESH_COOLDOWNS =
             new java.util.HashMap<>();
     private static final long COOLDOWN_MS = 30_000L;
@@ -78,7 +77,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         this.refreshButton = Button.builder(Component.translatable("screen.aeroclaims.claim_settings.refresh"), btn -> sendRefresh())
                 .bounds(btnX, this.topPos + 90, btnW, 18).build();
 
-        // Restore the button state if the cooldown is still active
         if (isOnCooldown()) {
             refreshButton.active = false;
             refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
@@ -94,7 +92,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         if (partyButton != null) partyButton.setMessage(getPartyText());
         if (alliesButton != null) alliesButton.setMessage(getAlliesText());
         if (othersButton != null) othersButton.setMessage(getOthersText());
-        // Do not touch the refresh button, the cooldown should keep running
     }
 
     private Component getPartyText() {
@@ -144,18 +141,13 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     @Override
     protected void renderLabels(net.minecraft.client.gui.GuiGraphics g, int mx, int my) {
-        // Centered title
         String title = Component.translatable("screen.aeroclaims.claim_settings.title").getString();
         g.drawString(this.font, title,
                 (this.imageWidth - this.font.width(title)) / 2, 7, COLOR_TITLE, false);
 
-        // Divider below the title
         g.fill(10, 18, this.imageWidth - 10, 19, 0x66888888);
-
-        // Divider before the info section
         g.fill(10, 116, this.imageWidth - 10, 117, 0x66888888);
 
-        // Claim status
         String statusText = Component.translatable(this.menu.isClaimActive()
                 ? "screen.aeroclaims.claim_settings.status.active"
                 : "screen.aeroclaims.claim_settings.status.disabled").getString();
@@ -165,7 +157,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         g.drawString(this.font, privacyPrefix, 10, 120, COLOR_LABEL, false);
         g.drawString(this.font, statusText, 10 + prefixWidth, 120, statusColor, false);
 
-        // Owner
         try {
             String name = Minecraft.getInstance()
                     .getConnection()
@@ -175,7 +166,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             g.drawString(this.font, Component.translatable("screen.aeroclaims.claim_settings.owner", name).getString(), 10, 132, COLOR_LABEL, false);
         } catch (Exception ignored) {}
 
-        // Ship
         String shipName = this.menu.getShipName();
         if (shipName != null && !shipName.isEmpty()) {
             Component shipText = Component.translatable("screen.aeroclaims.claim_settings.ship", shipName);
@@ -196,7 +186,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         super.render(g, mx, my, partialTick);
         this.renderTooltip(g, mx, my);
 
-        // Clear the cooldown after 30 seconds, but only if the server did not respond
         if (!refreshButton.active && !isOnCooldown()) {
             REFRESH_COOLDOWNS.remove(menu.getCenter());
             refreshButton.active = true;
