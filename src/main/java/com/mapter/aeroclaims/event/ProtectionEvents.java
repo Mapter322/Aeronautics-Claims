@@ -4,7 +4,7 @@ import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.registry.ModBlocks;
-import com.mapter.aeroclaims.ship.VSShipUtils;
+import com.mapter.aeroclaims.ship.SableShipUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -104,7 +104,7 @@ public class ProtectionEvents {
             return;
         }
         if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK.get()) return;
-        if (!VSShipUtils.isOnShip(level, event.getPos())) {
+        if (!SableShipUtils.isOnShip(level, event.getPos())) {
             event.setCanceled(true);
             if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.vsclaims.claim_block_only_on_ship"));
         }

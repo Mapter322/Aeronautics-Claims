@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,open=false": { "model": "aeroclaims:block/claim_block" },
+    "facing=south,open=false": { "model": "aeroclaims:block/claim_block", "y": 180 },
+    "facing=east,open=false": { "model": "aeroclaims:block/claim_block", "y": 90 },
+    "facing=west,open=false": { "model": "aeroclaims:block/claim_block", "y": 270 },
+    "facing=north,open=true": { "model": "aeroclaims:block/claim_block_open" },
+    "facing=south,open=true": { "model": "aeroclaims:block/claim_block_open", "y": 180 },
+    "facing=east,open=true": { "model": "aeroclaims:block/claim_block_open", "y": 90 },
+    "facing=west,open=true": { "model": "aeroclaims:block/claim_block_open", "y": 270 }
+  }
+}

@@ -1,7 +1,7 @@
 package com.mapter.aeroclaims.commands;
 
 import com.mapter.aeroclaims.ship.UnregisteredShipsManager;
-import com.mapter.aeroclaims.ship.VSShipUtils;
+import com.mapter.aeroclaims.ship.SableShipUtils;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -31,7 +31,7 @@ public class AdminCommands {
                                             int failed = 0;
                                             java.util.List<String> ids = new ArrayList<>(UnregisteredShipsManager.getShipIds());
                                             for (String shipId : ids) {
-                                                boolean ok = VSShipUtils.deleteShipById(source.getLevel(), shipId);
+                                                boolean ok = SableShipUtils.deleteShipById(source.getLevel(), shipId);
                                                 if (ok) {
                                                     deleted++;
                                                     UnregisteredShipsManager.removeShip(shipId);

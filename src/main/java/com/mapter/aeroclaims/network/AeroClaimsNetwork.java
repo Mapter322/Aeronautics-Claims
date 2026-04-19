@@ -7,7 +7,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 @EventBusSubscriber(modid = Aeroclaims.MODID, bus = EventBusSubscriber.Bus.MOD)
-public class VSClaimsNetwork {
+public class AeroClaimsNetwork {
 
     private static final String PROTOCOL_VERSION = "1";
 

@@ -14,7 +14,7 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 
 @Mod(Aeroclaims.MODID)
 public class Aeroclaims {
-    public static final String MODID = "vsclaims";
+    public static final String MODID = "aeroclaims";
 
     public Aeroclaims(IEventBus modBus, ModContainer modContainer) {
 

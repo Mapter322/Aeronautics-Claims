@@ -1,5 +1,6 @@
 package com.mapter.aeroclaims.block;
 
+import com.mapter.aeroclaims.ship.SableShipUtils;
 import com.mojang.serialization.MapCodec;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
@@ -7,7 +8,7 @@ import com.mapter.aeroclaims.claim.VsClaimManager;
 import com.mapter.aeroclaims.screen.ClaimSettingsMenu;
 import com.mapter.aeroclaims.ship.RegisteredShipsManager;
 import com.mapter.aeroclaims.ship.UnregisteredShipsManager;
-import com.mapter.aeroclaims.ship.VSShipUtils;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -35,7 +36,6 @@ import javax.annotation.Nullable;
 public class ClaimBlock extends BaseEntityBlock {
 
     public static final MapCodec<ClaimBlock> CODEC = simpleCodec(ClaimBlock::new);
-
     public static final BooleanProperty OPEN = BlockStateProperties.OPEN;
 
     public ClaimBlock(Properties props) {
@@ -76,10 +76,17 @@ public class ClaimBlock extends BaseEntityBlock {
     }
 
     @Override
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        if (level instanceof ServerLevel serverLevel) {
+            return SableShipUtils.isOnShip(serverLevel, pos);
+        }
+        return true;
+    }
+
+    @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state,
                             @Nullable net.minecraft.world.entity.LivingEntity placer,
                             net.minecraft.world.item.ItemStack stack) {
-
         if (!level.isClientSide && placer instanceof Player player) {
             ClaimManager.addClaim((ServerLevel) level, pos, player.getUUID());
         }
@@ -89,20 +96,15 @@ public class ClaimBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos,
                          BlockState newState, boolean moving) {
         if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
-            Object ship = VSShipUtils.getShipAt((ServerLevel) level, pos);
-            if (ship instanceof Boolean) {
-                ship = VSShipUtils.getShipObjectAt((ServerLevel) level, pos);
-            }
+            SubLevel ship = SableShipUtils.getShipAt((ServerLevel) level, pos);
+            String shipId = SableShipUtils.getShipId(ship);
 
-            String shipId = VSShipUtils.getShipId(ship);
             if (shipId != null) {
-                String shipName = VSShipUtils.getShipSlug(ship);
-                if (shipName == null) shipName = "ship";
+                String shipName = SableShipUtils.getShipName(ship);
                 RegisteredShipsManager.unregisterShip(shipId);
                 UnregisteredShipsManager.addShip(shipId, shipName);
             }
 
-            // Release ship claim
             Claim claim = ClaimManager.getClaimByCenter((ServerLevel) level, pos);
             if (claim != null && claim.isActive()) {
                 VsClaimManager.releaseShipClaimSlot((ServerLevel) level, claim.getOwner());
@@ -127,7 +129,7 @@ public class ClaimBlock extends BaseEntityBlock {
             return InteractionResult.PASS;
 
         if (!serverPlayer.getUUID().equals(claim.getOwner())) {
-            serverPlayer.sendSystemMessage(Component.translatable("message.vsclaims.only_owner_can_configure"));
+            serverPlayer.sendSystemMessage(Component.translatable("message.aeroclaims.only_owner_can_configure"));
             return InteractionResult.CONSUME;
         }
 
@@ -135,9 +137,6 @@ public class ClaimBlock extends BaseEntityBlock {
             level.setBlock(pos, state.setValue(OPEN, true), 3);
             level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
-
-        Object ship = VSShipUtils.getShipAt(serverPlayer.serverLevel(), pos);
-        String shipId = VSShipUtils.getShipId(ship);
 
         serverPlayer.openMenu(getMenuProvider(state, level, pos), buf -> {
             buf.writeBlockPos(pos);
@@ -153,16 +152,15 @@ public class ClaimBlock extends BaseEntityBlock {
 
     @Override
     public MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
-        Claim claim = level instanceof ServerLevel serverLevel ? ClaimManager.getClaimByCenter(serverLevel, pos) : null;
-        if (claim == null) {
-            return null;
-        }
+        Claim claim = level instanceof ServerLevel serverLevel
+                ? ClaimManager.getClaimByCenter(serverLevel, pos) : null;
+        if (claim == null) return null;
         return new SimpleMenuProvider(
                 (containerId, inv, p) -> new ClaimSettingsMenu(
                         containerId, inv, pos, claim.getOwner(),
                         claim.isActive(),
                         claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers()),
-                Component.translatable("screen.vsclaims.claim_settings.title")
+                Component.translatable("screen.aeroclaims.claim_settings.title")
         );
     }
 }
