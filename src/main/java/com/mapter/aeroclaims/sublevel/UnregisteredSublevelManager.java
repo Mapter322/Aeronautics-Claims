@@ -22,7 +22,7 @@ public class UnregisteredSublevelManager {
 
     private static final Logger LOGGER = LogManager.getLogger("aeroclaims/UnregisteredShipsManager");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String FILE_NAME = "unclaimed_sublevelss.json";
+    private static final String FILE_NAME = "unclaimed_sublevels.json";
 
     private static final Map<String, UnregisteredShip> ships = new ConcurrentHashMap<>();
     private static Path saveFile = null;
@@ -31,19 +31,16 @@ public class UnregisteredSublevelManager {
     // Record structure
 
     public static class UnregisteredShip {
-        public final String shipId;
-        public final String slug;
+        public final String name;
         public final String createdAt;
 
-        public UnregisteredShip(String shipId, String slug) {
-            this.shipId = shipId;
-            this.slug = slug;
+        public UnregisteredShip(String name) {
+            this.name = name;
             this.createdAt = Instant.now().toString();
         }
 
-        public UnregisteredShip(String shipId, String slug, String createdAt) {
-            this.shipId = shipId;
-            this.slug = slug;
+        public UnregisteredShip(String name, String createdAt) {
+            this.name = name;
             this.createdAt = createdAt;
         }
     }
@@ -74,11 +71,11 @@ public class UnregisteredSublevelManager {
 
     // Public API
 
-    public static void addShip(String shipId, String slug) {
+    public static void addShip(String shipId, String name) {
         if (ships.containsKey(shipId)) return;
-        ships.put(shipId, new UnregisteredShip(shipId, slug));
+        ships.put(shipId, new UnregisteredShip(name));
         save();
-        LOGGER.info("New unregistered ship detected: id={} slug={}", shipId, slug);
+        LOGGER.info("New unregistered ship detected: id={} name={}", shipId, name);
     }
 
     public static void removeShip(String shipId) {
@@ -110,15 +107,16 @@ public class UnregisteredSublevelManager {
     public static void save() {
         if (saveFile == null) return;
         try {
-            JsonArray array = new JsonArray();
-            for (UnregisteredShip s : ships.values()) {
-                JsonObject obj = new JsonObject();
-                obj.addProperty("shipId",    s.shipId);
-                obj.addProperty("slug",      s.slug);
-                obj.addProperty("createdAt", s.createdAt);
-                array.add(obj);
+            JsonObject obj = new JsonObject();
+            for (Map.Entry<String, UnregisteredShip> entry : ships.entrySet()) {
+                String shipId = entry.getKey();
+                UnregisteredShip s = entry.getValue();
+                JsonObject shipObj = new JsonObject();
+                shipObj.addProperty("name", s.name);
+                shipObj.addProperty("createdAt", s.createdAt);
+                obj.add(shipId, shipObj);
             }
-            Files.writeString(saveFile, GSON.toJson(array));
+            Files.writeString(saveFile, GSON.toJson(obj));
         } catch (IOException e) {
             LOGGER.error("Failed to save {}: {}", FILE_NAME, e.toString());
         }
@@ -129,13 +127,30 @@ public class UnregisteredSublevelManager {
         if (saveFile == null || !Files.exists(saveFile)) return;
         try {
             String content = Files.readString(saveFile);
-            JsonArray array = JsonParser.parseString(content).getAsJsonArray();
-            for (JsonElement el : array) {
-                JsonObject obj = el.getAsJsonObject();
-                String shipId    = obj.get("shipId").getAsString();
-                String slug      = obj.has("slug")      ? obj.get("slug").getAsString()      : "";
-                String createdAt = obj.has("createdAt") ? obj.get("createdAt").getAsString()  : "";
-                ships.put(shipId, new UnregisteredShip(shipId, slug, createdAt));
+            JsonElement element = JsonParser.parseString(content);
+            if (element.isJsonArray()) {
+                // Legacy array format
+                JsonArray array = element.getAsJsonArray();
+                for (JsonElement el : array) {
+                    JsonObject obj = el.getAsJsonObject();
+                    String shipId    = obj.get("shipId").getAsString();
+                    String name      = obj.has("name")      ? obj.get("name").getAsString()      : obj.has("slug") ? obj.get("slug").getAsString() : "";
+                    String createdAt = obj.has("createdAt") ? obj.get("createdAt").getAsString()  : "";
+                    ships.put(shipId, new UnregisteredShip(name, createdAt));
+                }
+            } else if (element.isJsonObject()) {
+                // New object format
+                JsonObject obj = element.getAsJsonObject();
+                for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                    String shipId = entry.getKey();
+                    JsonElement value = entry.getValue();
+                    if (value.isJsonObject()) {
+                        JsonObject shipObj = value.getAsJsonObject();
+                        String name      = shipObj.has("name")      ? shipObj.get("name").getAsString()      : "";
+                        String createdAt = shipObj.has("createdAt") ? shipObj.get("createdAt").getAsString()  : "";
+                        ships.put(shipId, new UnregisteredShip(name, createdAt));
+                    }
+                }
             }
         } catch (Exception e) {
             LOGGER.error("Failed to load {}: {}", FILE_NAME, e.toString());
