@@ -14,6 +14,7 @@
   "screen.aeroclaims.claim_settings.privacy_prefix": "Claim: ",
   "screen.aeroclaims.claim_settings.owner": "Owner: %s",
   "screen.aeroclaims.claim_settings.ship": "Name: %s",
+  "screen.aeroclaims.claim_settings.not_on_subclaim": "Not on a subclaim!",
   "commands.aeroclaims.only_player": "This command can only be used by a player",
   "commands.aeroclaims.info.registered_count": "§eYour claimed ships: %s",
   "commands.aeroclaims.info.ship_slots": "§eAero claims: %s / %s",
@@ -40,5 +41,7 @@
   "message.aeroclaims.ship_object_not_found": "§cFailed to get ship object!",
   "message.aeroclaims.ship_id_not_found": "§cFailed to get ship ID!",
   "message.aeroclaims.no_ship_slots": "§cYou have no available ship claims! Use /aeroclaims transfer aero <amount> to transfer claims",
-  "message.aeroclaims.ship_registered": "Ship claimed: %s"
+  "message.aeroclaims.ship_registered": "Ship claimed: %s",
+  "message.aeroclaims.not_on_subclaim": "§cBlock is not on a subclaim!",
+  "message.aeroclaims.duplicate_claim_block": "§cRemove other claim blocks from this ship first!"
 }

@@ -14,6 +14,7 @@
   "screen.aeroclaims.claim_settings.privacy_prefix": "Приват: ",
   "screen.aeroclaims.claim_settings.owner": "Владелец: %s",
   "screen.aeroclaims.claim_settings.ship": "Имя: %s",
+  "screen.aeroclaims.claim_settings.not_on_subclaim": "Не на субклейме!",
   "commands.aeroclaims.only_player": "Эта команда доступна только игроку",
   "commands.aeroclaims.info.registered_count": "§eТвои заприваченные корабли: %s",
   "commands.aeroclaims.info.ship_slots": "§eПриваты aero: %s / %s",
@@ -40,5 +41,7 @@
   "message.aeroclaims.ship_object_not_found": "§cНе удалось получить объект корабля!",
   "message.aeroclaims.ship_id_not_found": "§cНе удалось получить ID корабля!",
   "message.aeroclaims.no_ship_slots": "§cНет доступных приватов для кораблей! Используй /aeroclaims transfer aero <кол-во> чтобы перенести приваты",
-  "message.aeroclaims.ship_registered": "Корабль запривачен: %s"
+  "message.aeroclaims.ship_registered": "Корабль запривачен: %s",
+  "message.aeroclaims.not_on_subclaim": "§cБлок не на субклейме!",
+  "message.aeroclaims.duplicate_claim_block": "§cСначала уберите другие блоки привата с этого корабля!"
 }

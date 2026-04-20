@@ -77,7 +77,10 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         this.refreshButton = Button.builder(Component.translatable("screen.aeroclaims.claim_settings.refresh"), btn -> sendRefresh())
                 .bounds(btnX, this.topPos + 90, btnW, 18).build();
 
-        if (isOnCooldown()) {
+        if (!menu.isOnShip()) {
+            refreshButton.active = false;
+            refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.not_on_subclaim"));
+        } else if (isOnCooldown()) {
             refreshButton.active = false;
             refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
         }
@@ -166,16 +169,20 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             g.drawString(this.font, Component.translatable("screen.aeroclaims.claim_settings.owner", name).getString(), 10, 132, COLOR_LABEL, false);
         } catch (Exception ignored) {}
 
-        String shipName = this.menu.getShipName();
-        if (shipName != null && !shipName.isEmpty()) {
-            Component shipText = Component.translatable("screen.aeroclaims.claim_settings.ship", shipName);
-            int x = 10;
-            int y = 146;
-            int maxWidth = this.imageWidth - 20;
-            int line = 0;
-            for (FormattedCharSequence seq : this.font.split(shipText, maxWidth)) {
-                g.drawString(this.font, seq, x, y + (line * this.font.lineHeight), COLOR_LABEL, false);
-                line++;
+        int shipY = 146;
+        if (!this.menu.isOnShip()) {
+            Component notOnShip = Component.translatable("screen.aeroclaims.claim_settings.not_on_subclaim");
+            g.drawString(this.font, notOnShip.getString(), 10, shipY, 0xCC3333, false);
+        } else {
+            String shipName = this.menu.getShipName();
+            if (shipName != null && !shipName.isEmpty()) {
+                Component shipText = Component.translatable("screen.aeroclaims.claim_settings.ship", shipName);
+                int maxWidth = this.imageWidth - 20;
+                int line = 0;
+                for (FormattedCharSequence seq : this.font.split(shipText, maxWidth)) {
+                    g.drawString(this.font, seq, 10, shipY + (line * this.font.lineHeight), COLOR_LABEL, false);
+                    line++;
+                }
             }
         }
     }
@@ -186,7 +193,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         super.render(g, mx, my, partialTick);
         this.renderTooltip(g, mx, my);
 
-        if (!refreshButton.active && !isOnCooldown()) {
+        if (!refreshButton.active && menu.isOnShip() && !isOnCooldown()) {
             REFRESH_COOLDOWNS.remove(menu.getCenter());
             refreshButton.active = true;
             refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh"));

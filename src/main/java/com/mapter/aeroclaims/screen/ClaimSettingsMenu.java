@@ -18,20 +18,22 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
     private final BlockPos center;
     private final UUID owner;
     private final String shipName;
+    private final boolean onShip;
     private boolean claimActive;
     private boolean allowParty;
     private boolean allowAllies;
     private boolean allowOthers;
 
     public ClaimSettingsMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
-        this(containerId, playerInventory, buf.readBlockPos(), buf.readUUID(), buf.readUtf(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean());
+        this(containerId, playerInventory, buf.readBlockPos(), buf.readUUID(), buf.readUtf(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean(), buf.readBoolean());
     }
 
-    public ClaimSettingsMenu(int containerId, Inventory playerInventory, BlockPos center, UUID owner, String shipName, boolean claimActive, boolean allowParty, boolean allowAllies, boolean allowOthers) {
+    public ClaimSettingsMenu(int containerId, Inventory playerInventory, BlockPos center, UUID owner, String shipName, boolean onShip, boolean claimActive, boolean allowParty, boolean allowAllies, boolean allowOthers) {
         super(ModMenus.CLAIM_SETTINGS_MENU.get(), containerId);
         this.center = center;
         this.owner = owner;
         this.shipName = shipName;
+        this.onShip = onShip;
         this.claimActive = claimActive;
         this.allowParty = allowParty;
         this.allowAllies = allowAllies;
@@ -48,6 +50,10 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
 
     public String getShipName() {
         return shipName;
+    }
+
+    public boolean isOnShip() {
+        return onShip;
     }
 
     public boolean isClaimActive() {

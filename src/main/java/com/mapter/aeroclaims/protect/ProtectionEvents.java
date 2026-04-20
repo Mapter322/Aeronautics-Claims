@@ -114,11 +114,6 @@ public class ProtectionEvents {
             if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
             return;
         }
-        if (event.getPlacedBlock().getBlock() != ModBlocks.CLAIM_BLOCK.get()) return;
-        if (!SableShipUtils.isOnShip(level, event.getPos())) {
-            event.setCanceled(true);
-            if (shouldSendMessage(player)) player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_block_only_on_ship"));
-        }
     }
 
     @SubscribeEvent

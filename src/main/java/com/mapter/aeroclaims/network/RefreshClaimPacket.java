@@ -43,8 +43,22 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             if (!player.getUUID().equals(claim.getOwner())) return;
 
             if (!SableShipUtils.isOnShip(player.serverLevel(), msg.center)) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_only_on_ship"));
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.not_on_subclaim"));
                 return;
+            }
+
+            SubLevel currentShip = SableShipUtils.getShipAt(player.serverLevel(), msg.center);
+            String currentShipId = SableShipUtils.getShipId(currentShip);
+            if (currentShipId != null) {
+                for (Claim other : ClaimSavedData.get(player.serverLevel()).getClaims()) {
+                    if (other.getCenter().equals(msg.center)) continue;
+                    SubLevel otherShip = SableShipUtils.getShipAt(player.serverLevel(), other.getCenter());
+                    String otherShipId = SableShipUtils.getShipId(otherShip);
+                    if (currentShipId.equals(otherShipId)) {
+                        player.sendSystemMessage(Component.translatable("message.aeroclaims.duplicate_claim_block"));
+                        return;
+                    }
+                }
             }
 
             int maxSize = AeroClaimsConfig.MAX_SHIP_BLOCKS.get();

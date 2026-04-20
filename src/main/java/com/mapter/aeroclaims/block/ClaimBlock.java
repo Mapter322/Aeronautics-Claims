@@ -77,9 +77,6 @@ public class ClaimBlock extends BaseEntityBlock {
 
     @Override
     public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        if (level instanceof ServerLevel serverLevel) {
-            return SableShipUtils.isOnShip(serverLevel, pos);
-        }
         return true;
     }
 
@@ -139,11 +136,13 @@ public class ClaimBlock extends BaseEntityBlock {
         }
 
         SubLevel ship = SableShipUtils.getShipAt(serverPlayer.serverLevel(), pos);
+        boolean onShip = ship != null;
         String shipName = SableShipUtils.getShipName(ship);
         serverPlayer.openMenu(getMenuProvider(state, level, pos), buf -> {
             buf.writeBlockPos(pos);
             buf.writeUUID(claim.getOwner());
             buf.writeUtf(shipName != null ? shipName : "");
+            buf.writeBoolean(onShip);
             buf.writeBoolean(claim.isActive());
             buf.writeBoolean(claim.isAllowParty());
             buf.writeBoolean(claim.isAllowAllies());
@@ -160,7 +159,7 @@ public class ClaimBlock extends BaseEntityBlock {
         if (claim == null) return null;
         return new SimpleMenuProvider(
                 (containerId, inv, p) -> new ClaimSettingsMenu(
-                        containerId, inv, pos, claim.getOwner(), "",
+                        containerId, inv, pos, claim.getOwner(), "", false,
                         claim.isActive(),
                         claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers()),
                 Component.translatable("screen.aeroclaims.claim_settings.title")
