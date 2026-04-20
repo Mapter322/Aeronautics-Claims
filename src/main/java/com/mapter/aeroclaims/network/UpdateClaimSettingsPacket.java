@@ -33,8 +33,6 @@ public record UpdateClaimSettingsPacket(BlockPos center, boolean allowParty, boo
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player))
                 return;
-            if (player == null)
-                return;
 
             Claim claim = ClaimManager.getClaimByCenter(player.serverLevel(), msg.center);
             if (claim == null)

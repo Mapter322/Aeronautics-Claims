@@ -13,6 +13,9 @@ public class ClaimManager {
 
     public static ClaimPermissionResolver PERMISSION_RESOLVER = new DefaultPermissionResolver();
 
+    private record ShipTraversalResult(int count, Set<BlockPos> visitedBlocks, boolean limitExceeded) {
+    }
+
     public static void init(boolean opacLoaded) {
         PERMISSION_RESOLVER = opacLoaded
                 ? new OpacPermissionResolver()
@@ -27,34 +30,21 @@ public class ClaimManager {
     }
 
     public static void removeClaim(ServerLevel level, BlockPos pos) {
-
         ClaimSavedData data = ClaimSavedData.get(level);
         data.getClaims().removeIf(c -> c.getCenter().equals(pos));
         data.setDirty();
     }
 
     public static Claim getClaimAt(ServerLevel level, BlockPos pos) {
-
-        for (Claim claim : ClaimSavedData.get(level).getClaims()) {
-            if (claim.contains(pos)) return claim;
-        }
-        return null;
+        return findClaim(level, claim -> claim.contains(pos));
     }
 
     public static Claim getClaimByCenter(ServerLevel level, BlockPos center) {
-
-        for (Claim claim : ClaimSavedData.get(level).getClaims()) {
-            if (claim.getCenter().equals(center)) return claim;
-        }
-        return null;
+        return findClaim(level, claim -> claim.getCenter().equals(center));
     }
 
     public static Claim getClaimByShipId(ServerLevel level, String shipId) {
-        if (shipId == null) return null;
-        for (Claim claim : ClaimSavedData.get(level).getClaims()) {
-            if (shipId.equals(claim.getShipId())) return claim;
-        }
-        return null;
+        return shipId == null ? null : findClaim(level, claim -> shipId.equals(claim.getShipId()));
     }
 
     public static void refreshClaim(ServerLevel level, BlockPos center) {
@@ -82,80 +72,57 @@ public class ClaimManager {
     public static int countShipBlocks(ServerLevel level, BlockPos start, int hardLimit) {
         if (hardLimit <= 0) return 0;
 
-        Set<BlockPos> visited = new HashSet<>();
-        Queue<BlockPos> queue = new LinkedList<>();
-        queue.add(start);
-        visited.add(start);
-
-        int count = 0;
-        while (!queue.isEmpty() && count <= hardLimit) {
-            BlockPos current = queue.poll();
-            if (!level.getBlockState(current).isAir() && !level.getBlockState(current).is(Blocks.WATER)) {
-                count++;
-                if (count > hardLimit) return count;
-            }
-
-            for (Direction dir : Direction.values()) {
-                BlockPos neighbor = current.relative(dir);
-                if (!visited.contains(neighbor)
-                        && !level.getBlockState(neighbor).isAir()
-                        && !level.getBlockState(neighbor).is(Blocks.WATER)) {
-                    visited.add(neighbor);
-                    queue.add(neighbor);
-                }
-            }
-        }
-
-        return count;
+        return traverseShipBlocks(level, start, hardLimit).count();
     }
 
     public static int countShipBlocksExact(ServerLevel level, BlockPos start) {
+        return traverseShipBlocks(level, start, Integer.MAX_VALUE).count();
+    }
+
+    private static Set<BlockPos> floodFill(ServerLevel level, BlockPos start) {
+        return traverseShipBlocks(level, start, AeroClaimsConfig.MAX_SHIP_BLOCKS.get()).visitedBlocks();
+    }
+
+    private static Claim findClaim(ServerLevel level, java.util.function.Predicate<Claim> predicate) {
+        for (Claim claim : ClaimSavedData.get(level).getClaims()) {
+            if (predicate.test(claim)) {
+                return claim;
+            }
+        }
+        return null;
+    }
+
+    private static ShipTraversalResult traverseShipBlocks(ServerLevel level, BlockPos start, int blockLimit) {
         Set<BlockPos> visited = new HashSet<>();
         Queue<BlockPos> queue = new LinkedList<>();
-
         queue.add(start);
         visited.add(start);
 
         int count = 0;
+        boolean limitExceeded = false;
         while (!queue.isEmpty()) {
             BlockPos current = queue.poll();
-            if (!level.getBlockState(current).isAir() && !level.getBlockState(current).is(Blocks.WATER)) {
+            if (isSolidShipBlock(level, current)) {
                 count++;
+                if (count > blockLimit) {
+                    limitExceeded = true;
+                    break;
+                }
             }
 
             for (Direction dir : Direction.values()) {
                 BlockPos neighbor = current.relative(dir);
-                if (!visited.contains(neighbor)
-                        && !level.getBlockState(neighbor).isAir()
-                        && !level.getBlockState(neighbor).is(Blocks.WATER)) {
+                if (!visited.contains(neighbor) && isSolidShipBlock(level, neighbor)) {
                     visited.add(neighbor);
                     queue.add(neighbor);
                 }
             }
         }
 
-        return count;
+        return new ShipTraversalResult(count, visited, limitExceeded);
     }
 
-    private static Set<BlockPos> floodFill(ServerLevel level, BlockPos start) {
-        Set<BlockPos> claimed = new HashSet<>();
-        Set<BlockPos> visited = new HashSet<>();
-        Queue<BlockPos> queue = new LinkedList<>();
-        queue.add(start);
-        visited.add(start);
-        claimed.add(start);
-        int maxSize = AeroClaimsConfig.MAX_SHIP_BLOCKS.get();
-        while (!queue.isEmpty() && claimed.size() < maxSize) {
-            BlockPos current = queue.poll();
-            for (Direction dir : Direction.values()) {
-                BlockPos neighbor = current.relative(dir);
-                if (!visited.contains(neighbor) && !level.getBlockState(neighbor).isAir() && !level.getBlockState(neighbor).is(Blocks.WATER)) {
-                    visited.add(neighbor);
-                    claimed.add(neighbor);
-                    queue.add(neighbor);
-                }
-            }
-        }
-        return claimed;
+    private static boolean isSolidShipBlock(ServerLevel level, BlockPos pos) {
+        return !level.getBlockState(pos).isAir() && !level.getBlockState(pos).is(Blocks.WATER);
     }
 }

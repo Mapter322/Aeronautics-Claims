@@ -13,10 +13,27 @@ import xaero.pac.common.server.player.config.api.PlayerConfigOptions;
 
 import java.util.UUID;
 
-
 public class AeroClaimManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AeroClaimManager.class);
+
+    private record OpacContext(
+            UUID playerId,
+            IServerClaimsManagerAPI claimsManager,
+            IPlayerConfigAPI config,
+            IServerPlayerClaimInfoAPI playerInfo
+    ) {
+        int getFreeClaims() {
+            int baseLimit = claimsManager.getPlayerBaseClaimLimit(playerId);
+            int bonusLimit = config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
+            int usedClaims = playerInfo != null ? playerInfo.getClaimCount() : 0;
+            return Math.max(0, baseLimit + bonusLimit - usedClaims);
+        }
+
+        int getBonusLimit() {
+            return config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
+        }
+    }
 
     public enum TransferResult {
         SUCCESS,
@@ -29,37 +46,19 @@ public class AeroClaimManager {
         if (amount <= 0) return TransferResult.API_ERROR;
 
         try {
-            OpenPACServerAPI api = OpenPACServerAPI.get(player.server);
-            if (api == null) return TransferResult.OPAC_NOT_LOADED;
+            OpacContext opac = getOpacContext(player);
+            if (opac == null) return TransferResult.OPAC_NOT_LOADED;
 
-            UUID playerId = player.getUUID();
-
-            IServerClaimsManagerAPI claimsManager = api.getServerClaimsManager();
-            IPlayerConfigManagerAPI configManager = api.getPlayerConfigs();
-
-            if (claimsManager == null || configManager == null) return TransferResult.OPAC_NOT_LOADED;
-
-            IPlayerConfigAPI config = configManager.getLoadedConfig(playerId);
-            if (config == null) return TransferResult.API_ERROR;
-
-            int baseLimit  = claimsManager.getPlayerBaseClaimLimit(playerId);
-            int bonusLimit = config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
-
-            IServerPlayerClaimInfoAPI playerInfo = claimsManager.getPlayerInfo(playerId);
-            int usedClaims = playerInfo != null ? playerInfo.getClaimCount() : 0;
-            int totalLimit  = baseLimit + bonusLimit;
-            int freeClaims  = Math.max(0, totalLimit - usedClaims);
-
-            if (freeClaims < amount) {
+            if (opac.getFreeClaims() < amount) {
                 return TransferResult.NOT_ENOUGH_FREE;
             }
-            int newBonus = bonusLimit - amount;
-            IPlayerConfigAPI.SetResult setResult = config.tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
+            int newBonus = opac.getBonusLimit() - amount;
+            IPlayerConfigAPI.SetResult setResult = opac.config().tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
             if (setResult != IPlayerConfigAPI.SetResult.SUCCESS) {
                 return TransferResult.API_ERROR;
             }
             AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
-            data.addMigratedSlots(playerId, amount);
+            data.addMigratedSlots(opac.playerId(), amount);
 
             return TransferResult.SUCCESS;
         } catch (Exception e) {
@@ -96,24 +95,8 @@ public class AeroClaimManager {
 
     public static int getFreeOpacClaims(ServerPlayer player) {
         try {
-            OpenPACServerAPI api = OpenPACServerAPI.get(player.server);
-            if (api == null) return -1;
-
-            UUID playerId = player.getUUID();
-            IServerClaimsManagerAPI claimsManager = api.getServerClaimsManager();
-            IPlayerConfigManagerAPI configManager = api.getPlayerConfigs();
-            if (claimsManager == null || configManager == null) return -1;
-
-            IPlayerConfigAPI config = configManager.getLoadedConfig(playerId);
-            if (config == null) return -1;
-
-            int baseLimit  = claimsManager.getPlayerBaseClaimLimit(playerId);
-            int bonusLimit = config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
-
-            IServerPlayerClaimInfoAPI playerInfo = claimsManager.getPlayerInfo(playerId);
-            int usedClaims = playerInfo != null ? playerInfo.getClaimCount() : 0;
-
-            return Math.max(0, baseLimit + bonusLimit - usedClaims);
+            OpacContext opac = getOpacContext(player);
+            return opac == null ? -1 : opac.getFreeClaims();
         } catch (Exception e) {
             LOGGER.error("[Aeroclaims] getFreeOpacClaims: exception", e);
             return -1;
@@ -124,32 +107,22 @@ public class AeroClaimManager {
         if (amount <= 0) return TransferResult.API_ERROR;
 
         try {
-            OpenPACServerAPI api = OpenPACServerAPI.get(player.server);
-            if (api == null) return TransferResult.OPAC_NOT_LOADED;
-
-            UUID playerId = player.getUUID();
-
-            IServerClaimsManagerAPI claimsManager = api.getServerClaimsManager();
-            IPlayerConfigManagerAPI configManager = api.getPlayerConfigs();
-
-            if (claimsManager == null || configManager == null) return TransferResult.OPAC_NOT_LOADED;
-
-            IPlayerConfigAPI config = configManager.getLoadedConfig(playerId);
-            if (config == null) return TransferResult.API_ERROR;
+            OpacContext opac = getOpacContext(player);
+            if (opac == null) return TransferResult.OPAC_NOT_LOADED;
 
             AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
-            int freeShipClaims = data.getFreeSlots(playerId);
+            int freeShipClaims = data.getFreeSlots(opac.playerId());
 
             if (freeShipClaims < amount) {
                 return TransferResult.NOT_ENOUGH_FREE;
             }
-            int currentMigrated = data.getMigratedSlots(playerId);
-            data.setMigratedSlots(playerId, currentMigrated - amount);
-            int bonusLimit = config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
+            int currentMigrated = data.getMigratedSlots(opac.playerId());
+            data.setMigratedSlots(opac.playerId(), currentMigrated - amount);
+            int bonusLimit = opac.getBonusLimit();
             int newBonus = bonusLimit + amount;
-            IPlayerConfigAPI.SetResult setResult = config.tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
+            IPlayerConfigAPI.SetResult setResult = opac.config().tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
             if (setResult != IPlayerConfigAPI.SetResult.SUCCESS) {
-                data.setMigratedSlots(playerId, currentMigrated);
+                data.setMigratedSlots(opac.playerId(), currentMigrated);
                 return TransferResult.API_ERROR;
             }
 
@@ -158,5 +131,27 @@ public class AeroClaimManager {
             LOGGER.error("[Aeroclaims] transfer back: exception during transfer to OPAC", e);
             return TransferResult.API_ERROR;
         }
+    }
+
+    private static OpacContext getOpacContext(ServerPlayer player) {
+        OpenPACServerAPI api = OpenPACServerAPI.get(player.server);
+        if (api == null) {
+            return null;
+        }
+
+        UUID playerId = player.getUUID();
+        IServerClaimsManagerAPI claimsManager = api.getServerClaimsManager();
+        IPlayerConfigManagerAPI configManager = api.getPlayerConfigs();
+        if (claimsManager == null || configManager == null) {
+            return null;
+        }
+
+        IPlayerConfigAPI config = configManager.getLoadedConfig(playerId);
+        if (config == null) {
+            return null;
+        }
+
+        IServerPlayerClaimInfoAPI playerInfo = claimsManager.getPlayerInfo(playerId);
+        return new OpacContext(playerId, claimsManager, config, playerInfo);
     }
 }

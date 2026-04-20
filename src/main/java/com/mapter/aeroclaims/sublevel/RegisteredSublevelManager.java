@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.mapter.aeroclaims.Aeroclaims;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -16,7 +15,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
@@ -26,8 +24,6 @@ import java.util.UUID;
 public class RegisteredSublevelManager {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Type LEGACY_MAP_TYPE = new TypeToken<Map<String, String>>() {}.getType();
-    private static final Type SHIP_MAP_TYPE = new TypeToken<Map<String, ShipRegistration>>() {}.getType();
 
     private static Map<String, ShipRegistration> registeredShips = new HashMap<>();
 
@@ -85,14 +81,9 @@ public class RegisteredSublevelManager {
                 String shipId = entry.getKey();
                 JsonElement value = entry.getValue();
 
-                if (value != null && value.isJsonPrimitive()) {
-                    String name = value.getAsString();
-                    result.put(shipId, new ShipRegistration(name, null, null));
-                } else {
-                    ShipRegistration reg = GSON.fromJson(value, ShipRegistration.class);
-                    if (reg != null && reg.name != null) {
-                        result.put(shipId, reg);
-                    }
+                ShipRegistration reg = GSON.fromJson(value, ShipRegistration.class);
+                if (reg != null && reg.name != null) {
+                    result.put(shipId, reg);
                 }
             }
 
@@ -109,14 +100,6 @@ public class RegisteredSublevelManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-
-    public static void registerShip(String shipId, String name) {
-        registerShip(shipId, name, null);
-    }
-
-    public static void registerShip(String shipId, String name, UUID ownerUuid) {
-        registerShip(shipId, name, ownerUuid, null);
     }
 
     public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName) {
@@ -138,17 +121,6 @@ public class RegisteredSublevelManager {
         return reg == null ? null : reg.name;
     }
 
-    public static Map<String, String> getAllRegisteredShips() {
-        Map<String, String> result = new HashMap<>();
-        for (Map.Entry<String, ShipRegistration> entry : registeredShips.entrySet()) {
-            ShipRegistration reg = entry.getValue();
-            if (reg != null && reg.name != null) {
-                result.put(entry.getKey(), reg.name);
-            }
-        }
-        return result;
-    }
-
     public static Map<String, String> getRegisteredShips(UUID playerUuid) {
         Map<String, String> result = new HashMap<>();
         if (playerUuid == null) {
@@ -164,28 +136,5 @@ public class RegisteredSublevelManager {
         }
 
         return result;
-    }
-
-    public static int getRegistrationsCount(UUID playerUuid) {
-        if (playerUuid == null) {
-            return 0;
-        }
-
-        String uuidString = playerUuid.toString();
-        int count = 0;
-        for (ShipRegistration reg : registeredShips.values()) {
-            if (reg != null && uuidString.equals(reg.ownerUuid)) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    public static int getMaxRegistrations(UUID playerUuid) {
-        return Integer.MAX_VALUE;
-    }
-
-    public static boolean canRegister(UUID playerUuid) {
-        return true;
     }
 }

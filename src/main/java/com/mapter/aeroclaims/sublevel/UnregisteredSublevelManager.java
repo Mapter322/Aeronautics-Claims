@@ -116,24 +116,15 @@ public class UnregisteredSublevelManager {
         try {
             String content = Files.readString(saveFile);
             JsonElement element = JsonParser.parseString(content);
-            if (element.isJsonArray()) {
-                JsonArray array = element.getAsJsonArray();
-                for (JsonElement el : array) {
-                    JsonObject obj = el.getAsJsonObject();
-                    String shipId    = obj.get("shipId").getAsString();
-                    String name      = obj.has("name")      ? obj.get("name").getAsString()      : obj.has("slug") ? obj.get("slug").getAsString() : "";
-                    String createdAt = obj.has("createdAt") ? obj.get("createdAt").getAsString()  : "";
-                    ships.put(shipId, new UnregisteredShip(name, createdAt));
-                }
-            } else if (element.isJsonObject()) {
+            if (element.isJsonObject()) {
                 JsonObject obj = element.getAsJsonObject();
                 for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
                     String shipId = entry.getKey();
                     JsonElement value = entry.getValue();
                     if (value.isJsonObject()) {
                         JsonObject shipObj = value.getAsJsonObject();
-                        String name      = shipObj.has("name")      ? shipObj.get("name").getAsString()      : "";
-                        String createdAt = shipObj.has("createdAt") ? shipObj.get("createdAt").getAsString()  : "";
+                        String name = shipObj.get("name").getAsString();
+                        String createdAt = shipObj.get("createdAt").getAsString();
                         ships.put(shipId, new UnregisteredShip(name, createdAt));
                     }
                 }

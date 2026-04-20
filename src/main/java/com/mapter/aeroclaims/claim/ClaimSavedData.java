@@ -38,15 +38,14 @@ public class ClaimSavedData extends SavedData {
                 CompoundTag b = (CompoundTag) bt;
                 claimedBlocks.add(new BlockPos(b.getInt("x"), b.getInt("y"), b.getInt("z")));
             }
-            boolean active = !c.contains("active") || c.getBoolean("active");
             data.claims.add(new Claim(
                     new BlockPos(c.getInt("x"), c.getInt("y"), c.getInt("z")),
                     c.getUUID("owner"),
                     claimedBlocks,
-                    active,
+                    c.getBoolean("active"),
                     c.getBoolean("allowParty"),
                     c.getBoolean("allowAllies"),
-                    c.contains("allowOthers") && c.getBoolean("allowOthers")
+                    c.getBoolean("allowOthers")
             ));
             if (c.contains("shipId")) {
                 data.claims.get(data.claims.size() - 1).setShipId(c.getString("shipId"));

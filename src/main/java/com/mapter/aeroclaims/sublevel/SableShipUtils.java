@@ -7,12 +7,9 @@ import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 public class SableShipUtils {
-
-
     public static boolean isOnShip(ServerLevel level, BlockPos pos) {
         return getShipAt(level, pos) != null;
     }
-
 
     public static @Nullable SubLevel getShipAt(ServerLevel level, BlockPos pos) {
         SubLevelContainer container = SubLevelContainer.getContainer(level);
@@ -23,19 +20,16 @@ public class SableShipUtils {
         return plot.getSubLevel();
     }
 
-
     public static @Nullable String getShipId(@Nullable SubLevel ship) {
         if (ship == null) return null;
         return ship.getUniqueId().toString();
     }
-
 
     public static @Nullable String getShipName(@Nullable SubLevel ship) {
         if (ship == null) return null;
         String name = ship.getName();
         return name != null ? name : "ship";
     }
-
 
     public static boolean deleteShipById(ServerLevel level, String shipId) {
         SubLevelContainer container = SubLevelContainer.getContainer(level);
@@ -44,8 +38,7 @@ public class SableShipUtils {
             java.util.UUID uuid = java.util.UUID.fromString(shipId);
             SubLevel subLevel = container.getSubLevel(uuid);
             if (subLevel == null) return false;
-            container.removeSubLevel(subLevel,
-                    dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
+            container.removeSubLevel(subLevel, dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason.REMOVED);
             return true;
         } catch (Exception e) {
             return false;

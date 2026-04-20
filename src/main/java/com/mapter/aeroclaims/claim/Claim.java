@@ -16,26 +16,6 @@ public class Claim {
     private boolean allowOthers;
     private String shipId;
 
-    public Claim(BlockPos center, UUID owner, Set<BlockPos> claimedBlocks) {
-        this.center = center;
-        this.owner = owner;
-        this.claimedBlocks = claimedBlocks;
-        this.active = true;
-        this.allowParty = true;
-        this.allowAllies = false;
-        this.allowOthers = false;
-    }
-
-    public Claim(BlockPos center, UUID owner, Set<BlockPos> claimedBlocks, boolean allowParty, boolean allowAllies, boolean allowOthers) {
-        this.center = center;
-        this.owner = owner;
-        this.claimedBlocks = claimedBlocks;
-        this.active = true;
-        this.allowParty = allowParty;
-        this.allowAllies = allowAllies;
-        this.allowOthers = allowOthers;
-    }
-
     public Claim(BlockPos center, UUID owner, Set<BlockPos> claimedBlocks, boolean active, boolean allowParty, boolean allowAllies, boolean allowOthers) {
         this.center = center;
         this.owner = owner;
