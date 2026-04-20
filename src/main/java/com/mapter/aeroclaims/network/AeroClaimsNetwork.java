@@ -18,5 +18,6 @@ public class AeroClaimsNetwork {
         registrar.playToServer(RefreshClaimPacket.TYPE, RefreshClaimPacket.STREAM_CODEC, RefreshClaimPacket::handle);
         registrar.playToServer(RegisterShipPacket.TYPE, RegisterShipPacket.STREAM_CODEC, RegisterShipPacket::handle);
         registrar.playBidirectional(SyncClaimStatePacket.TYPE, SyncClaimStatePacket.STREAM_CODEC, SyncClaimStatePacket::handle);
+        registrar.playToClient(ClaimRefreshParticlesPacket.TYPE, ClaimRefreshParticlesPacket.STREAM_CODEC, ClaimRefreshParticlesPacket::handle);
     }
 }

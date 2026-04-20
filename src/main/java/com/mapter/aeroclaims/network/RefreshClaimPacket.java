@@ -86,6 +86,11 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             ClaimManager.refreshClaim(player.serverLevel(), msg.center);
             player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_refreshed"));
 
+            Claim updatedClaim = ClaimManager.getClaimByCenter(player.serverLevel(), msg.center);
+            if (updatedClaim != null) {
+                PacketDistributor.sendToPlayer(player, new ClaimRefreshParticlesPacket(new java.util.ArrayList<>(updatedClaim.getClaimedBlocks())));
+            }
+
             SubLevel ship = SableShipUtils.getShipAt(player.serverLevel(), msg.center);
             String shipId = SableShipUtils.getShipId(ship);
             if (shipId != null) {
