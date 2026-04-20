@@ -11,6 +11,9 @@ description='''
 Aeronautics Claims.
 '''
 
+[[mixins]]
+config = "aeroclaims.mixins.json"
+
 [[dependencies.aeroclaims]]
 modId = "neoforge"
 type = "required"

@@ -1,0 +1,18 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.mapter.aeroclaims.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "MixinBlockEntityConfigurationPacket",
+    "MixinClipboardEditPacket",
+    "MixinToolboxDisposeAllPacket",
+    "MixinToolboxEquipPacket",
+    "MixinRadialWrenchMenuSubmitPacket",
+    "MixinSuperGlueSelectionPacket",
+    "MixinSuperGlueRemovalPacket"
+  ],
+  "client": [],
+  "server": [],
+  "injectors": { "defaultRequire": 1 }
+}
