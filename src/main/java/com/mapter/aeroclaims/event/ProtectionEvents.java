@@ -20,10 +20,16 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 @EventBusSubscriber(modid = Aeroclaims.MODID)
 public class ProtectionEvents {
 
     private static final int CLAIM_MARGIN_BLOCKS = 5;
+    private static final long MESSAGE_COOLDOWN_MS = 15_000;
+    private static final Map<UUID, Long> lastMessageTime = new ConcurrentHashMap<>();
 
     private static Claim getClaimAtWithMargin(ServerLevel level, BlockPos pos) {
         Claim exact = ClaimManager.getClaimAt(level, pos);
@@ -41,7 +47,12 @@ public class ProtectionEvents {
     }
 
     private static boolean shouldSendMessage(ServerPlayer player) {
-        return !(player instanceof FakePlayer);
+        if (player instanceof FakePlayer) return false;
+        long now = System.currentTimeMillis();
+        Long last = lastMessageTime.get(player.getUUID());
+        if (last != null && now - last < MESSAGE_COOLDOWN_MS) return false;
+        lastMessageTime.put(player.getUUID(), now);
+        return true;
     }
 
     @SubscribeEvent
