@@ -10,7 +10,8 @@
     "MixinToolboxEquipPacket",
     "MixinRadialWrenchMenuSubmitPacket",
     "MixinSuperGlueSelectionPacket",
-    "MixinSuperGlueRemovalPacket"
+    "MixinSuperGlueRemovalPacket",
+    "MixinAssemblePacket"
   ],
   "client": [],
   "server": [],

@@ -1,6 +1,6 @@
 package com.mapter.aeroclaims.mixin;
 
-import com.mapter.aeroclaims.compat.CreateProtectionHelper;
+import com.mapter.aeroclaims.protect.CreateProtectionHelper;
 import com.simibubi.create.content.equipment.clipboard.ClipboardEditPacket;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;

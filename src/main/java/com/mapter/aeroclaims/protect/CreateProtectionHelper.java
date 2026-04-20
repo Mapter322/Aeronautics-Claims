@@ -1,4 +1,4 @@
-package com.mapter.aeroclaims.compat;
+package com.mapter.aeroclaims.protect;
 
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
