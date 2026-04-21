@@ -1,5 +1,7 @@
 package com.mapter.aeroclaims.claim;
 
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
@@ -17,24 +19,6 @@ public class AeroClaimManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AeroClaimManager.class);
 
-    private record OpacContext(
-            UUID playerId,
-            IServerClaimsManagerAPI claimsManager,
-            IPlayerConfigAPI config,
-            IServerPlayerClaimInfoAPI playerInfo
-    ) {
-        int getFreeClaims() {
-            int baseLimit = claimsManager.getPlayerBaseClaimLimit(playerId);
-            int bonusLimit = config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
-            int usedClaims = playerInfo != null ? playerInfo.getClaimCount() : 0;
-            return Math.max(0, baseLimit + bonusLimit - usedClaims);
-        }
-
-        int getBonusLimit() {
-            return config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
-        }
-    }
-
     public enum TransferResult {
         SUCCESS,
         OPAC_NOT_LOADED,
@@ -42,44 +26,73 @@ public class AeroClaimManager {
         API_ERROR
     }
 
+
     public static TransferResult transferFromOpac(ServerPlayer player, int amount) {
         if (amount <= 0) return TransferResult.API_ERROR;
-
         try {
-            OpacContext opac = getOpacContext(player);
-            if (opac == null) return TransferResult.OPAC_NOT_LOADED;
+            OpacContext ctx = opacContext(player);
+            if (ctx == null) return TransferResult.OPAC_NOT_LOADED;
+            if (ctx.freeClaims() < amount) return TransferResult.NOT_ENOUGH_FREE;
 
-            if (opac.getFreeClaims() < amount) {
-                return TransferResult.NOT_ENOUGH_FREE;
-            }
-            int newBonus = opac.getBonusLimit() - amount;
-            IPlayerConfigAPI.SetResult setResult = opac.config().tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
-            if (setResult != IPlayerConfigAPI.SetResult.SUCCESS) {
-                return TransferResult.API_ERROR;
-            }
-            AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
-            data.addMigratedSlots(opac.playerId(), amount);
+            IPlayerConfigAPI.SetResult result = ctx.config().tryToSet(
+                    PlayerConfigOptions.BONUS_CHUNK_CLAIMS, ctx.bonusLimit() - amount);
+            if (result != IPlayerConfigAPI.SetResult.SUCCESS) return TransferResult.API_ERROR;
 
+            AeroClaimSavedData.get(player.serverLevel()).addMigratedSlots(ctx.playerId(), amount);
             return TransferResult.SUCCESS;
         } catch (Exception e) {
-            LOGGER.error("[Aeroclaims] transfer: exception during transfer", e);
+            LOGGER.error("[AeroClaims] transferFromOpac failed", e);
             return TransferResult.API_ERROR;
         }
     }
 
-    public static boolean consumeShipClaimSlot(ServerLevel level, UUID playerId) {
-        AeroClaimSavedData data = AeroClaimSavedData.get(level);
-        if (data.getFreeSlots(playerId) <= 0) {
-            return false;
+    public static TransferResult transferToOpac(ServerPlayer player, int amount) {
+        if (amount <= 0) return TransferResult.API_ERROR;
+        try {
+            OpacContext ctx = opacContext(player);
+            if (ctx == null) return TransferResult.OPAC_NOT_LOADED;
+
+            AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
+            if (data.getFreeSlots(ctx.playerId()) < amount) return TransferResult.NOT_ENOUGH_FREE;
+
+            int previousMigrated = data.getMigratedSlots(ctx.playerId());
+            data.setMigratedSlots(ctx.playerId(), previousMigrated - amount);
+
+            IPlayerConfigAPI.SetResult result = ctx.config().tryToSet(
+                    PlayerConfigOptions.BONUS_CHUNK_CLAIMS, ctx.bonusLimit() + amount);
+            if (result != IPlayerConfigAPI.SetResult.SUCCESS) {
+                data.setMigratedSlots(ctx.playerId(), previousMigrated); // rollback
+                return TransferResult.API_ERROR;
+            }
+            return TransferResult.SUCCESS;
+        } catch (Exception e) {
+            LOGGER.error("[AeroClaims] transferToOpac failed", e);
+            return TransferResult.API_ERROR;
         }
-        data.incrementUsedSlots(playerId);
+    }
+
+
+    public static int getBlockLimit(ServerLevel level, BlockPos pos) {
+        return AeroClaimSavedData.get(level).getClaimsForBlock(pos)
+                * AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
+    }
+
+
+    public static boolean adjustClaimsForBlock(ServerLevel level, UUID owner, BlockPos pos, int delta) {
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        int newCount = data.getClaimsForBlock(pos) + delta;
+        if (newCount < 0) return false;
+        if (delta > 0 && data.getFreeSlots(owner) < delta) return false;
+
+        data.setClaimsForBlock(pos, owner, newCount);
         return true;
     }
 
-    public static void releaseShipClaimSlot(ServerLevel level, UUID playerId) {
-        AeroClaimSavedData data = AeroClaimSavedData.get(level);
-        data.decrementUsedSlots(playerId);
+
+    public static void releaseAllClaimsForBlock(ServerLevel level, UUID owner, BlockPos pos) {
+        AeroClaimSavedData.get(level).removeClaimsForBlock(pos, owner);
     }
+
 
     public static int getMigratedSlots(ServerLevel level, UUID playerId) {
         return AeroClaimSavedData.get(level).getMigratedSlots(playerId);
@@ -95,63 +108,45 @@ public class AeroClaimManager {
 
     public static int getFreeOpacClaims(ServerPlayer player) {
         try {
-            OpacContext opac = getOpacContext(player);
-            return opac == null ? -1 : opac.getFreeClaims();
+            OpacContext ctx = opacContext(player);
+            return ctx == null ? -1 : ctx.freeClaims();
         } catch (Exception e) {
-            LOGGER.error("[Aeroclaims] getFreeOpacClaims: exception", e);
+            LOGGER.error("[AeroClaims] getFreeOpacClaims failed", e);
             return -1;
         }
     }
 
-    public static TransferResult transferToOpac(ServerPlayer player, int amount) {
-        if (amount <= 0) return TransferResult.API_ERROR;
 
-        try {
-            OpacContext opac = getOpacContext(player);
-            if (opac == null) return TransferResult.OPAC_NOT_LOADED;
+    private record OpacContext(
+            UUID playerId,
+            IServerClaimsManagerAPI claimsManager,
+            IPlayerConfigAPI config,
+            IServerPlayerClaimInfoAPI playerInfo
+    ) {
+        int freeClaims() {
+            int base  = claimsManager.getPlayerBaseClaimLimit(playerId);
+            int bonus = config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
+            int used  = playerInfo != null ? playerInfo.getClaimCount() : 0;
+            return Math.max(0, base + bonus - used);
+        }
 
-            AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
-            int freeShipClaims = data.getFreeSlots(opac.playerId());
-
-            if (freeShipClaims < amount) {
-                return TransferResult.NOT_ENOUGH_FREE;
-            }
-            int currentMigrated = data.getMigratedSlots(opac.playerId());
-            data.setMigratedSlots(opac.playerId(), currentMigrated - amount);
-            int bonusLimit = opac.getBonusLimit();
-            int newBonus = bonusLimit + amount;
-            IPlayerConfigAPI.SetResult setResult = opac.config().tryToSet(PlayerConfigOptions.BONUS_CHUNK_CLAIMS, newBonus);
-            if (setResult != IPlayerConfigAPI.SetResult.SUCCESS) {
-                data.setMigratedSlots(opac.playerId(), currentMigrated);
-                return TransferResult.API_ERROR;
-            }
-
-            return TransferResult.SUCCESS;
-        } catch (Exception e) {
-            LOGGER.error("[Aeroclaims] transfer back: exception during transfer to OPAC", e);
-            return TransferResult.API_ERROR;
+        int bonusLimit() {
+            return config.getRaw(PlayerConfigOptions.BONUS_CHUNK_CLAIMS);
         }
     }
 
-    private static OpacContext getOpacContext(ServerPlayer player) {
+    private static OpacContext opacContext(ServerPlayer player) {
         OpenPACServerAPI api = OpenPACServerAPI.get(player.server);
-        if (api == null) {
-            return null;
-        }
+        if (api == null) return null;
 
-        UUID playerId = player.getUUID();
-        IServerClaimsManagerAPI claimsManager = api.getServerClaimsManager();
-        IPlayerConfigManagerAPI configManager = api.getPlayerConfigs();
-        if (claimsManager == null || configManager == null) {
-            return null;
-        }
+        IServerClaimsManagerAPI claims = api.getServerClaimsManager();
+        IPlayerConfigManagerAPI configs = api.getPlayerConfigs();
+        if (claims == null || configs == null) return null;
 
-        IPlayerConfigAPI config = configManager.getLoadedConfig(playerId);
-        if (config == null) {
-            return null;
-        }
+        UUID id = player.getUUID();
+        IPlayerConfigAPI config = configs.getLoadedConfig(id);
+        if (config == null) return null;
 
-        IServerPlayerClaimInfoAPI playerInfo = claimsManager.getPlayerInfo(playerId);
-        return new OpacContext(playerId, claimsManager, config, playerInfo);
+        return new OpacContext(id, claims, config, claims.getPlayerInfo(id));
     }
 }

@@ -1,5 +1,6 @@
 package com.mapter.aeroclaims.claim;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -21,30 +22,32 @@ public class AeroClaimSavedData extends SavedData {
     );
 
     private final Map<UUID, Integer> migratedSlots = new HashMap<>();
+
     private final Map<UUID, Integer> usedSlots = new HashMap<>();
 
+    private final Map<Long, Integer> claimsPerBlock = new HashMap<>();
+
+    private final Map<Long, Integer> shipBlockCountCache = new HashMap<>();
+
+
     public static AeroClaimSavedData get(ServerLevel level) {
-        ServerLevel overworld = level.getServer().overworld();
-        return overworld.getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
+        return level.getServer().overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
     }
 
     public static AeroClaimSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         AeroClaimSavedData data = new AeroClaimSavedData();
 
-        ListTag migrated = tag.getList("migrated", Tag.TAG_COMPOUND);
-        for (Tag t : migrated) {
-            CompoundTag entry = (CompoundTag) t;
-            UUID uuid = entry.getUUID("uuid");
-            int slots = entry.getInt("slots");
-            data.migratedSlots.put(uuid, slots);
+        for (Tag t : tag.getList("migrated", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.migratedSlots.put(e.getUUID("uuid"), e.getInt("slots"));
         }
-
-        ListTag used = tag.getList("used", Tag.TAG_COMPOUND);
-        for (Tag t : used) {
-            CompoundTag entry = (CompoundTag) t;
-            UUID uuid = entry.getUUID("uuid");
-            int slots = entry.getInt("slots");
-            data.usedSlots.put(uuid, slots);
+        for (Tag t : tag.getList("used", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.usedSlots.put(e.getUUID("uuid"), e.getInt("slots"));
+        }
+        for (Tag t : tag.getList("claimsPerBlock", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.claimsPerBlock.put(e.getLong("pos"), e.getInt("claims"));
         }
 
         return data;
@@ -53,25 +56,35 @@ public class AeroClaimSavedData extends SavedData {
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag migrated = new ListTag();
-        for (Map.Entry<UUID, Integer> entry : migratedSlots.entrySet()) {
-            CompoundTag e = new CompoundTag();
-            e.putUUID("uuid", entry.getKey());
-            e.putInt("slots", entry.getValue());
-            migrated.add(e);
+        for (Map.Entry<UUID, Integer> e : migratedSlots.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("uuid", e.getKey());
+            entry.putInt("slots", e.getValue());
+            migrated.add(entry);
         }
         tag.put("migrated", migrated);
 
         ListTag used = new ListTag();
-        for (Map.Entry<UUID, Integer> entry : usedSlots.entrySet()) {
-            CompoundTag e = new CompoundTag();
-            e.putUUID("uuid", entry.getKey());
-            e.putInt("slots", entry.getValue());
-            used.add(e);
+        for (Map.Entry<UUID, Integer> e : usedSlots.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("uuid", e.getKey());
+            entry.putInt("slots", e.getValue());
+            used.add(entry);
         }
         tag.put("used", used);
 
+        ListTag perBlock = new ListTag();
+        for (Map.Entry<Long, Integer> e : claimsPerBlock.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putLong("pos", e.getKey());
+            entry.putInt("claims", e.getValue());
+            perBlock.add(entry);
+        }
+        tag.put("claimsPerBlock", perBlock);
+
         return tag;
     }
+
 
     public int getMigratedSlots(UUID playerId) {
         return migratedSlots.getOrDefault(playerId, 0);
@@ -86,6 +99,7 @@ public class AeroClaimSavedData extends SavedData {
         setMigratedSlots(playerId, getMigratedSlots(playerId) + amount);
     }
 
+
     public int getUsedSlots(UUID playerId) {
         return usedSlots.getOrDefault(playerId, 0);
     }
@@ -95,15 +109,52 @@ public class AeroClaimSavedData extends SavedData {
         setDirty();
     }
 
-    public void incrementUsedSlots(UUID playerId) {
-        setUsedSlots(playerId, getUsedSlots(playerId) + 1);
-    }
-
-    public void decrementUsedSlots(UUID playerId) {
-        setUsedSlots(playerId, getUsedSlots(playerId) - 1);
-    }
-
     public int getFreeSlots(UUID playerId) {
         return Math.max(0, getMigratedSlots(playerId) - getUsedSlots(playerId));
+    }
+
+
+    public int getClaimsForBlock(BlockPos pos) {
+        return claimsPerBlock.getOrDefault(pos.asLong(), 0);
+    }
+
+
+    public void setClaimsForBlock(BlockPos pos, UUID owner, int newCount) {
+        int delta = newCount - getClaimsForBlock(pos);
+
+        if (newCount <= 0) {
+            claimsPerBlock.remove(pos.asLong());
+        } else {
+            claimsPerBlock.put(pos.asLong(), newCount);
+        }
+
+        usedSlots.put(owner, Math.max(0, getUsedSlots(owner) + delta));
+        setDirty();
+    }
+
+
+    public void removeClaimsForBlock(BlockPos pos, UUID owner) {
+        int current = getClaimsForBlock(pos);
+        if (current == 0) return;
+
+        claimsPerBlock.remove(pos.asLong());
+        usedSlots.put(owner, Math.max(0, getUsedSlots(owner) - current));
+        setDirty();
+    }
+
+
+
+    public Integer getCachedShipBlockCount(BlockPos pos) {
+        return shipBlockCountCache.get(pos.asLong());
+    }
+
+
+    public void cacheShipBlockCount(BlockPos pos, int count) {
+        shipBlockCountCache.put(pos.asLong(), count);
+    }
+
+
+    public void clearCachedShipBlockCount(BlockPos pos) {
+        shipBlockCountCache.remove(pos.asLong());
     }
 }

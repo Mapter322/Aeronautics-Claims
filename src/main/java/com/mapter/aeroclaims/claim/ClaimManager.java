@@ -1,31 +1,32 @@
 package com.mapter.aeroclaims.claim;
 
-import com.mapter.aeroclaims.config.AeroClaimsConfig;
-import com.mapter.aeroclaims.permission.*;
+import com.mapter.aeroclaims.permission.DefaultPermissionResolver;
+import com.mapter.aeroclaims.permission.ClaimPermissionResolver;
+import com.mapter.aeroclaims.permission.OpacPermissionResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Predicate;
 
 public class ClaimManager {
 
     public static ClaimPermissionResolver PERMISSION_RESOLVER = new DefaultPermissionResolver();
 
-    private record ShipTraversalResult(int count, Set<BlockPos> visitedBlocks, boolean limitExceeded) {
+    public static void init(boolean opacLoaded) {
+        PERMISSION_RESOLVER = opacLoaded ? new OpacPermissionResolver() : new DefaultPermissionResolver();
     }
 
-    public static void init(boolean opacLoaded) {
-        PERMISSION_RESOLVER = opacLoaded
-                ? new OpacPermissionResolver()
-                : new DefaultPermissionResolver();
-    }
 
     public static void addClaim(ServerLevel level, BlockPos pos, UUID owner) {
         ClaimSavedData data = ClaimSavedData.get(level);
-        Set<BlockPos> claimedBlocks = floodFill(level, pos);
-        data.getClaims().add(new Claim(pos, owner, claimedBlocks, false, true, false, false));
+        data.getClaims().add(new Claim(pos, owner, new HashSet<>(), false, true, false, false));
         data.setDirty();
     }
 
@@ -34,6 +35,32 @@ public class ClaimManager {
         data.getClaims().removeIf(c -> c.getCenter().equals(pos));
         data.setDirty();
     }
+
+    public static void deactivateClaim(ServerLevel level, BlockPos center) {
+        Claim claim = getClaimByCenter(level, center);
+        if (claim == null) return;
+        claim.setActive(false);
+        ClaimSavedData.get(level).setDirty();
+    }
+
+
+    public static boolean refreshClaim(ServerLevel level, BlockPos center) {
+        Claim claim = getClaimByCenter(level, center);
+        if (claim == null) return false;
+
+        int limit = AeroClaimManager.getBlockLimit(level, center);
+        if (limit <= 0) return false;
+
+        if (countShipBlocks(level, center, limit + 1) > limit) return false;
+
+        Set<BlockPos> blocks = floodFill(level, center, limit);
+        claim.setActive(true);
+        claim.getClaimedBlocks().clear();
+        claim.getClaimedBlocks().addAll(blocks);
+        ClaimSavedData.get(level).setDirty();
+        return true;
+    }
+
 
     public static Claim getClaimAt(ServerLevel level, BlockPos pos) {
         return findClaim(level, claim -> claim.contains(pos));
@@ -47,82 +74,56 @@ public class ClaimManager {
         return shipId == null ? null : findClaim(level, claim -> shipId.equals(claim.getShipId()));
     }
 
-    public static void refreshClaim(ServerLevel level, BlockPos center) {
-        Claim claim = getClaimByCenter(level, center);
-        if (claim != null) {
-            int maxSize = AeroClaimsConfig.MAX_SHIP_BLOCKS.get();
-            if (countShipBlocks(level, center, maxSize) > maxSize) {
-                return;
-            }
-            Set<BlockPos> newBlocks = floodFill(level, center);
-            claim.setActive(true);
-            claim.getClaimedBlocks().clear();
-            claim.getClaimedBlocks().addAll(newBlocks);
-            ClaimSavedData.get(level).setDirty();
-        }
-    }
-
-    public static void deactivateClaim(ServerLevel level, BlockPos center) {
-        Claim claim = getClaimByCenter(level, center);
-        if (claim == null) return;
-        claim.setActive(false);
-        ClaimSavedData.get(level).setDirty();
-    }
 
     public static int countShipBlocks(ServerLevel level, BlockPos start, int hardLimit) {
         if (hardLimit <= 0) return 0;
-
-        return traverseShipBlocks(level, start, hardLimit).count();
+        return traverse(level, start, hardLimit).count();
     }
 
     public static int countShipBlocksExact(ServerLevel level, BlockPos start) {
-        return traverseShipBlocks(level, start, Integer.MAX_VALUE).count();
+        return traverse(level, start, Integer.MAX_VALUE).count();
     }
 
-    private static Set<BlockPos> floodFill(ServerLevel level, BlockPos start) {
-        return traverseShipBlocks(level, start, AeroClaimsConfig.MAX_SHIP_BLOCKS.get()).visitedBlocks();
+
+    private static Set<BlockPos> floodFill(ServerLevel level, BlockPos start, int limit) {
+        // limit+1 so the full set at exactly `limit` blocks is captured
+        return traverse(level, start, limit + 1).visitedBlocks();
     }
 
-    private static Claim findClaim(ServerLevel level, java.util.function.Predicate<Claim> predicate) {
+    private static Claim findClaim(ServerLevel level, Predicate<Claim> predicate) {
         for (Claim claim : ClaimSavedData.get(level).getClaims()) {
-            if (predicate.test(claim)) {
-                return claim;
-            }
+            if (predicate.test(claim)) return claim;
         }
         return null;
     }
 
-    private static ShipTraversalResult traverseShipBlocks(ServerLevel level, BlockPos start, int blockLimit) {
+    private record TraversalResult(int count, Set<BlockPos> visitedBlocks) {}
+
+    private static TraversalResult traverse(ServerLevel level, BlockPos start, int limit) {
         Set<BlockPos> visited = new HashSet<>();
         Queue<BlockPos> queue = new LinkedList<>();
-        queue.add(start);
         visited.add(start);
+        queue.add(start);
 
         int count = 0;
-        boolean limitExceeded = false;
         while (!queue.isEmpty()) {
             BlockPos current = queue.poll();
-            if (isSolidShipBlock(level, current)) {
-                count++;
-                if (count > blockLimit) {
-                    limitExceeded = true;
-                    break;
-                }
-            }
+            if (!isSolid(level, current)) continue;
+
+            if (++count > limit) break;
 
             for (Direction dir : Direction.values()) {
                 BlockPos neighbor = current.relative(dir);
-                if (!visited.contains(neighbor) && isSolidShipBlock(level, neighbor)) {
-                    visited.add(neighbor);
+                if (visited.add(neighbor) && isSolid(level, neighbor)) {
                     queue.add(neighbor);
                 }
             }
         }
-
-        return new ShipTraversalResult(count, visited, limitExceeded);
+        return new TraversalResult(count, visited);
     }
 
-    private static boolean isSolidShipBlock(ServerLevel level, BlockPos pos) {
-        return !level.getBlockState(pos).isAir() && !level.getBlockState(pos).is(Blocks.WATER);
+    private static boolean isSolid(ServerLevel level, BlockPos pos) {
+        return !level.getBlockState(pos).isAir()
+                && !level.getBlockState(pos).is(Blocks.WATER);
     }
 }

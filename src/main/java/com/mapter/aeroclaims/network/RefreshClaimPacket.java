@@ -1,10 +1,11 @@
 package com.mapter.aeroclaims.network;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
-import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
@@ -16,93 +17,122 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import java.util.ArrayList;
+
 public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload {
 
-    public static final Type<RefreshClaimPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Aeroclaims.MODID, "refresh_claim"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, RefreshClaimPacket> STREAM_CODEC = StreamCodec.composite(
-            BlockPos.STREAM_CODEC, RefreshClaimPacket::center,
-            RefreshClaimPacket::new
-    );
+    public static final Type<RefreshClaimPacket> TYPE =
+            new Type<>(ResourceLocation.fromNamespaceAndPath(Aeroclaims.MODID, "refresh_claim"));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, RefreshClaimPacket> STREAM_CODEC =
+            StreamCodec.composite(
+                    BlockPos.STREAM_CODEC, RefreshClaimPacket::center,
+                    RefreshClaimPacket::new
+            );
 
     @Override
-    public Type<RefreshClaimPacket> type() {
-        return TYPE;
-    }
+    public Type<RefreshClaimPacket> type() { return TYPE; }
 
     public static void handle(RefreshClaimPacket msg, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
-            Claim claim = ClaimManager.getClaimByCenter(player.serverLevel(), msg.center);
-            if (claim == null) return;
+            ServerLevel level = player.serverLevel();
+            Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
+            if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 
-            if (!player.getUUID().equals(claim.getOwner())) return;
-
-            if (!SableShipUtils.isOnShip(player.serverLevel(), msg.center)) {
+            if (!SableShipUtils.isOnShip(level, msg.center)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.not_on_subclaim"));
                 return;
             }
 
-            SubLevel currentShip = SableShipUtils.getShipAt(player.serverLevel(), msg.center);
-            String currentShipId = SableShipUtils.getShipId(currentShip);
-            if (currentShipId != null) {
-                for (Claim other : ClaimSavedData.get(player.serverLevel()).getClaims()) {
-                    if (other.getCenter().equals(msg.center)) continue;
-                    SubLevel otherShip = SableShipUtils.getShipAt(player.serverLevel(), other.getCenter());
-                    String otherShipId = SableShipUtils.getShipId(otherShip);
-                    if (currentShipId.equals(otherShipId)) {
-                        player.sendSystemMessage(Component.translatable("message.aeroclaims.duplicate_claim_block"));
-                        return;
-                    }
-                }
-            }
-
-            int maxSize = AeroClaimsConfig.MAX_SHIP_BLOCKS.get();
-            if (ClaimManager.countShipBlocks(player.serverLevel(), msg.center, maxSize) > maxSize) {
-                int exact = ClaimManager.countShipBlocksExact(player.serverLevel(), msg.center);
-                if (claim.isActive()) {
-                    AeroClaimManager.releaseShipClaimSlot(player.serverLevel(), claim.getOwner());
-                }
-                ClaimManager.deactivateClaim(player.serverLevel(), msg.center);
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", exact, maxSize));
-                PacketDistributor.sendToPlayer(player, new SyncClaimStatePacket(msg.center, false,
-                        claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers()));
+            if (hasDuplicateClaimBlock(level, msg.center)) {
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.duplicate_claim_block"));
                 return;
             }
 
-            if (!claim.isActive()) {
-                boolean consumed = AeroClaimManager.consumeShipClaimSlot(
-                        player.serverLevel(), player.getUUID());
-                if (!consumed) {
-                    player.sendSystemMessage(Component.translatable("message.aeroclaims.no_ship_slots"));
-                    return;
-                }
+            int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
+            if (maxSize <= 0) {
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_claims_allocated"));
+                sync(player, msg.center, claim, level, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN);
+                return;
             }
 
-            ClaimManager.refreshClaim(player.serverLevel(), msg.center);
+            int blockCount = ClaimManager.countShipBlocks(level, msg.center, maxSize + 1);
+            if (blockCount > maxSize) {
+
+                int exact = ClaimManager.countShipBlocksExact(level, msg.center);
+                ClaimManager.deactivateClaim(level, msg.center);
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", exact, maxSize));
+                sync(player, msg.center, claim, level, exact);
+                return;
+            }
+
+            if (!ClaimManager.refreshClaim(level, msg.center)) {
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_failed"));
+                sync(player, msg.center, claim, level, blockCount);
+                return;
+            }
+
             player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_refreshed"));
 
-            Claim updatedClaim = ClaimManager.getClaimByCenter(player.serverLevel(), msg.center);
-            if (updatedClaim != null) {
-                PacketDistributor.sendToPlayer(player, new ClaimRefreshParticlesPacket(new java.util.ArrayList<>(updatedClaim.getClaimedBlocks())));
+            Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
+            if (updated != null) {
+                PacketDistributor.sendToPlayer(player,
+                        new ClaimRefreshParticlesPacket(new ArrayList<>(updated.getClaimedBlocks())));
             }
 
-            SubLevel ship = SableShipUtils.getShipAt(player.serverLevel(), msg.center);
-            String shipId = SableShipUtils.getShipId(ship);
-            if (shipId != null) {
-                String shipName = SableShipUtils.getShipName(ship);
-                RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
-                UnregisteredSublevelManager.removeShip(shipId);
-                claim.setShipId(shipId);
-                ClaimSavedData.get(player.serverLevel()).setDirty();
-            }
-
-            PacketDistributor.sendToPlayer(player, new SyncClaimStatePacket(msg.center, claim.isActive(),
-                    claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers()));
+            registerShip(level, msg.center, claim, player);
+            sync(player, msg.center, claim, level, blockCount);
         });
+    }
+
+    private static boolean hasDuplicateClaimBlock(ServerLevel level, BlockPos center) {
+        SubLevel ship = SableShipUtils.getShipAt(level, center);
+        String shipId = SableShipUtils.getShipId(ship);
+        if (shipId == null) return false;
+
+        for (Claim other : ClaimSavedData.get(level).getClaims()) {
+            if (other.getCenter().equals(center)) continue;
+            String otherId = SableShipUtils.getShipId(SableShipUtils.getShipAt(level, other.getCenter()));
+            if (shipId.equals(otherId)) return true;
+        }
+        return false;
+    }
+
+    private static void registerShip(ServerLevel level, BlockPos center, Claim claim, ServerPlayer player) {
+        SubLevel ship = SableShipUtils.getShipAt(level, center);
+        String shipId = SableShipUtils.getShipId(ship);
+        if (shipId == null) return;
+
+        String shipName = SableShipUtils.getShipName(ship);
+        RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
+        UnregisteredSublevelManager.removeShip(shipId);
+        claim.setShipId(shipId);
+        ClaimSavedData.get(level).setDirty();
+    }
+
+    private static void sync(ServerPlayer player, BlockPos center, Claim claim,
+                              ServerLevel level, int shipBlockCount) {
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        if (shipBlockCount != SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) {
+            data.cacheShipBlockCount(center, shipBlockCount);
+        }
+        PacketDistributor.sendToPlayer(player, new SyncClaimStatePacket(
+                center,
+                claim.isActive(),
+                claim.isAllowParty(),
+                claim.isAllowAllies(),
+                claim.isAllowOthers(),
+                data.getClaimsForBlock(center),
+                data.getFreeSlots(player.getUUID()),
+                AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
+                shipBlockCount
+        ));
     }
 }

@@ -1,13 +1,16 @@
 package com.mapter.aeroclaims.block;
 
-import com.mapter.aeroclaims.sublevel.SableShipUtils;
-import com.mojang.serialization.MapCodec;
+import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
+import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
-import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.network.SyncClaimStatePacket;
 import com.mapter.aeroclaims.screen.ClaimSettingsMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
+import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
+import com.mojang.serialization.MapCodec;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -54,20 +57,15 @@ public class ClaimBlock extends BaseEntityBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState()
-                .setValue(BlockStateProperties.HORIZONTAL_FACING,
-                        context.getHorizontalDirection().getOpposite())
+                .setValue(BlockStateProperties.HORIZONTAL_FACING, context.getHorizontalDirection().getOpposite())
                 .setValue(OPEN, false);
     }
 
     @Override
-    public RenderShape getRenderShape(BlockState state) {
-        return RenderShape.MODEL;
-    }
+    public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
 
     @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return CODEC;
-    }
+    protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
 
     @Nullable
     @Override
@@ -76,9 +74,7 @@ public class ClaimBlock extends BaseEntityBlock {
     }
 
     @Override
-    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
-        return true;
-    }
+    public boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) { return true; }
 
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state,
@@ -93,21 +89,26 @@ public class ClaimBlock extends BaseEntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos,
                          BlockState newState, boolean moving) {
         if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
-            SubLevel ship = SableShipUtils.getShipAt((ServerLevel) level, pos);
-            String shipId = SableShipUtils.getShipId(ship);
+            ServerLevel serverLevel = (ServerLevel) level;
 
+            SubLevel ship = SableShipUtils.getShipAt(serverLevel, pos);
+            String shipId = SableShipUtils.getShipId(ship);
             if (shipId != null) {
                 String shipName = SableShipUtils.getShipName(ship);
                 RegisteredSublevelManager.unregisterShip(shipId);
                 UnregisteredSublevelManager.addShip(shipId, shipName);
             }
 
-            Claim claim = ClaimManager.getClaimByCenter((ServerLevel) level, pos);
-            if (claim != null && claim.isActive()) {
-                AeroClaimManager.releaseShipClaimSlot((ServerLevel) level, claim.getOwner());
+            Claim claim = ClaimManager.getClaimByCenter(serverLevel, pos);
+            if (claim != null) {
+                AeroClaimManager.releaseAllClaimsForBlock(serverLevel, claim.getOwner(), pos);
             }
 
-            ClaimManager.removeClaim((ServerLevel) level, pos);
+            ClaimManager.removeClaim(serverLevel, pos);
+
+
+            AeroClaimSavedData data = AeroClaimSavedData.get(serverLevel);
+            data.clearCachedShipBlockCount(pos);
         }
         super.onRemove(state, level, pos, newState, moving);
     }
@@ -115,15 +116,12 @@ public class ClaimBlock extends BaseEntityBlock {
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player,
                                                BlockHitResult hit) {
-        if (level.isClientSide)
-            return InteractionResult.SUCCESS;
+        if (level.isClientSide) return InteractionResult.SUCCESS;
+        if (!(player instanceof ServerPlayer serverPlayer)) return InteractionResult.PASS;
 
-        if (!(player instanceof ServerPlayer serverPlayer))
-            return InteractionResult.PASS;
-
-        Claim claim = ClaimManager.getClaimByCenter(serverPlayer.serverLevel(), pos);
-        if (claim == null)
-            return InteractionResult.PASS;
+        ServerLevel serverLevel = serverPlayer.serverLevel();
+        Claim claim = ClaimManager.getClaimByCenter(serverLevel, pos);
+        if (claim == null) return InteractionResult.PASS;
 
         if (!serverPlayer.getUUID().equals(claim.getOwner())) {
             serverPlayer.sendSystemMessage(Component.translatable("message.aeroclaims.only_owner_can_configure"));
@@ -135,9 +133,17 @@ public class ClaimBlock extends BaseEntityBlock {
             level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
 
-        SubLevel ship = SableShipUtils.getShipAt(serverPlayer.serverLevel(), pos);
+        SubLevel ship = SableShipUtils.getShipAt(serverLevel, pos);
         boolean onShip = ship != null;
         String shipName = SableShipUtils.getShipName(ship);
+
+        AeroClaimSavedData data = AeroClaimSavedData.get(serverLevel);
+        int claimsForBlock = data.getClaimsForBlock(pos);
+        int freeSlots = data.getFreeSlots(serverPlayer.getUUID());
+
+        Integer cachedCount = data.getCachedShipBlockCount(pos);
+        int initialBlockCount = (cachedCount != null) ? cachedCount : SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
+
         serverPlayer.openMenu(getMenuProvider(state, level, pos), buf -> {
             buf.writeBlockPos(pos);
             buf.writeUUID(claim.getOwner());
@@ -147,6 +153,10 @@ public class ClaimBlock extends BaseEntityBlock {
             buf.writeBoolean(claim.isAllowParty());
             buf.writeBoolean(claim.isAllowAllies());
             buf.writeBoolean(claim.isAllowOthers());
+            buf.writeInt(claimsForBlock);
+            buf.writeInt(freeSlots);
+            buf.writeInt(AeroClaimsConfig.BLOCKS_PER_CLAIM.get());
+            buf.writeInt(initialBlockCount);
         });
 
         return InteractionResult.CONSUME;
@@ -159,9 +169,10 @@ public class ClaimBlock extends BaseEntityBlock {
         if (claim == null) return null;
         return new SimpleMenuProvider(
                 (containerId, inv, p) -> new ClaimSettingsMenu(
-                        containerId, inv, pos, claim.getOwner(), "", false,
-                        claim.isActive(),
-                        claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers()),
+                        containerId, inv, pos, claim.getOwner(), "",
+                        false, claim.isActive(),
+                        claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
+                        0, 0, 0, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN),
                 Component.translatable("screen.aeroclaims.claim_settings.title")
         );
     }

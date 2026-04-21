@@ -95,10 +95,9 @@ public class SableSubLevelEventHandler {
                     try {
                         java.util.UUID ownerId = java.util.UUID.fromString(reg.ownerUuid);
                         Claim claim = ClaimManager.getClaimByShipId(serverLevel, shipId);
-                        if (claim != null && claim.isActive()) {
-                            AeroClaimManager.releaseShipClaimSlot(serverLevel, ownerId);
-                        }
                         if (claim != null) {
+
+                            AeroClaimManager.releaseAllClaimsForBlock(serverLevel, ownerId, claim.getCenter());
                             ClaimManager.removeClaim(serverLevel, claim.getCenter());
                         }
                     } catch (Exception e) {
