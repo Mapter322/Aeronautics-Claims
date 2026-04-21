@@ -7,7 +7,6 @@ import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
-import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
@@ -23,7 +22,13 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-
+// Client → server packet: player requests ship block recount without reactivation.
+// Flow:
+// 1. Check block is on sublevel.
+// 2. Check for duplicate claim block on same ship.
+// 3. Recount blocks - react per deactivateOnOverflow setting on overflow.
+// 4. Register ship (link shipId to claim).
+// 5. Send SyncClaimStatePacket to client.
 public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload {
 
     public static final Type<RefreshClaimPacket> TYPE =
@@ -73,12 +78,12 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             }
 
             Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
+
             if (blockCount > maxSize) {
-                if (deactivateOnOverflow) {
-                    player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large_deactivated", blockCount, maxSize));
-                } else {
-                    player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", blockCount, maxSize));
-                }
+                String msgKey = deactivateOnOverflow
+                        ? "message.aeroclaims.ship_too_large_deactivated"
+                        : "message.aeroclaims.ship_too_large";
+                player.sendSystemMessage(Component.translatable(msgKey, blockCount, maxSize));
             } else {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
             }
@@ -88,6 +93,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
         });
     }
 
+    // Checks if another claim block exists on the same ship.
     private static boolean hasDuplicateClaimBlock(ServerLevel level, BlockPos center) {
         SubLevel ship = SableShipUtils.getShipAt(level, center);
         String shipId = SableShipUtils.getShipId(ship);
@@ -101,6 +107,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
         return false;
     }
 
+    // Links ship (sublevel) to claim and updates registries.
     private static void registerShip(ServerLevel level, BlockPos center, Claim claim, ServerPlayer player) {
         SubLevel ship = SableShipUtils.getShipAt(level, center);
         String shipId = SableShipUtils.getShipId(ship);
