@@ -61,6 +61,49 @@ public class ClaimManager {
         return true;
     }
 
+    public static int recountShipBlocks(ServerLevel level, BlockPos center, boolean deactivateOnOverflow) {
+        Claim claim = getClaimByCenter(level, center);
+        if (claim == null) return -1;
+
+        int limit = AeroClaimManager.getBlockLimit(level, center);
+        if (limit <= 0) return -1;
+
+        int blockCount = countShipBlocks(level, center, limit + 1);
+        if (blockCount > limit) {
+            // Over limit
+            int exact = countShipBlocksExact(level, center);
+            if (deactivateOnOverflow) {
+                claim.setActive(false);
+                ClaimSavedData.get(level).setDirty();
+            }
+            return exact;
+        }
+
+        // Within limit — update block set, keep active state unchanged
+        Set<BlockPos> blocks = floodFill(level, center, limit);
+        claim.getClaimedBlocks().clear();
+        claim.getClaimedBlocks().addAll(blocks);
+        ClaimSavedData.get(level).setDirty();
+        return blockCount;
+    }
+
+    public static boolean activateClaim(ServerLevel level, BlockPos center) {
+        Claim claim = getClaimByCenter(level, center);
+        if (claim == null) return false;
+
+        int limit = AeroClaimManager.getBlockLimit(level, center);
+        if (limit <= 0) return false;
+
+        if (countShipBlocks(level, center, limit + 1) > limit) return false;
+
+        Set<BlockPos> blocks = floodFill(level, center, limit);
+        claim.setActive(true);
+        claim.getClaimedBlocks().clear();
+        claim.getClaimedBlocks().addAll(blocks);
+        ClaimSavedData.get(level).setDirty();
+        return true;
+    }
+
 
     public static Claim getClaimAt(ServerLevel level, BlockPos pos) {
         return findClaim(level, claim -> claim.contains(pos));

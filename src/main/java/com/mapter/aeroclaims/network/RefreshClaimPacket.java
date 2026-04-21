@@ -7,6 +7,7 @@ import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
@@ -22,7 +23,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-import java.util.ArrayList;
 
 public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload {
 
@@ -63,32 +63,28 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 return;
             }
 
-            int blockCount = ClaimManager.countShipBlocks(level, msg.center, maxSize + 1);
-            if (blockCount > maxSize) {
+            boolean deactivateOnOverflow = AeroClaimsConfig.DEACTIVATE_ON_OVERFLOW.get();
+            int blockCount = ClaimManager.recountShipBlocks(level, msg.center, deactivateOnOverflow);
 
-                int exact = ClaimManager.countShipBlocksExact(level, msg.center);
-                ClaimManager.deactivateClaim(level, msg.center);
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", exact, maxSize));
-                sync(player, msg.center, claim, level, exact);
-                return;
-            }
-
-            if (!ClaimManager.refreshClaim(level, msg.center)) {
+            if (blockCount < 0) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_failed"));
-                sync(player, msg.center, claim, level, blockCount);
+                sync(player, msg.center, claim, level, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN);
                 return;
             }
-
-            player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_refreshed"));
 
             Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
-            if (updated != null) {
-                PacketDistributor.sendToPlayer(player,
-                        new ClaimRefreshParticlesPacket(new ArrayList<>(updated.getClaimedBlocks())));
+            if (blockCount > maxSize) {
+                if (deactivateOnOverflow) {
+                    player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large_deactivated", blockCount, maxSize));
+                } else {
+                    player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", blockCount, maxSize));
+                }
+            } else {
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
             }
 
             registerShip(level, msg.center, claim, player);
-            sync(player, msg.center, claim, level, blockCount);
+            sync(player, msg.center, updated != null ? updated : claim, level, blockCount);
         });
     }
 

@@ -1,7 +1,9 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.network.ActivateClaimPacket;
 import com.mapter.aeroclaims.network.AdjustBlockClaimsPacket;
+import com.mapter.aeroclaims.network.DeactivateClaimPacket;
 import com.mapter.aeroclaims.network.RefreshClaimPacket;
 import com.mapter.aeroclaims.network.SyncClaimStatePacket;
 import com.mapter.aeroclaims.network.UpdateClaimSettingsPacket;
@@ -34,20 +36,23 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private static final int COLOR_DIV   = 0x66888888;
 
     private static final long REFRESH_COOLDOWN_MS = 30_000L;
-    // static so the cooldown survives screen re-opens within the same session
     private static final Map<BlockPos, Long> refreshCooldowns = new HashMap<>();
 
-    private static final int ROW_Y      = 116; // relative to topPos
-    private static final int SMALL_BTN  = 20;
-    private static final int BTN_X      = 10;
-    private static final int BTN_H      = 18;
+    private static final int ROW_Y     = 116;
+    private static final int SMALL_BTN = 20;
+    private static final int BTN_X     = 10;
+    private static final int BTN_H     = 18;
 
     private Button partyButton;
     private Button alliesButton;
     private Button othersButton;
     private Button refreshButton;
+    private Button actionButton;
     private Button minusButton;
     private Button plusButton;
+
+
+    private boolean inActivateMode = false;
 
     public ClaimSettingsScreen(ClaimSettingsMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -55,7 +60,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         imageHeight = TEXTURE_H + 30;
     }
 
-    // ─── lifecycle ────────────────────────────────────────────────────────────
+    // --- lifecycle ---
 
     @Override
     protected void init() {
@@ -81,9 +86,16 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             sendPermissions();
         }).bounds(leftPos + BTN_X, topPos + 68, bw, BTN_H).build();
 
+        int halfBw = (bw - 4) / 2;
+
         refreshButton = Button.builder(refreshText(), b -> sendRefresh())
-                .bounds(leftPos + BTN_X, topPos + 90, bw, BTN_H).build();
+                .bounds(leftPos + BTN_X, topPos + 90, halfBw, BTN_H).build();
+
+        actionButton = Button.builder(activateText(), b -> sendActionButtonClick())
+                .bounds(leftPos + BTN_X + halfBw + 4, topPos + 90, bw - halfBw - 4, BTN_H).build();
+
         updateRefreshButton();
+        updateActionButton();
 
         int halfW = bw / 2 - 4;
         minusButton = Button.builder(Component.literal("-"), b -> sendAdjust(-1))
@@ -95,6 +107,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         addRenderableWidget(alliesButton);
         addRenderableWidget(othersButton);
         addRenderableWidget(refreshButton);
+        addRenderableWidget(actionButton);
         addRenderableWidget(minusButton);
         addRenderableWidget(plusButton);
 
@@ -111,10 +124,11 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         alliesButton.setMessage(alliesText());
         othersButton.setMessage(othersText());
         updateRefreshButton();
+        updateActionButton();
         refreshClaimButtons();
     }
 
-    // ─── rendering ────────────────────────────────────────────────────────────
+    // rendering
 
     @Override
     protected void renderBg(GuiGraphics g, float partialTick, int mx, int my) {
@@ -123,20 +137,17 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     @Override
     protected void renderLabels(GuiGraphics g, int mx, int my) {
-        int bw   = imageWidth - BTN_X * 2;
+        int bw    = imageWidth - BTN_X * 2;
         int halfW = bw / 2 - 4;
 
-        // Title
         String title = Component.translatable("screen.aeroclaims.claim_settings.title").getString();
         g.drawString(font, title, (imageWidth - font.width(title)) / 2, 7, COLOR_TITLE, false);
 
         separator(g, 18);
         separator(g, 111);
 
-        // ── Claims row ───────────────────────────────────────────────────
         int rowTextY = ROW_Y + 5;
 
-        // Left: [−] <N> [+]
         int labelX = BTN_X + SMALL_BTN + 2;
         int labelW = halfW - SMALL_BTN * 2 - 4;
         String claimsText = menu.getClaimsForBlock() + " aero";
@@ -144,11 +155,9 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
                 labelX + (labelW - font.width(claimsText)) / 2, rowTextY,
                 COLOR_WHITE, false);
 
-        // Divider
         int divX = BTN_X + halfW + 4;
         g.fill(divX, ROW_Y, divX + 1, ROW_Y + BTN_H, COLOR_DIV);
 
-        // Right: X / Y blocks
         int rightX = divX + 4;
         int rightW = bw - halfW - 8;
         String blocksText = blocksText();
@@ -159,10 +168,8 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
         separator(g, ROW_Y + BTN_H + 3);
 
-        // ── Info section ─────────────────────────────────────────────────
         int infoY = ROW_Y + BTN_H + 8;
 
-        // Status
         boolean active = menu.isClaimActive();
         String prefix = Component.translatable("screen.aeroclaims.claim_settings.privacy_prefix").getString();
         String status = Component.translatable(active
@@ -171,7 +178,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         g.drawString(font, prefix, BTN_X, infoY, COLOR_TEXT, false);
         g.drawString(font, status, BTN_X + font.width(prefix), infoY, active ? COLOR_OK : COLOR_ERR, false);
 
-        // Owner
         try {
             String ownerName = Minecraft.getInstance()
                     .getConnection().getPlayerInfo(menu.getOwner())
@@ -181,7 +187,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
                     BTN_X, infoY + 12, COLOR_TEXT, false);
         } catch (Exception ignored) {}
 
-        // Ship name / not-on-ship warning
         int nameY = infoY + 24;
         if (!menu.isOnShip()) {
             g.drawString(font,
@@ -205,12 +210,16 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
         // Restore refresh button once cooldown expires
         if (!refreshButton.active && menu.isOnShip() && !onCooldown()) {
-            refreshButton.active = true;
-            refreshButton.setMessage(refreshText());
+            updateRefreshButton();
+        }
+
+        // Re-evaluate action button every frame
+        if (menu.isOnShip()) {
+            updateActionButton();
         }
     }
 
-    // ─── button state ─────────────────────────────────────────────────────────
+    // button state
 
     private void refreshClaimButtons() {
         if (!menu.isOnShip()) {
@@ -225,7 +234,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private boolean canReduceByOne() {
         if (!menu.isClaimActive()) return true;
         int count = menu.getShipBlockCount();
-        if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) return true; // server will validate
+        if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) return true;
         return count <= (menu.getClaimsForBlock() - 1) * menu.getBlocksPerClaim();
     }
 
@@ -242,7 +251,30 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         }
     }
 
-    // ─── actions ──────────────────────────────────────────────────────────────
+    private void updateActionButton() {
+        if (!menu.isOnShip()) {
+            inActivateMode = false;
+            actionButton.active = false;
+            actionButton.setMessage(activateText());
+            return;
+        }
+
+        boolean nowCooldown = onCooldown();
+
+        if (nowCooldown) {
+            if (!inActivateMode) {
+                inActivateMode = true;
+            }
+            actionButton.active = blocksKnownAndOk();
+            actionButton.setMessage(activateText());
+        } else {
+            inActivateMode = false;
+            actionButton.setMessage(deactivateText());
+            actionButton.active = menu.isClaimActive();
+        }
+    }
+
+    // actions
 
     private void sendPermissions() {
         PacketDistributor.sendToServer(new UpdateClaimSettingsPacket(
@@ -251,7 +283,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     private void sendAdjust(int delta) {
         PacketDistributor.sendToServer(new AdjustBlockClaimsPacket(menu.getCenter(), delta));
-        // Optimistic update — server corrects via SyncClaimStatePacket if invalid
         menu.setClaimsForBlock(Math.max(0, menu.getClaimsForBlock() + delta));
         menu.setFreeSlots(Math.max(0, menu.getFreeSlots() - delta));
         refreshClaimButtons();
@@ -263,22 +294,52 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         refreshCooldowns.put(menu.getCenter(), System.currentTimeMillis());
         refreshButton.active = false;
         refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
+        // Immediately switch to activate mode
+        inActivateMode = true;
+        actionButton.setMessage(activateText());
+        actionButton.active = blocksKnownAndOk();
     }
 
-    // ─── helpers ──────────────────────────────────────────────────────────────
+    private void sendActionButtonClick() {
+        if (inActivateMode) {
+            sendActivate();
+        } else {
+            sendDeactivate();
+        }
+    }
+
+    private void sendActivate() {
+        if (!onCooldown() || blocksOverLimit()) return;
+        PacketDistributor.sendToServer(new ActivateClaimPacket(menu.getCenter()));
+        actionButton.active = false; // prevent spam until server syncs back
+    }
+
+    private void sendDeactivate() {
+        if (onCooldown()) return;
+        PacketDistributor.sendToServer(new DeactivateClaimPacket(menu.getCenter()));
+        actionButton.active = false;
+    }
+
+    // helpers
 
     private boolean onCooldown() {
         Long last = refreshCooldowns.get(menu.getCenter());
         return last != null && System.currentTimeMillis() - last < REFRESH_COOLDOWN_MS;
     }
 
+    private boolean blocksKnownAndOk() {
+        return menu.getShipBlockCount() != SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN
+                && !blocksOverLimit();
+    }
+
+
     private String blocksText() {
         int count = menu.getShipBlockCount();
-        int limit = menu.getBlockLimit();
-        if (!menu.isOnShip()) return "—";
-        if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN || limit <= 0) {
+        if (!menu.isOnShip()) return "\u2014";
+        if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) {
             return Component.translatable("screen.aeroclaims.claim_settings.blocks_unknown").getString();
         }
+        int limit = menu.getBlockLimit();
         return Component.translatable("screen.aeroclaims.claim_settings.blocks_usage", count, limit).getString();
     }
 
@@ -297,6 +358,14 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     private Component refreshText() {
         return Component.translatable("screen.aeroclaims.claim_settings.refresh");
+    }
+
+    private Component activateText() {
+        return Component.translatable("screen.aeroclaims.claim_settings.activate");
+    }
+
+    private Component deactivateText() {
+        return Component.translatable("screen.aeroclaims.claim_settings.deactivate");
     }
 
     private Component partyText() {

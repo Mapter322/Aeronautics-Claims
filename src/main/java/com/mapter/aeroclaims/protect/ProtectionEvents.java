@@ -3,6 +3,7 @@ package com.mapter.aeroclaims.protect;
 import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.registry.ModBlocks;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import net.minecraft.core.BlockPos;
@@ -27,14 +28,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @EventBusSubscriber(modid = Aeroclaims.MODID)
 public class ProtectionEvents {
 
-    private static final int CLAIM_MARGIN_BLOCKS = 5;
     private static final long MESSAGE_COOLDOWN_MS = 15_000;
     private static final Map<UUID, Long> lastMessageTime = new ConcurrentHashMap<>();
 
     private static Claim getClaimAtWithMargin(ServerLevel level, BlockPos pos) {
         Claim exact = ClaimManager.getClaimAt(level, pos);
         if (exact != null) return exact;
-        for (int r = 1; r <= CLAIM_MARGIN_BLOCKS; r++) {
+        int margin = AeroClaimsConfig.CLAIM_MARGIN_BLOCKS.get();
+        for (int r = 1; r <= margin; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dz = -r; dz <= r; dz++) {
                     if (Math.abs(dx) != r && Math.abs(dz) != r) continue;
