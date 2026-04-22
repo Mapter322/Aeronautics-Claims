@@ -35,6 +35,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.phys.BlockHitResult;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 public class ClaimBlock extends BaseEntityBlock {
 
@@ -81,7 +82,11 @@ public class ClaimBlock extends BaseEntityBlock {
                             @Nullable net.minecraft.world.entity.LivingEntity placer,
                             net.minecraft.world.item.ItemStack stack) {
         if (!level.isClientSide && placer instanceof Player player) {
-            ClaimManager.addClaim((ServerLevel) level, pos, player.getUUID());
+            UUID owner = player.getUUID();
+            ClaimManager.addClaim((ServerLevel) level, pos, owner);
+            if (level.getBlockEntity(pos) instanceof ClaimBlockEntity be) {
+                be.setOwner(owner);
+            }
         }
     }
 
@@ -121,7 +126,16 @@ public class ClaimBlock extends BaseEntityBlock {
 
         ServerLevel serverLevel = serverPlayer.serverLevel();
         Claim claim = ClaimManager.getClaimByCenter(serverLevel, pos);
-        if (claim == null) return InteractionResult.PASS;
+
+        // Claim missing for this position, recover using owner stored in the BlockEntity
+        // This handles cases where saved data is out of sync
+        if (claim == null) {
+            UUID storedOwner = level.getBlockEntity(pos) instanceof ClaimBlockEntity be ? be.getOwner() : null;
+            if (storedOwner == null) return InteractionResult.PASS;
+            ClaimManager.addClaim(serverLevel, pos, storedOwner);
+            claim = ClaimManager.getClaimByCenter(serverLevel, pos);
+            if (claim == null) return InteractionResult.PASS;
+        }
 
         if (!serverPlayer.getUUID().equals(claim.getOwner())) {
             serverPlayer.sendSystemMessage(Component.translatable("message.aeroclaims.only_owner_can_configure"));
@@ -144,15 +158,16 @@ public class ClaimBlock extends BaseEntityBlock {
         Integer cachedCount = data.getCachedShipBlockCount(pos);
         int initialBlockCount = (cachedCount != null) ? cachedCount : SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
 
+        final Claim finalClaim = claim;
         serverPlayer.openMenu(getMenuProvider(state, level, pos), buf -> {
             buf.writeBlockPos(pos);
-            buf.writeUUID(claim.getOwner());
+            buf.writeUUID(finalClaim.getOwner());
             buf.writeUtf(shipName != null ? shipName : "");
             buf.writeBoolean(onShip);
-            buf.writeBoolean(claim.isActive());
-            buf.writeBoolean(claim.isAllowParty());
-            buf.writeBoolean(claim.isAllowAllies());
-            buf.writeBoolean(claim.isAllowOthers());
+            buf.writeBoolean(finalClaim.isActive());
+            buf.writeBoolean(finalClaim.isAllowParty());
+            buf.writeBoolean(finalClaim.isAllowAllies());
+            buf.writeBoolean(finalClaim.isAllowOthers());
             buf.writeInt(claimsForBlock);
             buf.writeInt(freeSlots);
             buf.writeInt(AeroClaimsConfig.BLOCKS_PER_CLAIM.get());
