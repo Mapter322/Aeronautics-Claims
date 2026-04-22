@@ -88,7 +88,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
             }
 
-            registerShip(level, msg.center, claim, player);
+            registerShip(level, msg.center, claim, player, blockCount, maxSize);
             sync(player, msg.center, updated != null ? updated : claim, level, blockCount);
         });
     }
@@ -108,13 +108,16 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
     }
 
     // Links ship (sublevel) to claim and updates registries.
-    private static void registerShip(ServerLevel level, BlockPos center, Claim claim, ServerPlayer player) {
+    // blockCount and maxSize are written to JSON so the file always reflects last known block usage.
+    private static void registerShip(ServerLevel level, BlockPos center, Claim claim, ServerPlayer player,
+                                     int blockCount, int maxSize) {
         SubLevel ship = SableShipUtils.getShipAt(level, center);
         String shipId = SableShipUtils.getShipId(ship);
         if (shipId == null) return;
 
         String shipName = SableShipUtils.getShipName(ship);
-        RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
+        RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString(),
+                blockCount, maxSize);
         UnregisteredSublevelManager.removeShip(shipId);
         claim.setShipId(shipId);
         ClaimSavedData.get(level).setDirty();

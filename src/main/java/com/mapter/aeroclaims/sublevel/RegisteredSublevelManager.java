@@ -34,6 +34,9 @@ public class RegisteredSublevelManager {
         public String ownerUuid;
         public String owner;
 
+        public Integer blocksUsed;
+        public Integer blocksMax;
+
         public ShipRegistration() {
         }
 
@@ -104,6 +107,15 @@ public class RegisteredSublevelManager {
 
     public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName) {
         registeredShips.put(shipId, new ShipRegistration(name, ownerUuid, ownerName));
+        saveRegisteredShips();
+    }
+
+    public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName,
+                                    int blocksUsed, int blocksMax) {
+        ShipRegistration reg = new ShipRegistration(name, ownerUuid, ownerName);
+        reg.blocksUsed = blocksUsed;
+        reg.blocksMax = blocksMax;
+        registeredShips.put(shipId, reg);
         saveRegisteredShips();
     }
 
