@@ -7,8 +7,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class ClaimSavedData extends SavedData {
@@ -20,6 +22,30 @@ public class ClaimSavedData extends SavedData {
     );
 
     private final List<Claim> claims = new ArrayList<>();
+
+    private final Map<BlockPos, Claim> blockIndex = new HashMap<>();
+    private boolean indexDirty = true;
+
+    private void rebuildIndex() {
+        blockIndex.clear();
+        for (Claim claim : claims) {
+            if (claim.isActive()) {
+                for (BlockPos pos : claim.getClaimedBlocks()) {
+                    blockIndex.put(pos, claim);
+                }
+            }
+        }
+        indexDirty = false;
+    }
+
+    public Map<BlockPos, Claim> getBlockIndex() {
+        if (indexDirty) rebuildIndex();
+        return blockIndex;
+    }
+
+    public void invalidateIndex() {
+        indexDirty = true;
+    }
 
     public static ClaimSavedData get(ServerLevel level) {
         return level.getDataStorage().computeIfAbsent(FACTORY, "aeroclaims_data");
@@ -85,6 +111,12 @@ public class ClaimSavedData extends SavedData {
 
         tag.put("claims", list);
         return tag;
+    }
+
+    @Override
+    public void setDirty() {
+        super.setDirty();
+        invalidateIndex();
     }
 
     public List<Claim> getClaims() {

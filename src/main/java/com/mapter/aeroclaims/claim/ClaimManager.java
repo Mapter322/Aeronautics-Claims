@@ -103,11 +103,10 @@ public class ClaimManager {
         return blockCount;
     }
 
-    // Claim lookup
 
     // Returns claim containing position, or null.
     public static Claim getClaimAt(ServerLevel level, BlockPos pos) {
-        return findClaim(level, claim -> claim.contains(pos));
+        return ClaimSavedData.get(level).getBlockIndex().get(pos);
     }
 
     // Returns claim by center block, or null.
