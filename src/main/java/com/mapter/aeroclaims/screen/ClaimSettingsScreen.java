@@ -37,6 +37,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     private static final long REFRESH_COOLDOWN_MS = 30_000L;
     private static final Map<BlockPos, Long> refreshCooldowns = new HashMap<>();
+    private static final Map<BlockPos, Boolean> activateUsedInCooldown = new HashMap<>();
 
     private static final int ROW_Y     = 116;
     private static final int SMALL_BTN = 20;
@@ -265,8 +266,10 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             if (!inActivateMode) {
                 inActivateMode = true;
             }
-            actionButton.active = blocksKnownAndOk();
             actionButton.setMessage(activateText());
+            // Disable if already activated once this cooldown, or blocks not OK
+            boolean alreadyUsed = Boolean.TRUE.equals(activateUsedInCooldown.get(menu.getCenter()));
+            actionButton.active = !alreadyUsed && blocksKnownAndOk();
         } else {
             inActivateMode = false;
             actionButton.setMessage(deactivateText());
@@ -292,6 +295,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         if (onCooldown()) return;
         PacketDistributor.sendToServer(new RefreshClaimPacket(menu.getCenter()));
         refreshCooldowns.put(menu.getCenter(), System.currentTimeMillis());
+        activateUsedInCooldown.put(menu.getCenter(), false); // reset for new cooldown
         refreshButton.active = false;
         refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
         // Immediately switch to activate mode
@@ -311,7 +315,8 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private void sendActivate() {
         if (!onCooldown() || blocksOverLimit()) return;
         PacketDistributor.sendToServer(new ActivateClaimPacket(menu.getCenter()));
-        actionButton.active = false; // prevent spam until server syncs back
+        activateUsedInCooldown.put(menu.getCenter(), true); // block until next refresh
+        actionButton.active = false;
     }
 
     private void sendDeactivate() {
