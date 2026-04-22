@@ -49,6 +49,10 @@ public class AeroClaimSavedData extends SavedData {
             CompoundTag e = (CompoundTag) t;
             data.claimsPerBlock.put(e.getLong("pos"), e.getInt("claims"));
         }
+        for (Tag t : tag.getList("shipBlockCountCache", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.shipBlockCountCache.put(e.getLong("pos"), e.getInt("count"));
+        }
 
         return data;
     }
@@ -81,6 +85,15 @@ public class AeroClaimSavedData extends SavedData {
             perBlock.add(entry);
         }
         tag.put("claimsPerBlock", perBlock);
+
+        ListTag shipCache = new ListTag();
+        for (Map.Entry<Long, Integer> e : shipBlockCountCache.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putLong("pos", e.getKey());
+            entry.putInt("count", e.getValue());
+            shipCache.add(entry);
+        }
+        tag.put("shipBlockCountCache", shipCache);
 
         return tag;
     }
@@ -151,6 +164,7 @@ public class AeroClaimSavedData extends SavedData {
 
     public void cacheShipBlockCount(BlockPos pos, int count) {
         shipBlockCountCache.put(pos.asLong(), count);
+        setDirty();
     }
 
 

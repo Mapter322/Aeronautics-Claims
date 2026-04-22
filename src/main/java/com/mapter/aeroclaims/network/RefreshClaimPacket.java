@@ -62,14 +62,17 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             }
 
             int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
-            if (maxSize <= 0) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_claims_allocated"));
-                sync(player, msg.center, claim, level, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN);
-                return;
-            }
+            boolean hasClaims = maxSize > 0;
 
             boolean deactivateOnOverflow = AeroClaimsConfig.DEACTIVATE_ON_OVERFLOW.get();
-            int blockCount = ClaimManager.recountShipBlocks(level, msg.center, deactivateOnOverflow);
+            int blockCount;
+
+            if (hasClaims) {
+                blockCount = ClaimManager.recountShipBlocks(level, msg.center, deactivateOnOverflow);
+            } else {
+                blockCount = ClaimManager.countShipBlocksExact(level, msg.center);
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_claims_allocated"));
+            }
 
             if (blockCount < 0) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_failed"));
@@ -79,16 +82,18 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
 
             Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
 
-            if (blockCount > maxSize) {
+            if (hasClaims && blockCount > maxSize) {
                 String msgKey = deactivateOnOverflow
                         ? "message.aeroclaims.ship_too_large_deactivated"
                         : "message.aeroclaims.ship_too_large";
                 player.sendSystemMessage(Component.translatable(msgKey, blockCount, maxSize));
-            } else {
+            } else if (hasClaims) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
             }
 
-            registerShip(level, msg.center, claim, player, blockCount, maxSize);
+            if (hasClaims) {
+                registerShip(level, msg.center, claim, player, blockCount, maxSize);
+            }
             sync(player, msg.center, updated != null ? updated : claim, level, blockCount);
         });
     }
