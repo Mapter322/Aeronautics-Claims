@@ -98,6 +98,7 @@ public class RegisteredSublevelManager {
     }
 
     private static void saveRegisteredShips() {
+        if (shipsDataFile == null) return;
         try (FileWriter writer = new FileWriter(shipsDataFile)) {
             GSON.toJson(registeredShips, writer);
         } catch (IOException e) {
@@ -105,9 +106,19 @@ public class RegisteredSublevelManager {
         }
     }
 
+
+    public static void saveNow() {
+        saveRegisteredShips();
+    }
+
+
+    public static int getCount() {
+        return registeredShips.size();
+    }
+
+
     public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName) {
         registeredShips.put(shipId, new ShipRegistration(name, ownerUuid, ownerName));
-        saveRegisteredShips();
     }
 
     public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName,
@@ -116,12 +127,10 @@ public class RegisteredSublevelManager {
         reg.blocksUsed = blocksUsed;
         reg.blocksMax = blocksMax;
         registeredShips.put(shipId, reg);
-        saveRegisteredShips();
     }
 
     public static void unregisterShip(String shipId) {
         registeredShips.remove(shipId);
-        saveRegisteredShips();
     }
 
     public static ShipRegistration getRegistration(String shipId) {

@@ -59,19 +59,19 @@ public class UnregisteredSublevelManager {
 
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
+
         save();
     }
+
 
     public static void addShip(String shipId, String name) {
         if (ships.containsKey(shipId)) return;
         ships.put(shipId, new UnregisteredShip(name));
-        save();
         LOGGER.info("New unregistered ship detected: id={} name={}", shipId, name);
     }
 
     public static void removeShip(String shipId) {
         if (ships.remove(shipId) != null) {
-            save();
             LOGGER.debug("Ship {} removed from unregistered list", shipId);
         }
     }
@@ -91,6 +91,7 @@ public class UnregisteredSublevelManager {
     public static int getCount() {
         return ships.size();
     }
+
 
     public static void save() {
         if (saveFile == null) return;
