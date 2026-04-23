@@ -11,7 +11,10 @@
     "MixinRadialWrenchMenuSubmitPacket",
     "MixinSuperGlueSelectionPacket",
     "MixinSuperGlueRemovalPacket",
-    "MixinAssemblePacket"
+    "MixinAssemblePacket",
+    "MixinHoneyGlueSpawnPacket",
+    "MixinHoneyGlueChangeBoundsPacket",
+    "MixinPlaceMergingGluePacket"
   ],
   "client": [],
   "server": [],
