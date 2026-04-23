@@ -9,6 +9,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.IntValue BLOCKS_PER_CLAIM;
     public static final ModConfigSpec.BooleanValue DEACTIVATE_ON_OVERFLOW;
     public static final ModConfigSpec.IntValue CLAIM_MARGIN_BLOCKS;
+    public static final ModConfigSpec.BooleanValue EXPLOSION_PROTECTION;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -23,6 +24,9 @@ public class AeroClaimsConfig {
         CLAIM_MARGIN_BLOCKS = builder
                 .comment("Additional blocks of protection margin around claimed blocks. 0 = no margin, 1 = 1 block buffer, etc. Default: 0.")
                 .defineInRange("claimMarginBlocks", 0, 0, 100);
+        EXPLOSION_PROTECTION = builder
+                .comment("If true, explosions cannot destroy or damage blocks inside active claims. Default: true.")
+                .define("explosionProtection", true);
         builder.pop();
 
         SPEC = builder.build();

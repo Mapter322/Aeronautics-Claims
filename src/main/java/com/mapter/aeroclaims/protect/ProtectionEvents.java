@@ -18,6 +18,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -159,7 +160,18 @@ public class ProtectionEvents {
         }
     }
 
-    // Utilities
+
+    @SubscribeEvent
+    public static void onExplosionDetonate(ExplosionEvent.Detonate event) {
+        if (!AeroClaimsConfig.EXPLOSION_PROTECTION.get()) return;
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+
+        event.getAffectedBlocks().removeIf(pos -> {
+            Claim claim = getClaimAtWithMargin(level, pos);
+            return claim != null && claim.isActive();
+        });
+    }
+
 
     private static <T> T firstNonNull(T a, T b) {
         return a != null ? a : b;
