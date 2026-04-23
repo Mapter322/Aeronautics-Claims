@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    " G ",
+    "IRI",
+    "OIB"
+  ],
+  "key": {
+    "I": {
+      "item": "create:iron_sheet"
+    },
+    "R": {
+      "item": "create:precision_mechanism"
+    },
+    "G": {
+      "item": "create:framed_glass_pane"
+    },
+    "O": {
+      "item": "minecraft:orange_dye"
+    },
+    "B": {
+      "item": "minecraft:black_dye"
+    }
+  },
+  "result": {
+    "id": "aeroclaims:claim_block",
+    "count": 1
+  }
+}
