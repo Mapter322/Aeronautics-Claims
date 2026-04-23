@@ -40,7 +40,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private static final Map<BlockPos, Boolean> activateUsedInCooldown = new HashMap<>();
 
     private static final int ROW_Y     = 116;
-    private static final int SMALL_BTN = 20;
+    private static final int SMALL_BTN = 12;
     private static final int BTN_X     = 10;
     private static final int BTN_H     = 18;
 
@@ -151,10 +151,10 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
         int labelX = BTN_X + SMALL_BTN + 2;
         int labelW = halfW - SMALL_BTN * 2 - 4;
-        String claimsText = menu.getClaimsForBlock() + " aero";
+        String claimsText = menu.getClaimsForBlock() + " claims";
         g.drawString(font, claimsText,
                 labelX + (labelW - font.width(claimsText)) / 2, rowTextY,
-                COLOR_WHITE, false);
+                COLOR_TEXT, false);
 
         int divX = BTN_X + halfW + 4;
         g.fill(divX, ROW_Y, divX + 1, ROW_Y + BTN_H, COLOR_DIV);
