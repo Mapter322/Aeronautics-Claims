@@ -5,11 +5,10 @@ import net.minecraft.server.level.ServerPlayer;
 import xaero.pac.common.server.api.OpenPACServerAPI;
 import xaero.pac.common.server.parties.party.api.IPartyManagerAPI;
 import xaero.pac.common.server.parties.party.api.IServerPartyAPI;
+import xaero.pac.common.server.player.data.api.ServerPlayerDataAPI;
 
 import java.util.UUID;
 
-// Permission resolver with Open Parties and Claims (OPAC) support.
-// Respects allowParty and allowAllies flags when checking access
 public class OpacPermissionResolver implements ClaimPermissionResolver {
 
     @Override
@@ -17,10 +16,10 @@ public class OpacPermissionResolver implements ClaimPermissionResolver {
         UUID playerUuid = player.getUUID();
         UUID ownerUuid  = claim.getOwner();
 
-        // Owner always has access
         if (playerUuid.equals(ownerUuid)) return true;
 
-        // Claim is open to all
+        if (ServerPlayerDataAPI.from(player).isClaimsAdminMode()) return true;
+
         if (claim.isAllowOthers()) return true;
 
         OpenPACServerAPI api = OpenPACServerAPI.get(player.server);
