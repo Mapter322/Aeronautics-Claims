@@ -44,9 +44,8 @@ public class ClaimManager {
         ClaimSavedData.get(level).setDirty();
     }
 
-    // Claim activation/refresh
 
-    // Activates claim: runs flood-fill on ship and saves block set. Returns false if ship exceeds block limit.
+
     public static boolean activateClaim(ServerLevel level, BlockPos center) {
         Claim claim = getClaimByCenter(level, center);
         if (claim == null) return false;
@@ -62,7 +61,6 @@ public class ClaimManager {
         return true;
     }
 
-    // Updates claimed block set without changing active flag. Used for periodic refresh.
     public static boolean refreshClaim(ServerLevel level, BlockPos center) {
         Claim claim = getClaimByCenter(level, center);
         if (claim == null) return false;
@@ -73,13 +71,11 @@ public class ClaimManager {
         if (countShipBlocks(level, center, limit + 1) > limit) return false;
 
         updateClaimedBlocks(level, claim, center, limit);
-        claim.setActive(true);
         ClaimSavedData.get(level).setDirty();
         return true;
     }
 
-    // Recounts ship blocks and updates saved set. If deactivateOnOverflow=true, deactivates claim on overflow.
-    // @return exact block count, or -1 on error
+
     public static int recountShipBlocks(ServerLevel level, BlockPos center, boolean deactivateOnOverflow) {
         Claim claim = getClaimByCenter(level, center);
         if (claim == null) return -1;
@@ -94,7 +90,6 @@ public class ClaimManager {
                 claim.setActive(false);
                 ClaimSavedData.get(level).setDirty();
             }
-            // Overflow - return exact count without extra flood-fill
             return countShipBlocksExact(level, center);
         }
 
@@ -104,31 +99,24 @@ public class ClaimManager {
     }
 
 
-    // Returns claim containing position, or null.
     public static Claim getClaimAt(ServerLevel level, BlockPos pos) {
         return ClaimSavedData.get(level).getBlockIndex().get(pos);
     }
 
-    // Returns claim by center block, or null.
     public static Claim getClaimByCenter(ServerLevel level, BlockPos center) {
         return findClaim(level, claim -> claim.getCenter().equals(center));
     }
 
-    // Returns claim by ship ID, or null.
     public static Claim getClaimByShipId(ServerLevel level, String shipId) {
         if (shipId == null) return null;
         return findClaim(level, claim -> shipId.equals(claim.getShipId()));
     }
 
-    // Ship block counting
-
-    // Count with limit - stops at hardLimit.
     public static int countShipBlocks(ServerLevel level, BlockPos start, int hardLimit) {
         if (hardLimit <= 0) return 0;
         return traverse(level, start, hardLimit).count();
     }
 
-    // Exact count of all ship blocks without limit.
     public static int countShipBlocksExact(ServerLevel level, BlockPos start) {
         return traverse(level, start, Integer.MAX_VALUE).count();
     }
@@ -154,7 +142,6 @@ public class ClaimManager {
 
     private record TraversalResult(int count, Set<BlockPos> visitedBlocks) {}
 
-    // BFS traversal of connected solid blocks with count limit.
     private static TraversalResult traverse(ServerLevel level, BlockPos start, int limit) {
         Set<BlockPos> visited = new HashSet<>();
         Queue<BlockPos> queue = new LinkedList<>();

@@ -7,9 +7,7 @@ import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
-import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
-import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -22,13 +20,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-// Client → server packet: player requests ship block recount without reactivation.
-// Flow:
-// 1. Check block is on sublevel.
-// 2. Check for duplicate claim block on same ship.
-// 3. Recount blocks - react per deactivateOnOverflow setting on overflow.
-// 4. Register ship (link shipId to claim).
-// 5. Send SyncClaimStatePacket to client.
 public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload {
 
     public static final Type<RefreshClaimPacket> TYPE =
@@ -80,8 +71,6 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 return;
             }
 
-            Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
-
             if (hasClaims && blockCount > maxSize) {
                 String msgKey = deactivateOnOverflow
                         ? "message.aeroclaims.ship_too_large_deactivated"
@@ -91,14 +80,13 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
             }
 
-            if (hasClaims) {
-                registerShip(level, msg.center, claim, player, blockCount, maxSize);
-            }
+            cacheShipStructure(level, msg.center, blockCount);
+
+            Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
             sync(player, msg.center, updated != null ? updated : claim, level, blockCount);
         });
     }
 
-    // Checks if another claim block exists on the same ship.
     private static boolean hasDuplicateClaimBlock(ServerLevel level, BlockPos center) {
         SubLevel ship = SableShipUtils.getShipAt(level, center);
         String shipId = SableShipUtils.getShipId(ship);
@@ -112,28 +100,20 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
         return false;
     }
 
-    // Links ship (sublevel) to claim and updates registries.
-    // blockCount and maxSize are written to JSON so the file always reflects last known block usage.
-    private static void registerShip(ServerLevel level, BlockPos center, Claim claim, ServerPlayer player,
-                                     int blockCount, int maxSize) {
+    private static void cacheShipStructure(ServerLevel level, BlockPos center, int blockCount) {
         SubLevel ship = SableShipUtils.getShipAt(level, center);
         String shipId = SableShipUtils.getShipId(ship);
-        if (shipId == null) return;
 
-        String shipName = SableShipUtils.getShipName(ship);
-        RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString(),
-                blockCount, maxSize);
-        UnregisteredSublevelManager.removeShip(shipId);
-        claim.setShipId(shipId);
-        ClaimSavedData.get(level).setDirty();
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        data.cacheShipBlockCount(center, blockCount);
+        if (shipId != null) {
+            data.cacheShipId(center, shipId);
+        }
     }
 
     private static void sync(ServerPlayer player, BlockPos center, Claim claim,
                               ServerLevel level, int shipBlockCount) {
         AeroClaimSavedData data = AeroClaimSavedData.get(level);
-        if (shipBlockCount != SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) {
-            data.cacheShipBlockCount(center, shipBlockCount);
-        }
         PacketDistributor.sendToPlayer(player, new SyncClaimStatePacket(
                 center,
                 claim.isActive(),

@@ -7,7 +7,10 @@ import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
+import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
+import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -55,9 +58,18 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 return;
             }
 
-            int blockCount = ClaimManager.countShipBlocks(level, msg.center, maxSize + 1);
+            AeroClaimSavedData data = AeroClaimSavedData.get(level);
+            Integer cachedCount = data.getCachedShipBlockCount(msg.center);
+
+            int blockCount;
+            if (cachedCount != null) {
+                blockCount = cachedCount;
+            } else {
+                blockCount = ClaimManager.countShipBlocks(level, msg.center, maxSize + 1);
+            }
+
             if (blockCount > maxSize) {
-                int exact = ClaimManager.countShipBlocksExact(level, msg.center);
+                int exact = cachedCount != null ? cachedCount : ClaimManager.countShipBlocksExact(level, msg.center);
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", exact, maxSize));
                 sync(player, msg.center, claim, level, exact);
                 return;
@@ -71,6 +83,8 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
 
             player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_refreshed"));
 
+            registerShip(level, msg.center, claim, player, blockCount, maxSize);
+
             Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
             if (updated != null) {
                 PacketDistributor.sendToPlayer(player,
@@ -79,6 +93,26 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
 
             sync(player, msg.center, updated != null ? updated : claim, level, blockCount);
         });
+    }
+
+    private static void registerShip(ServerLevel level, BlockPos center, Claim claim, ServerPlayer player,
+                                     int blockCount, int maxSize) {
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        String shipId = data.getCachedShipId(center);
+
+        if (shipId == null) {
+            SubLevel ship = SableShipUtils.getShipAt(level, center);
+            shipId = SableShipUtils.getShipId(ship);
+        }
+
+        if (shipId == null) return;
+
+        String shipName = SableShipUtils.getShipName(SableShipUtils.getShipAt(level, center));
+        RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString(),
+                blockCount, maxSize);
+        UnregisteredSublevelManager.removeShip(shipId);
+        claim.setShipId(shipId);
+        ClaimSavedData.get(level).setDirty();
     }
 
     private static void sync(ServerPlayer player, BlockPos center, Claim claim,

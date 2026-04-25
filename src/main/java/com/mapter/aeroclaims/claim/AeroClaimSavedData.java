@@ -29,6 +29,8 @@ public class AeroClaimSavedData extends SavedData {
 
     private final Map<Long, Integer> shipBlockCountCache = new HashMap<>();
 
+    private final Map<Long, String> shipIdCache = new HashMap<>();
+
 
     public static AeroClaimSavedData get(ServerLevel level) {
         return level.getServer().overworld().getDataStorage().computeIfAbsent(FACTORY, DATA_NAME);
@@ -52,6 +54,10 @@ public class AeroClaimSavedData extends SavedData {
         for (Tag t : tag.getList("shipBlockCountCache", Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;
             data.shipBlockCountCache.put(e.getLong("pos"), e.getInt("count"));
+        }
+        for (Tag t : tag.getList("shipIdCache", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.shipIdCache.put(e.getLong("pos"), e.getString("shipId"));
         }
 
         return data;
@@ -94,6 +100,15 @@ public class AeroClaimSavedData extends SavedData {
             shipCache.add(entry);
         }
         tag.put("shipBlockCountCache", shipCache);
+
+        ListTag shipIdCacheTag = new ListTag();
+        for (Map.Entry<Long, String> e : shipIdCache.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putLong("pos", e.getKey());
+            entry.putString("shipId", e.getValue());
+            shipIdCacheTag.add(entry);
+        }
+        tag.put("shipIdCache", shipIdCacheTag);
 
         return tag;
     }
@@ -170,5 +185,19 @@ public class AeroClaimSavedData extends SavedData {
 
     public void clearCachedShipBlockCount(BlockPos pos) {
         shipBlockCountCache.remove(pos.asLong());
+    }
+
+    public String getCachedShipId(BlockPos pos) {
+        return shipIdCache.get(pos.asLong());
+    }
+
+    public void cacheShipId(BlockPos pos, String shipId) {
+        shipIdCache.put(pos.asLong(), shipId);
+        setDirty();
+    }
+
+    public void clearCachedShipId(BlockPos pos) {
+        shipIdCache.remove(pos.asLong());
+        setDirty();
     }
 }
