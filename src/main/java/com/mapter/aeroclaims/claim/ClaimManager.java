@@ -16,7 +16,11 @@ import java.util.function.Predicate;
 
 public class ClaimManager {
 
-    public static ClaimPermissionResolver PERMISSION_RESOLVER = new DefaultPermissionResolver();
+    private static ClaimPermissionResolver PERMISSION_RESOLVER = new DefaultPermissionResolver();
+
+    public static ClaimPermissionResolver getPermissionResolver() {
+        return PERMISSION_RESOLVER;
+    }
 
     public static void init(boolean opacLoaded) {
         PERMISSION_RESOLVER = opacLoaded ? new OpacPermissionResolver() : new DefaultPermissionResolver();
