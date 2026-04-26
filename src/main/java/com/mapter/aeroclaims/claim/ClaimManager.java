@@ -115,7 +115,6 @@ public class ClaimManager {
         return traverse(level, start, Integer.MAX_VALUE).count();
     }
 
-    // Private methods
 
     private static void updateClaimedBlocks(ServerLevel level, Claim claim, BlockPos center, int limit) {
         Set<BlockPos> blocks = floodFill(level, center, limit);
@@ -173,6 +172,6 @@ public class ClaimManager {
 
     private static boolean isSolid(ServerLevel level, BlockPos pos) {
         var state = level.getBlockState(pos);
-        return !state.isAir() && !state.is(Blocks.WATER);
+        return !state.isAir() && !state.is(Blocks.WATER) && !state.is(Blocks.SNOW);
     }
 }

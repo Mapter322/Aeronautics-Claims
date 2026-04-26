@@ -17,7 +17,7 @@ public class AeroClaimsConfig {
         builder.push("general");
         BLOCKS_PER_CLAIM = builder
                 .comment("How many ship blocks one aero claim covers. Example: 100 means 1 claim = 100 block limit.")
-                .defineInRange("blocksPerClaim", 100, 1, Integer.MAX_VALUE);
+                .defineInRange("blocksPerClaim", 250, 1, Integer.MAX_VALUE);
         DEACTIVATE_ON_OVERFLOW = builder
                 .comment("If true, the claim will be deactivated when a refresh finds the ship exceeds its block limit. Default: false.")
                 .define("deactivateOnOverflow", false);
