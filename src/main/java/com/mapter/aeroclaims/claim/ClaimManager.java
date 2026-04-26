@@ -8,9 +8,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
 
+import java.util.ArrayDeque;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -23,7 +22,6 @@ public class ClaimManager {
         PERMISSION_RESOLVER = opacLoaded ? new OpacPermissionResolver() : new DefaultPermissionResolver();
     }
 
-    // Claim management
 
     public static void addClaim(ServerLevel level, BlockPos pos, UUID owner) {
         ClaimSavedData data = ClaimSavedData.get(level);
@@ -43,8 +41,6 @@ public class ClaimManager {
         claim.setActive(false);
         ClaimSavedData.get(level).setDirty();
     }
-
-
 
     public static boolean activateClaim(ServerLevel level, BlockPos center) {
         Claim claim = getClaimByCenter(level, center);
@@ -75,7 +71,6 @@ public class ClaimManager {
         return true;
     }
 
-
     public static int recountShipBlocks(ServerLevel level, BlockPos center, boolean deactivateOnOverflow) {
         Claim claim = getClaimByCenter(level, center);
         if (claim == null) return -1;
@@ -97,7 +92,6 @@ public class ClaimManager {
         ClaimSavedData.get(level).setDirty();
         return blockCount;
     }
-
 
     public static Claim getClaimAt(ServerLevel level, BlockPos pos) {
         return ClaimSavedData.get(level).getBlockIndex().get(pos);
@@ -142,26 +136,39 @@ public class ClaimManager {
 
     private record TraversalResult(int count, Set<BlockPos> visitedBlocks) {}
 
+
     private static TraversalResult traverse(ServerLevel level, BlockPos start, int limit) {
-        Set<BlockPos> visited = new HashSet<>();
-        Queue<BlockPos> queue = new LinkedList<>();
-        visited.add(start);
-        queue.add(start);
+        Set<Long> visited = new HashSet<>();
+        ArrayDeque<Long> queue = new ArrayDeque<>();
+
+        long startLong = start.asLong();
+        visited.add(startLong);
+        queue.add(startLong);
 
         int count = 0;
         while (!queue.isEmpty()) {
-            BlockPos current = queue.poll();
-            if (!isSolid(level, current)) continue;
+            long current = queue.poll();
+            BlockPos currentPos = BlockPos.of(current);
+
+            if (!isSolid(level, currentPos)) continue;
             if (++count > limit) break;
 
             for (Direction dir : Direction.values()) {
-                BlockPos neighbor = current.relative(dir);
-                if (visited.add(neighbor) && isSolid(level, neighbor)) {
-                    queue.add(neighbor);
+                long neighborLong = BlockPos.offset(current, dir);
+                if (visited.add(neighborLong)) {
+                    BlockPos neighborPos = BlockPos.of(neighborLong);
+                    if (isSolid(level, neighborPos)) {
+                        queue.add(neighborLong);
+                    }
                 }
             }
         }
-        return new TraversalResult(count, visited);
+
+        Set<BlockPos> visitedBlocks = new HashSet<>(visited.size());
+        for (long packed : visited) {
+            visitedBlocks.add(BlockPos.of(packed));
+        }
+        return new TraversalResult(count, visitedBlocks);
     }
 
     private static boolean isSolid(ServerLevel level, BlockPos pos) {
