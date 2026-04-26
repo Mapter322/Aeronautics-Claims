@@ -12,6 +12,6 @@ public class CreateProtectionHelper {
     public static boolean isBlockAccessAllowed(BlockPos pos, ServerPlayer player) {
         if (pos == null || player == null) return true;
         Claim claim = ClaimManager.getClaimAt(player.serverLevel(), pos);
-        return claim == null || ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim);
+        return claim == null || ClaimManager.getPermissionResolver().canAccess(player, claim);
     }
 }

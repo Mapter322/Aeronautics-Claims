@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -24,9 +23,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-// Forge event listeners protecting claimed blocks from unauthorized access.
-// Each event checks if affected position is in an active claim, then verifies player permissions via PERMISSION_RESOLVER.
-// Spam messages limited by MESSAGE_COOLDOWN_MS cooldown per player.
 @EventBusSubscriber(modid = Aeroclaims.MODID)
 public class ProtectionEvents {
 
@@ -74,7 +70,7 @@ public class ProtectionEvents {
         Claim claim = getClaimAtWithMargin(player.serverLevel(), event.getPos());
         if (claim == null) return;
 
-        if (!ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
+        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
             event.setCanceled(true);
             if (shouldSendMessage(player)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
@@ -87,7 +83,7 @@ public class ProtectionEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         ServerLevel level = player.serverLevel();
 
-        // Check both clicked block and target block (where new block could be placed)
+
         BlockPos clickedPos = event.getPos();
         BlockPos targetPos  = clickedPos.relative(event.getFace());
         Claim claim = firstNonNull(
@@ -96,7 +92,7 @@ public class ProtectionEvents {
         );
         if (claim == null) return;
 
-        if (!ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
+        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
             event.setUseItem(TriState.FALSE);
@@ -124,7 +120,7 @@ public class ProtectionEvents {
         );
         if (claim == null) return;
 
-        if (!ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
+        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
         }
@@ -137,7 +133,7 @@ public class ProtectionEvents {
         Claim claim = getClaimAtWithMargin(player.serverLevel(), event.getPos());
         if (claim == null) return;
 
-        if (!ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
+        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
             event.setCanceled(true);
             if (shouldSendMessage(player)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
@@ -152,7 +148,7 @@ public class ProtectionEvents {
         Claim claim = getClaimAtWithMargin(player.serverLevel(), event.getPos());
         if (claim == null) return;
 
-        if (!ClaimManager.PERMISSION_RESOLVER.canAccess(player, claim)) {
+        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
             event.setCanceled(true);
             if (shouldSendMessage(player)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
