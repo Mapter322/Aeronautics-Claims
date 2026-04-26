@@ -1,10 +1,12 @@
 package com.mapter.aeroclaims.sublevel;
 
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.math.Pose3dc;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3dc;
 
 public class SableShipUtils {
     public static boolean isOnShip(ServerLevel level, BlockPos pos) {
@@ -29,6 +31,14 @@ public class SableShipUtils {
         if (ship == null) return null;
         String name = ship.getName();
         return name != null ? name : "ship";
+    }
+
+    public static @Nullable double[] getShipWorldPos(@Nullable SubLevel ship) {
+        if (ship == null) return null;
+        Pose3dc pose = ship.logicalPose();
+        if (pose == null) return null;
+        Vector3dc pos = pose.position();
+        return new double[]{pos.x(), pos.y(), pos.z()};
     }
 
     public static boolean deleteShipById(ServerLevel level, String shipId) {

@@ -79,7 +79,7 @@ public class AdminCommands {
     }
 
     private static int dumpUnclaimed(CommandSourceStack source) {
-        UnregisteredSublevelManager.save();
+        UnregisteredSublevelManager.saveNow();
         int count = UnregisteredSublevelManager.getCount();
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.dump", count), true);
         return 1;
@@ -94,7 +94,7 @@ public class AdminCommands {
 
     private static int dumpAll(CommandSourceStack source) {
         RegisteredSublevelManager.saveNow();
-        UnregisteredSublevelManager.save();
+        UnregisteredSublevelManager.saveNow();
         int claimed   = RegisteredSublevelManager.getCount();
         int unclaimed = UnregisteredSublevelManager.getCount();
         source.sendSuccess(() -> Component.translatable(
