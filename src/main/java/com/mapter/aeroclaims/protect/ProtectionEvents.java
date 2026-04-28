@@ -16,6 +16,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
 
@@ -31,8 +32,6 @@ public class ProtectionEvents {
 
     // Claim lookup with margin
 
-    // Searches for claim at position with claimMarginBlocks buffer.
-    // Checks exact position first, then rings r=1..margin.
     private static Claim getClaimAtWithMargin(ServerLevel level, BlockPos pos) {
         Claim exact = ClaimManager.getClaimAt(level, pos);
         if (exact != null) return exact;
@@ -156,6 +155,19 @@ public class ProtectionEvents {
         }
     }
 
+
+
+    @SubscribeEvent
+    public static void onBlockEntityPlace(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+
+        BlockEntity be = level.getBlockEntity(event.getPos());
+        if (be instanceof IPlacerTracked tracked) {
+            tracked.aeroclaims$setPlacerUUID(player.getUUID());
+            be.setChanged();
+        }
+    }
 
     @SubscribeEvent
     public static void onExplosionDetonate(ExplosionEvent.Detonate event) {

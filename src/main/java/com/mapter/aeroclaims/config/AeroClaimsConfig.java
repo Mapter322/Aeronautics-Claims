@@ -10,6 +10,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.BooleanValue DEACTIVATE_ON_OVERFLOW;
     public static final ModConfigSpec.IntValue CLAIM_MARGIN_BLOCKS;
     public static final ModConfigSpec.BooleanValue EXPLOSION_PROTECTION;
+    public static final ModConfigSpec.BooleanValue KINETIC_BLOCK_PROTECTION;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -27,6 +28,9 @@ public class AeroClaimsConfig {
         EXPLOSION_PROTECTION = builder
                 .comment("If true, explosions cannot destroy or damage blocks inside active claims. Default: true.")
                 .define("explosionProtection", true);
+        KINETIC_BLOCK_PROTECTION = builder
+                .comment("If true, Create drills and saws can only break claimed blocks if placed by a player with permission. Default: true.")
+                .define("kineticBlockProtection", true);
         builder.pop();
 
         SPEC = builder.build();

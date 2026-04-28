@@ -14,7 +14,10 @@
     "MixinAssemblePacket",
     "MixinHoneyGlueSpawnPacket",
     "MixinHoneyGlueChangeBoundsPacket",
-    "MixinPlaceMergingGluePacket"
+    "MixinPlaceMergingGluePacket",
+    "MixinKineticBlockEntityPlacer",
+    "MixinBlockBreakingKineticBlockEntity",
+    "MixinBlockBreakingMovementBehaviour"
   ],
   "client": [],
   "server": [],
