@@ -6,9 +6,7 @@ import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 
 import java.util.List;
 
@@ -18,22 +16,9 @@ public class AdminCommands {
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
             Commands.literal("aeroclaims")
-                .requires(source -> source.hasPermission(2))
-
-
-                .then(Commands.literal("info")
-                    .then(Commands.argument("player", EntityArgument.player())
-                        .executes(ctx -> {
-                            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
-                            return PlayerCommands.executeInfo(
-                                    ctx.getSource(),
-                                    target.getUUID(),
-                                    target.getGameProfile().getName()
-                            );
-                        })))
-
 
                 .then(Commands.literal("sublevels")
+                    .requires(source -> source.hasPermission(2))
                     .then(Commands.literal("unclaimed")
                         .then(Commands.literal("clear")
                             .executes(ctx -> clearUnclaimed(ctx.getSource())))

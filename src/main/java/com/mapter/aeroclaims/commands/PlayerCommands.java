@@ -6,6 +6,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -22,7 +23,17 @@ public class PlayerCommands {
         dispatcher.register(
             Commands.literal("aeroclaims")
                 .then(Commands.literal("info")
-                    .executes(ctx -> executeInfo(ctx.getSource(), null, null)))
+                    .executes(ctx -> executeInfo(ctx.getSource(), null, null))
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .requires(source -> source.hasPermission(2))
+                        .executes(ctx -> {
+                            ServerPlayer target = EntityArgument.getPlayer(ctx, "player");
+                            return executeInfo(
+                                    ctx.getSource(),
+                                    target.getUUID(),
+                                    target.getGameProfile().getName()
+                            );
+                        })))
 
                 .then(Commands.literal("transfer")
                     .then(Commands.literal("to")
