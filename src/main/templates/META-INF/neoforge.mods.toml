@@ -28,10 +28,16 @@ versionRange = "[1.21.1,1.22)"
 ordering = "NONE"
 side = "BOTH"
 
+[[dependencies.aeroclaims]]
+modId = "ftbteams"
+type = "optional"
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
 
 [[dependencies.aeroclaims]]
 modId = "openpartiesandclaims"
-type = "required"
+type = "optional"
 versionRange = "[0,)"
 ordering = "NONE"
 side = "BOTH"

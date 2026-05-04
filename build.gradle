@@ -116,7 +116,8 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 dependencies {
 
     api "dev.ryanhcode.sable:sable-common-1.21.1:1.0.6"
-    implementation "curse.maven:open-parties-and-claims-636608:7914511"
+    compileOnly "curse.maven:open-parties-and-claims-636608:7914511"
+    compileOnly "curse.maven:ftb-teams-forge-404468:7878281"
     implementation "curse.maven:create-328085:7408951"
     implementation("net.createmod.ponder:Ponder-NeoForge-1.21.1:1.0.69")
     compileOnly("dev.simulated_team.simulated:simulated-neoforge-1.21.1:1.0.3") { transitive = false }

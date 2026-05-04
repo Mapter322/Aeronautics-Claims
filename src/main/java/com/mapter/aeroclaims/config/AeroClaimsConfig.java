@@ -6,16 +6,29 @@ public class AeroClaimsConfig {
 
     public static final ModConfigSpec SPEC;
 
+    public static final ModConfigSpec.EnumValue<PartyProvider> PARTY_PROVIDER;
     public static final ModConfigSpec.IntValue BLOCKS_PER_CLAIM;
     public static final ModConfigSpec.BooleanValue DEACTIVATE_ON_OVERFLOW;
     public static final ModConfigSpec.IntValue CLAIM_MARGIN_BLOCKS;
     public static final ModConfigSpec.BooleanValue EXPLOSION_PROTECTION;
     public static final ModConfigSpec.BooleanValue KINETIC_BLOCK_PROTECTION;
 
+
+    public enum PartyProvider {
+        FTB,
+        OPAC
+    }
+
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
         builder.push("general");
+        PARTY_PROVIDER = builder
+                .comment(
+                    "Which party/teams mod to use for claim access checks. FTB Teams or Open Parties and CLaims.",
+                    "Default: OPAC"
+                )
+                .defineEnum("partyProvider", PartyProvider.OPAC);
         BLOCKS_PER_CLAIM = builder
                 .comment("How many ship blocks one aero claim covers. Example: 100 means 1 claim = 100 block limit.")
                 .defineInRange("blocksPerClaim", 250, 1, Integer.MAX_VALUE);

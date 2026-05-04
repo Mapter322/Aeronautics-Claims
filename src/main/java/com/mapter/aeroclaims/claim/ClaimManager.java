@@ -1,12 +1,16 @@
 package com.mapter.aeroclaims.claim;
 
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.permission.ClaimPermissionResolver;
 import com.mapter.aeroclaims.permission.DefaultPermissionResolver;
+import com.mapter.aeroclaims.permission.FtbTeamsPermissionResolver;
 import com.mapter.aeroclaims.permission.OpacPermissionResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.Blocks;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
@@ -16,14 +20,52 @@ import java.util.function.Predicate;
 
 public class ClaimManager {
 
-    private static ClaimPermissionResolver PERMISSION_RESOLVER = new DefaultPermissionResolver();
+    private static final Logger LOGGER = LogManager.getLogger();
+
+    private static ClaimPermissionResolver PERMISSION_RESOLVER = null;
+    private static boolean ftbLoaded  = false;
+    private static boolean opacLoaded = false;
+
+
+    public static void init(boolean ftbLoaded, boolean opacLoaded) {
+        ClaimManager.ftbLoaded  = ftbLoaded;
+        ClaimManager.opacLoaded = opacLoaded;
+
+        PERMISSION_RESOLVER = null;
+    }
 
     public static ClaimPermissionResolver getPermissionResolver() {
+        if (PERMISSION_RESOLVER == null) {
+            PERMISSION_RESOLVER = buildResolver();
+        }
         return PERMISSION_RESOLVER;
     }
 
-    public static void init(boolean opacLoaded) {
-        PERMISSION_RESOLVER = opacLoaded ? new OpacPermissionResolver() : new DefaultPermissionResolver();
+    private static ClaimPermissionResolver buildResolver() {
+        AeroClaimsConfig.PartyProvider provider = AeroClaimsConfig.PARTY_PROVIDER.get();
+
+        return switch (provider) {
+            case FTB -> {
+                if (ftbLoaded) {
+                    LOGGER.info("[AeroClaims] Using FTB Teams for party permission checks.");
+                    yield new FtbTeamsPermissionResolver();
+                } else {
+                    LOGGER.warn("[AeroClaims] partyProvider = FTB, but 'ftbteams' is not loaded! " +
+                            "Falling back to owner-only resolver.");
+                    yield new DefaultPermissionResolver();
+                }
+            }
+            case OPAC -> {
+                if (opacLoaded) {
+                    LOGGER.info("[AeroClaims] Using Open Parties and Claims for party permission checks.");
+                    yield new OpacPermissionResolver();
+                } else {
+                    LOGGER.warn("[AeroClaims] partyProvider = OPAC, but 'openpartiesandclaims' is not loaded! " +
+                            "Falling back to owner-only resolver.");
+                    yield new DefaultPermissionResolver();
+                }
+            }
+        };
     }
 
 
@@ -138,7 +180,6 @@ public class ClaimManager {
     }
 
     private record TraversalResult(int count, Set<BlockPos> visitedBlocks) {}
-
 
     private static TraversalResult traverse(ServerLevel level, BlockPos start, int limit) {
         Set<Long> visited = new HashSet<>();

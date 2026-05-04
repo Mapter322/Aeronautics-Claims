@@ -27,12 +27,15 @@ public class Aeroclaims {
         modBus.addListener(Aeroclaims::onCommonSetup);
 
         modContainer.registerConfig(ModConfig.Type.SERVER, AeroClaimsConfig.SPEC);
-
-        ClaimManager.init(ModList.get().isLoaded("openpartiesandclaims"));
     }
 
     private static void onCommonSetup(FMLCommonSetupEvent event) {
         SableSubLevelEventHandler.register();
+
+        boolean ftbLoaded  = ModList.get().isLoaded("ftbteams");
+        boolean opacLoaded = ModList.get().isLoaded("openpartiesandclaims");
+
+        ClaimManager.init(ftbLoaded, opacLoaded);
     }
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {
