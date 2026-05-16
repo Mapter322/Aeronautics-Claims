@@ -37,6 +37,7 @@
   "commands.aeroclaims.ships.clear.none": "There are no unregistered ships",
   "commands.aeroclaims.ships.clear.done": "Clearing unregistered ships finished. Deleted: %s, failed: %s, total: %s",
   "commands.aeroclaims.sublevels.dump": "§aSublevels dump finished. §fOpen folder minecraft/world/aeroclaims",
+  "commands.aeroclaims.sublevels.clear.disabled": "§cThis command is disabled in config. Enable 'enableClearCommand' to use it.",
   "commands.aeroclaims.sublevels.clear.none": "There are no unclaimed sublevels",
   "message.aeroclaims.foreign_territory": "§cThis is someone else's territory",
   "message.aeroclaims.no_access_use_block": "§cYou don't have permission to use this block",

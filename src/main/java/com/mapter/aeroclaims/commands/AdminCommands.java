@@ -1,5 +1,6 @@
 package com.mapter.aeroclaims.commands;
 
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
@@ -36,6 +37,11 @@ public class AdminCommands {
 
 
     private static int clearUnclaimed(CommandSourceStack source) {
+        if (!AeroClaimsConfig.ENABLE_CLEAR_COMMAND.get()) {
+            source.sendFailure(Component.translatable("commands.aeroclaims.sublevels.clear.disabled"));
+            return 0;
+        }
+
         int total = UnregisteredSublevelManager.getCount();
 
         if (total == 0) {

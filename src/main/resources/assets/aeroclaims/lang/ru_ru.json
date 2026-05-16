@@ -37,6 +37,7 @@
   "commands.aeroclaims.ships.clear.none": "Незарегистрированных кораблей нет",
   "commands.aeroclaims.ships.clear.done": "Удаление незарегистрированных кораблей завершено. Удалено: %s, не удалось удалить: %s, всего было: %s",
   "commands.aeroclaims.sublevels.dump": "§aСубклеймы выгружены. §fОткройте папку minecraft/world/aeroclaims",
+  "commands.aeroclaims.sublevels.clear.disabled": "§cЭта команда отключена в конфиге. Включите 'enableClearCommand' чтобы использовать её.",
   "commands.aeroclaims.sublevels.clear.none": "Незаприваченых субклеймов нет",
   "message.aeroclaims.foreign_territory": "§cЭто чужая территория",
   "message.aeroclaims.no_access_use_block": "§cНет доступа к использованию блока",
