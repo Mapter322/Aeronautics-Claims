@@ -56,5 +56,12 @@
   "screen.aeroclaims.claim_settings.access_label": "Доступ: %s",
   "screen.aeroclaims.claim_settings.access.party": "§bГруппа",
   "screen.aeroclaims.claim_settings.access.party_ally": "§aГруппа + Союзники",
-  "screen.aeroclaims.claim_settings.access.all": "§eВсе"
+  "screen.aeroclaims.claim_settings.access.all": "§eВсе",
+  "commands.aeroclaims.admin.refresh.all.done": "§aОбновление приватов завершено. Обновлено: %s, ошибок: %s, всего: %s",
+  "commands.aeroclaims.admin.refresh.player.done": "§aОбновлены приваты игрока %s. Обновлено: %s, ошибок: %s, всего: %s",
+  "commands.aeroclaims.admin.refresh.no_claims": "§eПриваты для %s не найдены",
+  "commands.aeroclaims.admin.refresh.invalid_ship_uuid": "§cНеверный UUID корабля: %s",
+  "commands.aeroclaims.admin.refresh.ship_not_found": "§Приват для корабля %s не найден",
+  "commands.aeroclaims.admin.refresh.ship.done": "§aБлоки пересчитаны для корабля: %s",
+  "commands.aeroclaims.admin.refresh.ship_failed": "§cНе удалось обновить корабль %s."
 }
