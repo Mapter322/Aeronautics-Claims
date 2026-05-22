@@ -12,7 +12,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.IntValue CLAIM_MARGIN_BLOCKS;
     public static final ModConfigSpec.BooleanValue EXPLOSION_PROTECTION;
     public static final ModConfigSpec.BooleanValue KINETIC_BLOCK_PROTECTION;
-    public static final ModConfigSpec.BooleanValue ENABLE_CLEAR_COMMAND;
+    public static final ModConfigSpec.BooleanValue ENABLE_DELETE_COMMAND;
 
 
     public enum PartyProvider {
@@ -45,13 +45,13 @@ public class AeroClaimsConfig {
         KINETIC_BLOCK_PROTECTION = builder
                 .comment("If true, Create drills and saws can only break claimed blocks if placed by a player with permission. Default: true.")
                 .define("kineticBlockProtection", true);
-        ENABLE_CLEAR_COMMAND = builder
+        ENABLE_DELETE_COMMAND = builder
                 .comment(
                     "WARNING: This command deletes ALL unclaimed sublevels from the world.",
                     "Only enable this if you know what you're doing.",
                     "Default: false"
                 )
-                .define("enableClearCommand", false);
+                .define("enableDeleteCommand", false);
         builder.pop();
 
         SPEC = builder.build();

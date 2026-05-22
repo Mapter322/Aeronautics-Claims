@@ -28,11 +28,7 @@
   "commands.aeroclaims.transfer.error": "§cПроизошла ошибка при переносе приватов",
   "commands.aeroclaims.transfer_back.success": "§aУспешно перенесено %s приват(ов) в opac. §eПриваты aero: %s / %s",
   "commands.aeroclaims.transfer_back.not_enough": "§cНедостаточно свободных приватов aero. Свободно: %s, запрошено: %s",
-  "commands.aeroclaims.ships.clear.none": "Незарегистрированных кораблей нет",
-  "commands.aeroclaims.ships.clear.done": "Удаление незарегистрированных кораблей завершено. Удалено: %s, не удалось удалить: %s, всего было: %s",
   "commands.aeroclaims.sublevels.dump": "§aСубклеймы выгружены. §fОткройте папку minecraft/world/aeroclaims",
-  "commands.aeroclaims.sublevels.clear.disabled": "§cЭта команда отключена в конфиге. Включите 'enableClearCommand' чтобы использовать её.",
-  "commands.aeroclaims.sublevels.clear.none": "Незаприваченых субклеймов нет",
   "message.aeroclaims.foreign_territory": "§cЭто чужая территория",
   "message.aeroclaims.no_access_use_block": "§cНет доступа к использованию блока",
   "message.aeroclaims.claim_block_only_on_ship": "§cБлок можно поставить только на корабль!",
@@ -63,5 +59,9 @@
   "commands.aeroclaims.admin.refresh.invalid_ship_uuid": "§cНеверный UUID корабля: %s",
   "commands.aeroclaims.admin.refresh.ship_not_found": "§Приват для корабля %s не найден",
   "commands.aeroclaims.admin.refresh.ship.done": "§aБлоки пересчитаны для корабля: %s",
-  "commands.aeroclaims.admin.refresh.ship_failed": "§cНе удалось обновить корабль %s."
+  "commands.aeroclaims.admin.refresh.ship_failed": "§cНе удалось обновить корабль %s.",
+  "commands.aeroclaims.sublevels.delete.disabled": "§cЭта команда отключена в конфиге. Включите 'enableClearCommand' чтобы использовать её.",
+  "commands.aeroclaims.sublevels.delete.none": "Незаприваченых сублевелов нет",
+  "commands.aeroclaims.ships.delete.none": "Незаприваченых сублевелов нет",
+  "commands.aeroclaims.ships.delete.done": "Удаление незаприваченых сублевелов завершено. Удалено: %s, не удалось удалить: %s, всего было: %s"
 }

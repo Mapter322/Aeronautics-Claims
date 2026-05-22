@@ -32,17 +32,12 @@ public class AdminCommands {
 
                 .then(Commands.literal("sublevels")
                     .requires(source -> source.hasPermission(2))
-                    .then(Commands.literal("unclaimed")
-                        .then(Commands.literal("clear")
-                            .executes(ctx -> clearUnclaimed(ctx.getSource())))
-                        .then(Commands.literal("dump")
-                            .executes(ctx -> dumpUnclaimed(ctx.getSource()))))
-                    .then(Commands.literal("claimed")
-                        .then(Commands.literal("dump")
-                            .executes(ctx -> dumpClaimed(ctx.getSource()))))
-                    .then(Commands.literal("all")
-                        .then(Commands.literal("dump")
-                            .executes(ctx -> dumpAll(ctx.getSource()))))
+                    .then(Commands.literal("dump")
+                        .executes(ctx -> dumpAll(ctx.getSource())))
+                    .then(Commands.literal("delete")
+                        .then(Commands.literal("unclaimed")
+                            .then(Commands.literal("confirm")
+                                .executes(ctx -> deleteUnclaimed(ctx.getSource())))))
                     .then(Commands.literal("refresh")
                         .then(Commands.literal("all")
                             .executes(ctx -> adminRefreshAll(ctx.getSource())))
@@ -55,8 +50,8 @@ public class AdminCommands {
                             .then(Commands.argument("shipUuid", StringArgumentType.word())
                                 .executes(ctx -> adminRefreshByShipUuid(
                                         ctx.getSource(),
-                                        StringArgumentType.getString(ctx, "shipUuid")))))))
-        );
+                                        StringArgumentType.getString(ctx, "shipUuid"))))))))
+        ;
     }
 
 
@@ -177,15 +172,15 @@ public class AdminCommands {
     }
 
 
-    private static int clearUnclaimed(CommandSourceStack source) {
-        if (!AeroClaimsConfig.ENABLE_CLEAR_COMMAND.get()) {
-            source.sendFailure(Component.translatable("commands.aeroclaims.sublevels.clear.disabled"));
+    private static int deleteUnclaimed(CommandSourceStack source) {
+        if (!AeroClaimsConfig.ENABLE_DELETE_COMMAND.get()) {
+            source.sendFailure(Component.translatable("commands.aeroclaims.sublevels.delete.disabled"));
             return 0;
         }
 
         int total = UnregisteredSublevelManager.getCount();
         if (total == 0) {
-            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.clear.none"), true);
+            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.delete.none"), true);
             return 1;
         }
 
@@ -201,23 +196,11 @@ public class AdminCommands {
 
         int fd = deleted, ff = failed;
         source.sendSuccess(() -> Component.translatable(
-                "commands.aeroclaims.ships.clear.done", fd, ff, total), true);
+                "commands.aeroclaims.ships.delete.done", fd, ff, total), true);
         return 1;
     }
 
-    private static int dumpUnclaimed(CommandSourceStack source) {
-        UnregisteredSublevelManager.saveNow();
-        int count = UnregisteredSublevelManager.getCount();
-        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.dump", count), true);
-        return 1;
-    }
 
-    private static int dumpClaimed(CommandSourceStack source) {
-        RegisteredSublevelManager.saveNow();
-        int count = RegisteredSublevelManager.getCount();
-        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.dump", count), true);
-        return 1;
-    }
 
     private static int dumpAll(CommandSourceStack source) {
         RegisteredSublevelManager.saveNow();
