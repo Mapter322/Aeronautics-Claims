@@ -4,7 +4,7 @@
   "screen.aeroclaims.claim_settings.refresh": "Refresh",
   "screen.aeroclaims.claim_settings.activate": "Activate",
   "screen.aeroclaims.claim_settings.deactivate": "Deactivate",
-  "screen.aeroclaims.claim_settings.refresh_wait": "Wait 30 seconds...",
+  "screen.aeroclaims.claim_settings.refresh_wait": "Wait 10 sec...",
   "screen.aeroclaims.claim_settings.status.active": "active",
   "screen.aeroclaims.claim_settings.status.disabled": "disabled",
   "screen.aeroclaims.claim_settings.privacy_prefix": "Claim: ",

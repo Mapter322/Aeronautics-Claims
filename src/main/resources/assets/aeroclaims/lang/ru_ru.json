@@ -4,7 +4,7 @@
   "screen.aeroclaims.claim_settings.refresh": "Обновить",
   "screen.aeroclaims.claim_settings.activate": "Активировать",
   "screen.aeroclaims.claim_settings.deactivate": "Деактивировать",
-  "screen.aeroclaims.claim_settings.refresh_wait": "Подождите 30 сек...",
+  "screen.aeroclaims.claim_settings.refresh_wait": "Ждите 10 сек...",
   "screen.aeroclaims.claim_settings.status.active": "активен",
   "screen.aeroclaims.claim_settings.status.disabled": "отключен",
   "screen.aeroclaims.claim_settings.privacy_prefix": "Приват: ",

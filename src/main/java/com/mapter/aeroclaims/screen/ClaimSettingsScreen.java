@@ -34,9 +34,9 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private static final int COLOR_ERR     = 0xCC3333;
     private static final int COLOR_WHITE   = 0xFFFFFF;
     private static final int COLOR_DIV     = 0x66888888;
-    private static final int COLOR_INFO_BG = 0xCC333333; // dark grey panel behind the info block
+    private static final int COLOR_INFO_BG = 0xCC333333;
 
-    private static final long REFRESH_COOLDOWN_MS = 30_000L;
+    private static final long REFRESH_COOLDOWN_MS = 10_000L;
     // per-block cooldown tracking; activateUsed prevents double-activate within one cooldown window
     private static final Map<BlockPos, Long>    refreshCooldowns       = new HashMap<>();
     private static final Map<BlockPos, Boolean> activateUsedInCooldown = new HashMap<>();
