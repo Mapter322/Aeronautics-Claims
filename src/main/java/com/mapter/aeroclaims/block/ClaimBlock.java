@@ -114,6 +114,7 @@ public class ClaimBlock extends BaseEntityBlock {
 
             AeroClaimSavedData data = AeroClaimSavedData.get(serverLevel);
             data.clearCachedShipBlockCount(pos);
+            data.clearCachedShipId(pos);
         }
         super.onRemove(state, level, pos, newState, moving);
     }
