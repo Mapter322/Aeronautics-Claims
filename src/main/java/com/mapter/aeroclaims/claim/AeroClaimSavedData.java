@@ -185,6 +185,7 @@ public class AeroClaimSavedData extends SavedData {
 
     public void clearCachedShipBlockCount(BlockPos pos) {
         shipBlockCountCache.remove(pos.asLong());
+        setDirty();
     }
 
     public String getCachedShipId(BlockPos pos) {
