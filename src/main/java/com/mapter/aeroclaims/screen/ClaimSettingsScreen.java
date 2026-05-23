@@ -37,19 +37,16 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private static final int COLOR_INFO_BG = 0xCC333333;
 
     private static final long REFRESH_COOLDOWN_MS = 10_000L;
-    // per-block cooldown tracking; activateUsed prevents double-activate within one cooldown window
     private static final Map<BlockPos, Long>    refreshCooldowns       = new HashMap<>();
     private static final Map<BlockPos, Boolean> activateUsedInCooldown = new HashMap<>();
 
     // layout
-    private static final int BTN_X     = 10;
-    private static final int BTN_H     = 18;
-    private static final int SMALL_BTN = 12;
-    private static final int GAP       = 10;  // spacing between elements
-    private static final int INFO_Y    = 46;  // 24 (access btn top) + 18 (BTN_H) + 4 (GAP)
-    private static final int INFO_PAD  = 4;   // inner text padding inside the info panel
+    private static final int BTN_X    = 10;
+    private static final int BTN_H    = 18;
+    private static final int GAP      = 10;
+    private static final int INFO_Y   = 46;
+    private static final int INFO_PAD = 4;
 
-    // access levels for the cycling button: party < party+ally < all
     private static final int ACCESS_PARTY      = 0;
     private static final int ACCESS_PARTY_ALLY = 1;
     private static final int ACCESS_ALL        = 2;
@@ -57,16 +54,13 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private Button accessButton;
     private Button refreshButton;
     private Button actionButton;
-    private Button minusButton;
-    private Button plusButton;
 
-    // true while we're inside a cooldown window waiting for the user to confirm activation
     private boolean inActivateMode = false;
 
     public ClaimSettingsScreen(ClaimSettingsMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
         imageWidth  = TEXTURE_W;
-        imageHeight = TEXTURE_H + 30;
+        imageHeight = TEXTURE_H + 10;
     }
 
     @Override
@@ -74,7 +68,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         super.init();
 
         int bw    = imageWidth - BTN_X * 2;
-        int halfW = bw / 2 - 4;
+        int halfW = bw / 2 - 2;
 
         accessButton = Button.builder(accessText(), b -> {
             cycleAccess();
@@ -82,20 +76,12 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             sendPermissions();
         }).bounds(leftPos + BTN_X, topPos + 24, bw, BTN_H).build();
 
-        int rowY  = INFO_Y + infoPanelHeight() + GAP;
-        // left column: [-  N claims  +] on top, 0/255 text below (drawn in renderLabels)
-        minusButton = Button.builder(Component.literal("-"), b -> sendAdjust(-1))
-                .bounds(leftPos + BTN_X, topPos + rowY, SMALL_BTN, BTN_H).build();
-        plusButton  = Button.builder(Component.literal("+"), b -> sendAdjust(+1))
-                .bounds(leftPos + BTN_X + halfW - SMALL_BTN, topPos + rowY, SMALL_BTN, BTN_H).build();
+        int rowY = INFO_Y + infoPanelHeight() + GAP;
 
-        // right column: [Refresh] on top, [Activate/Deactivate] below
-        int rightX = BTN_X + halfW + 8;
-        int rightW = bw - halfW - 8;
         refreshButton = Button.builder(refreshText(), b -> sendRefresh())
-                .bounds(leftPos + rightX, topPos + rowY, rightW, BTN_H).build();
+                .bounds(leftPos + BTN_X, topPos + rowY, halfW, BTN_H).build();
         actionButton  = Button.builder(activateText(), b -> sendActionButtonClick())
-                .bounds(leftPos + rightX, topPos + rowY + BTN_H + 2, rightW, BTN_H).build();
+                .bounds(leftPos + BTN_X + halfW + 4, topPos + rowY, halfW, BTN_H).build();
 
         updateRefreshButton();
         updateActionButton();
@@ -103,30 +89,18 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         addRenderableWidget(accessButton);
         addRenderableWidget(refreshButton);
         addRenderableWidget(actionButton);
-        addRenderableWidget(minusButton);
-        addRenderableWidget(plusButton);
-
-        refreshClaimButtons();
     }
 
-    @Override
-    public void removed() {
-        super.removed();
-    }
-
-    // called from the network handler when fresh state arrives from the server
     public void syncFromMenu() {
         accessButton.setMessage(accessText());
         updateRefreshButton();
         updateActionButton();
-        refreshClaimButtons();
     }
 
     @Override
     protected void renderBg(GuiGraphics g, float partialTick, int mx, int my) {
         g.blit(BACKGROUND, leftPos, topPos, 0, 0, TEXTURE_W, TEXTURE_H, TEXTURE_W, TEXTURE_H);
 
-        // dark panel behind the info block — same width as the access button, 4px gap above and below
         int panelH = infoPanelHeight();
         int bw = imageWidth - BTN_X * 2;
         g.fill(leftPos + BTN_X,
@@ -138,21 +112,19 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     @Override
     protected void renderLabels(GuiGraphics g, int mx, int my) {
-        int bw    = imageWidth - BTN_X * 2;
-        int halfW = bw / 2 - 4;
-        int divX  = BTN_X + halfW + 4;
+        int bw   = imageWidth - BTN_X * 2;
 
         String title = Component.translatable("screen.aeroclaims.claim_settings.title").getString();
         g.drawString(font, title, (imageWidth - font.width(title)) / 2, 7, COLOR_TITLE, false);
 
         separator(g, 18);
 
-        // --- info block (dark bg, white text) ---
-        // text is drawn with INFO_PAD offset from the panel edges
+        // --- info block ---
         int textX = BTN_X + INFO_PAD;
         int textW = bw - INFO_PAD * 2;
         int y = INFO_Y + INFO_PAD;
 
+        // Status
         boolean active = menu.isClaimActive();
         String prefix = Component.translatable("screen.aeroclaims.claim_settings.privacy_prefix").getString();
         String status  = Component.translatable(active
@@ -162,6 +134,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         g.drawString(font, status, textX + font.width(prefix), y, active ? COLOR_OK : COLOR_ERR, false);
         y += font.lineHeight + 2;
 
+        // Owner
         try {
             String ownerName = Minecraft.getInstance()
                     .getConnection().getPlayerInfo(menu.getOwner())
@@ -172,10 +145,12 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
             y += font.lineHeight + 2;
         } catch (Exception ignored) {}
 
+        // Ship name
         if (!menu.isOnShip()) {
             g.drawString(font,
                     Component.translatable("screen.aeroclaims.claim_settings.not_on_subclaim").getString(),
                     textX, y, COLOR_ERR, false);
+            y += font.lineHeight + 2;
         } else if (menu.getShipName() != null && !menu.getShipName().isEmpty()) {
             for (FormattedCharSequence line : font.split(
                     Component.translatable("screen.aeroclaims.claim_settings.ship", menu.getShipName()),
@@ -183,48 +158,39 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
                 g.drawString(font, line, textX, y, COLOR_WHITE, false);
                 y += font.lineHeight;
             }
+            y += 2;
         }
 
-        // --- claims / blocks column ---
+        // Claims used / needed
+        int usedClaims   = menu.getClaimsForBlock();
+        int neededClaims = neededClaimsCount();
+        int claimsColor  = (neededClaims > usedClaims) ? COLOR_ERR : COLOR_OK;
+        String claimsLabel  = Component.translatable("screen.aeroclaims.claim_settings.claims_label").getString();
+        String claimsValues = usedClaims + " / " + neededClaims;
+        g.drawString(font, claimsLabel, textX, y, COLOR_WHITE, false);
+        g.drawString(font, claimsValues, textX + font.width(claimsLabel), y, claimsColor, false);
+        y += font.lineHeight + 2;
+
+        // Block count
+        String blocksLine = blocksText();
+        int blocksColor = blocksOverLimit() ? COLOR_ERR : COLOR_WHITE;
+        g.drawString(font, blocksLine, textX, y, blocksColor, false);
+
+        // separator above buttons
         int rowY = INFO_Y + infoPanelHeight() + GAP;
         separator(g, INFO_Y + infoPanelHeight() + GAP / 2);
-
-        // vertical divider between left and right columns
-        g.fill(divX, rowY, divX + 1, rowY + BTN_H * 2 + 2, COLOR_DIV);
-
-        // left column, top: "N claims" centered between - and +
-        int labelX = BTN_X + SMALL_BTN + 2;
-        int labelW = halfW - SMALL_BTN * 2 - 4;
-        String claimsText = menu.getClaimsForBlock() + " claims";
-        g.drawString(font, claimsText,
-                labelX + (labelW - font.width(claimsText)) / 2, rowY + 5,
-                COLOR_TEXT, false);
-
-        // left column, bottom: block usage — dark bg, same horizontal bounds as - and + buttons
-        int blocksBoxX = BTN_X;
-        int blocksBoxW = halfW;
-        int blocksBoxY = rowY + BTN_H + 2;
-        int blocksBoxH = BTN_H;
-        g.fill(blocksBoxX, blocksBoxY, blocksBoxX + blocksBoxW, blocksBoxY + blocksBoxH, COLOR_INFO_BG);
-        String blocksText  = blocksText();
-        int    blocksColor = blocksOverLimit() ? COLOR_ERR : COLOR_WHITE;
-        g.drawString(font, blocksText,
-                blocksBoxX + (blocksBoxW - font.width(blocksText)) / 2,
-                blocksBoxY + (blocksBoxH - font.lineHeight) / 2,
-                blocksColor, false);
-
-        separator(g, rowY + BTN_H + 2 + BTN_H + GAP / 2);
+        separator(g, rowY + BTN_H + GAP / 2);
     }
 
-    // calculates the pixel height of the info panel so renderBg can size it dynamically
     private int infoPanelHeight() {
-        int lines = 2; // claim status + owner
+        int lines = 2; // status + owner
         if (!menu.isOnShip()) {
-            lines += 1;
+            lines += 1; // not on ship
         } else if (menu.getShipName() != null && !menu.getShipName().isEmpty()) {
             int textW = imageWidth - BTN_X * 2 - INFO_PAD * 2;
             lines += Math.max(1, (menu.getShipName().length() * 6) / textW + 1);
         }
+        lines += 2; // claims used/needed + block count
         return INFO_PAD * 2 + lines * (font.lineHeight + 2);
     }
 
@@ -234,32 +200,12 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         super.render(g, mx, my, partialTick);
         renderTooltip(g, mx, my);
 
-        // re-enable refresh once the cooldown window closes
         if (!refreshButton.active && menu.isOnShip() && !onCooldown()) {
             updateRefreshButton();
         }
-
         if (menu.isOnShip()) {
             updateActionButton();
         }
-    }
-
-    private void refreshClaimButtons() {
-        if (!menu.isOnShip()) {
-            minusButton.active = false;
-            plusButton.active  = false;
-            return;
-        }
-        plusButton.active  = menu.getFreeSlots() >= 1;
-        minusButton.active = menu.getClaimsForBlock() >= 1 && canReduceByOne();
-    }
-
-    // can't reduce below the current ship size
-    private boolean canReduceByOne() {
-        if (!menu.isClaimActive()) return true;
-        int count = menu.getShipBlockCount();
-        if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) return true;
-        return count <= (menu.getClaimsForBlock() - 1) * menu.getBlocksPerClaim();
     }
 
     private void updateRefreshButton() {
@@ -286,7 +232,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         if (onCooldown()) {
             inActivateMode = true;
             actionButton.setMessage(activateText());
-            // block if already activated once this cooldown, or ship size isn't confirmed yet
             boolean alreadyUsed = Boolean.TRUE.equals(activateUsedInCooldown.get(menu.getCenter()));
             actionButton.active = !alreadyUsed && blocksKnownAndOk();
         } else {
@@ -324,13 +269,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
                 menu.getCenter(), menu.isAllowParty(), menu.isAllowAllies(), menu.isAllowOthers()));
     }
 
-    private void sendAdjust(int delta) {
-        PacketDistributor.sendToServer(new AdjustBlockClaimsPacket(menu.getCenter(), delta));
-        menu.setClaimsForBlock(Math.max(0, menu.getClaimsForBlock() + delta));
-        menu.setFreeSlots(Math.max(0, menu.getFreeSlots() - delta));
-        refreshClaimButtons();
-    }
-
     private void sendRefresh() {
         if (onCooldown()) return;
         PacketDistributor.sendToServer(new RefreshClaimPacket(menu.getCenter()));
@@ -366,10 +304,17 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         return last != null && System.currentTimeMillis() - last < REFRESH_COOLDOWN_MS;
     }
 
-    // ship size is known and fits within the allocated claims
     private boolean blocksKnownAndOk() {
         return menu.getShipBlockCount() != SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN
                 && !blocksOverLimit();
+    }
+
+    private int neededClaimsCount() {
+        int count = menu.getShipBlockCount();
+        if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN || count <= 0) return 0;
+        int bpc = menu.getBlocksPerClaim();
+        if (bpc <= 0) return 0;
+        return (count + bpc - 1) / bpc;
     }
 
     private String blocksText() {
