@@ -1,6 +1,7 @@
 package com.mapter.aeroclaims.network;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
@@ -37,6 +38,8 @@ public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayl
             ServerLevel level = player.serverLevel();
             Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
+
+            AeroClaimManager.releaseAllClaimsForBlock(level, claim.getOwner(), msg.center);
 
             ClaimManager.deactivateClaim(level, msg.center);
             player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_deactivated"));
