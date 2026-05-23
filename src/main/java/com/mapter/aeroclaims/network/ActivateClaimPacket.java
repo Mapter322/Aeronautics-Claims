@@ -10,6 +10,7 @@ import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
+import com.mapter.aeroclaims.util.TeamColorHelper;
 import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -87,8 +88,9 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
 
             Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
             if (updated != null) {
+                int teamColor = TeamColorHelper.getTeamColor(player, updated.getOwner());
                 PacketDistributor.sendToPlayer(player,
-                        new ClaimRefreshParticlesPacket(new ArrayList<>(updated.getClaimedBlocks())));
+                        new ClaimRefreshParticlesPacket(new ArrayList<>(updated.getClaimedBlocks()), teamColor));
             }
 
             sync(player, msg.center, updated != null ? updated : claim, level, blockCount);

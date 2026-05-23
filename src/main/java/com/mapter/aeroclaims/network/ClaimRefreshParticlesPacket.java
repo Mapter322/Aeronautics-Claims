@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.List;
 
-public record ClaimRefreshParticlesPacket(List<BlockPos> claimedBlocks) implements CustomPacketPayload {
+public record ClaimRefreshParticlesPacket(List<BlockPos> claimedBlocks, int color) implements CustomPacketPayload {
 
     public static final Type<ClaimRefreshParticlesPacket> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(Aeroclaims.MODID, "claim_refresh_particles"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ClaimRefreshParticlesPacket> STREAM_CODEC = StreamCodec.of(
@@ -20,6 +20,7 @@ public record ClaimRefreshParticlesPacket(List<BlockPos> claimedBlocks) implemen
                 for (BlockPos pos : packet.claimedBlocks) {
                     BlockPos.STREAM_CODEC.encode(buf, pos);
                 }
+                buf.writeInt(packet.color);
             },
             buf -> {
                 int size = buf.readVarInt();
@@ -27,7 +28,8 @@ public record ClaimRefreshParticlesPacket(List<BlockPos> claimedBlocks) implemen
                 for (int i = 0; i < size; i++) {
                     blocks.add(BlockPos.STREAM_CODEC.decode(buf));
                 }
-                return new ClaimRefreshParticlesPacket(blocks);
+                int color = buf.readInt();
+                return new ClaimRefreshParticlesPacket(blocks, color);
             }
     );
 
@@ -39,7 +41,7 @@ public record ClaimRefreshParticlesPacket(List<BlockPos> claimedBlocks) implemen
     public static void handle(ClaimRefreshParticlesPacket msg, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player().level().isClientSide) {
-                ClaimOutlineRenderer.setOutline(msg.claimedBlocks);
+                ClaimOutlineRenderer.setOutline(msg.claimedBlocks, msg.color);
             }
         });
     }

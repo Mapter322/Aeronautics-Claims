@@ -20,14 +20,14 @@ import java.util.Set;
 @EventBusSubscriber(modid = Aeroclaims.MODID, value = Dist.CLIENT)
 public class ClaimOutlineRenderer {
 
-    private static final int COLOR = 0x33D9FF;
+    private static final int DEFAULT_COLOR = 0x33D9FF;
     private static final int DURATION_TICKS = 80;
     private static final float LINE_WIDTH = 1 / 16f;
     private static final Object OUTLINE_SLOT = new Object();
 
     private static int remainingTicks = 0;
 
-    public static void setOutline(List<BlockPos> blocks) {
+    public static void setOutline(List<BlockPos> blocks, int color) {
         if (blocks.isEmpty()) return;
         Level level = Minecraft.getInstance().level;
         Set<BlockPos> blockSet = new HashSet<>(blocks.size());
@@ -40,7 +40,7 @@ public class ClaimOutlineRenderer {
         }
         if (blockSet.isEmpty()) return;
         Outliner.getInstance().showCluster(OUTLINE_SLOT, blockSet)
-                .colored(COLOR)
+                .colored(color)
                 .disableLineNormals()
                 .lineWidth(LINE_WIDTH);
         remainingTicks = DURATION_TICKS;
