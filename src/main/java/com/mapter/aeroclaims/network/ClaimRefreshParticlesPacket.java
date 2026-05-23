@@ -1,13 +1,12 @@
 package com.mapter.aeroclaims.network;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.client.ClaimOutlineRenderer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.List;
@@ -39,17 +38,8 @@ public record ClaimRefreshParticlesPacket(List<BlockPos> claimedBlocks) implemen
 
     public static void handle(ClaimRefreshParticlesPacket msg, IPayloadContext context) {
         context.enqueueWork(() -> {
-            Level level = context.player().level();
-            if (level.isClientSide) {
-                for (BlockPos pos : msg.claimedBlocks) {
-                    for (int i = 0; i < 10; i++) {
-                        level.addParticle(ParticleTypes.TOTEM_OF_UNDYING,
-                                pos.getX() + 0.5,
-                                pos.getY() + 0.5 + (i * 0.1),
-                                pos.getZ() + 0.5,
-                                0, 0.02, 0);
-                    }
-                }
+            if (context.player().level().isClientSide) {
+                ClaimOutlineRenderer.setOutline(msg.claimedBlocks);
             }
         });
     }
