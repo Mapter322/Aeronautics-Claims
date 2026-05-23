@@ -62,7 +62,6 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 blockCount = ClaimManager.recountShipBlocks(level, msg.center, deactivateOnOverflow);
             } else {
                 blockCount = ClaimManager.countShipBlocksExact(level, msg.center);
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_claims_allocated"));
             }
 
             if (blockCount < 0) {
@@ -71,7 +70,20 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 return;
             }
 
-            if (hasClaims && blockCount > maxSize) {
+            int blocksPerClaim = AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
+            int neededClaims = (blockCount + blocksPerClaim - 1) / blocksPerClaim;
+            int currentClaims = AeroClaimSavedData.get(level).getClaimsForBlock(msg.center);
+            int delta = neededClaims - currentClaims;
+            boolean autoAdjustOk = true;
+            if (delta != 0) {
+                autoAdjustOk = AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
+            }
+
+            maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
+
+            if (!autoAdjustOk) {
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_ship_slots"));
+            } else if (hasClaims && blockCount > maxSize) {
                 String msgKey = deactivateOnOverflow
                         ? "message.aeroclaims.ship_too_large_deactivated"
                         : "message.aeroclaims.ship_too_large";
