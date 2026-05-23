@@ -85,7 +85,6 @@ public class RegisteredSublevelManager {
         if (++tickCounter >= COORD_UPDATE_INTERVAL) {
             tickCounter = 0;
             updateAllWorldPositions();
-            UnregisteredSublevelManager.updateAllWorldPositions();
         }
     }
 
