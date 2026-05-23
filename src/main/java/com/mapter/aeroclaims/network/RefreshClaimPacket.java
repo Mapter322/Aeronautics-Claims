@@ -75,7 +75,16 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             int currentClaims = AeroClaimSavedData.get(level).getClaimsForBlock(msg.center);
             int delta = neededClaims - currentClaims;
             boolean autoAdjustOk = true;
-            if (delta != 0) {
+            if (delta > 0) {
+                int free = AeroClaimSavedData.get(level).getFreeSlots(player.getUUID());
+                int applied = Math.min(delta, free);
+                if (applied > 0) {
+                    AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, applied);
+                }
+                if (applied < delta) {
+                    autoAdjustOk = false;
+                }
+            } else if (delta < 0) {
                 autoAdjustOk = AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
             }
 

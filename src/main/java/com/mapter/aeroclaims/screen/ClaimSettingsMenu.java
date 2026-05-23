@@ -1,7 +1,11 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.block.ClaimBlock;
+import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.claim.Claim;
+import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.registry.ModMenus;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -108,6 +112,13 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
     public void removed(Player player) {
         Level level = player.level();
         if (!level.isClientSide) {
+            ServerLevel serverLevel = (ServerLevel) level;
+
+            Claim claim = ClaimManager.getClaimByCenter(serverLevel, center);
+            if (claim != null && !claim.isActive() && player.getUUID().equals(claim.getOwner())) {
+                AeroClaimManager.releaseAllClaimsForBlock(serverLevel, claim.getOwner(), center);
+            }
+
             BlockState state = level.getBlockState(center);
             if (state.getBlock() instanceof ClaimBlock
                     && state.hasProperty(ClaimBlock.OPEN)
