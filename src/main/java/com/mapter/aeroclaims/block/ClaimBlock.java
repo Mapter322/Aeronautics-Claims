@@ -150,7 +150,9 @@ public class ClaimBlock extends BaseEntityBlock {
 
         SubLevel ship = SableShipUtils.getShipAt(serverLevel, pos);
         boolean onShip = ship != null;
-        String shipName = SableShipUtils.getShipName(ship);
+        String shipId = SableShipUtils.getShipId(ship);
+        String registeredName = shipId != null ? RegisteredSublevelManager.getRegisteredName(shipId) : null;
+        String shipName = registeredName != null ? registeredName : SableShipUtils.getShipName(ship);
 
         AeroClaimSavedData data = AeroClaimSavedData.get(serverLevel);
         int claimsForBlock = data.getClaimsForBlock(pos);

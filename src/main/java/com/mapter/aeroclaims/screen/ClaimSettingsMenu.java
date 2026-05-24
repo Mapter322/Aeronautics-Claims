@@ -21,7 +21,7 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
 
     private final BlockPos center;
     private final UUID owner;
-    private final String shipName;
+    private String shipName;
     private final boolean onShip;
 
     private boolean claimActive;
@@ -74,6 +74,7 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
     public BlockPos getCenter()     { return center; }
     public UUID getOwner()          { return owner; }
     public String getShipName()     { return shipName; }
+    public void setShipName(String v) { shipName = v; }
     public boolean isOnShip()       { return onShip; }
 
     public boolean isClaimActive()              { return claimActive; }

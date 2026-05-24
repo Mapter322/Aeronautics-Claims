@@ -5,11 +5,13 @@ import com.mapter.aeroclaims.network.ActivateClaimPacket;
 import com.mapter.aeroclaims.network.AdjustBlockClaimsPacket;
 import com.mapter.aeroclaims.network.DeactivateClaimPacket;
 import com.mapter.aeroclaims.network.RefreshClaimPacket;
+import com.mapter.aeroclaims.network.RenameShipPacket;
 import com.mapter.aeroclaims.network.SyncClaimStatePacket;
 import com.mapter.aeroclaims.network.UpdateClaimSettingsPacket;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -55,6 +57,11 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private Button refreshButton;
     private Button actionButton;
 
+    private EditBox renameBox;
+    private boolean editing;
+    private String editOriginal;
+    private int shipNameY, shipNameH;
+
     private boolean inActivateMode = false;
 
     public ClaimSettingsScreen(ClaimSettingsMenu menu, Inventory inv, Component title) {
@@ -89,6 +96,13 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         addRenderableWidget(accessButton);
         addRenderableWidget(refreshButton);
         addRenderableWidget(actionButton);
+
+        renameBox = new EditBox(font, leftPos + BTN_X + INFO_PAD, topPos + INFO_Y, imageWidth - BTN_X * 2 - INFO_PAD * 2, font.lineHeight + 2, Component.empty());
+        renameBox.setMaxLength(48);
+        renameBox.setBordered(false);
+        renameBox.setTextColor(COLOR_WHITE);
+        renameBox.visible = false;
+        addWidget(renameBox);
     }
 
     public void syncFromMenu() {
@@ -152,11 +166,20 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
                     textX, y, COLOR_ERR, false);
             y += font.lineHeight + 2;
         } else if (menu.getShipName() != null && !menu.getShipName().isEmpty()) {
-            for (FormattedCharSequence line : font.split(
-                    Component.translatable("screen.aeroclaims.claim_settings.ship", menu.getShipName()),
-                    textW)) {
-                g.drawString(font, line, textX, y, COLOR_WHITE, false);
+            shipNameY = y;
+            if (!editing) {
+                for (FormattedCharSequence line : font.split(
+                        Component.translatable("screen.aeroclaims.claim_settings.ship", menu.getShipName()),
+                        textW)) {
+                    g.drawString(font, line, textX, y, COLOR_WHITE, false);
+                    y += font.lineHeight;
+                }
+                shipNameH = y - shipNameY;
+            } else {
+                String namePrefix = Component.translatable("screen.aeroclaims.claim_settings.ship", "").getString();
+                g.drawString(font, namePrefix, textX, y, COLOR_WHITE, false);
                 y += font.lineHeight;
+                shipNameH = font.lineHeight;
             }
             y += 2;
         }
@@ -200,12 +223,78 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         super.render(g, mx, my, partialTick);
         renderTooltip(g, mx, my);
 
+        if (editing) {
+            renameBox.setY(topPos + shipNameY);
+            renameBox.renderWidget(g, mx, my, partialTick);
+        }
+
         if (!refreshButton.active && menu.isOnShip() && !onCooldown()) {
             updateRefreshButton();
         }
         if (menu.isOnShip()) {
             updateActionButton();
         }
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
+        if (editing) {
+            if (!renameBox.isMouseOver(mx, my)) { confirmRename(); return true; }
+            return renameBox.mouseClicked(mx, my, button);
+        }
+        if (isOverShipName(mx, my)) { startEditing(); return true; }
+        return super.mouseClicked(mx, my, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (editing) {
+            if (keyCode == 256) { stopEditing(); return true; }
+            if (keyCode == 257 || keyCode == 335) { confirmRename(); return true; }
+            renameBox.keyPressed(keyCode, scanCode, modifiers);
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char c, int modifiers) {
+        return editing ? renameBox.charTyped(c, modifiers) : super.charTyped(c, modifiers);
+    }
+
+    private boolean isOverShipName(double mx, double my) {
+        if (!menu.isOnShip() || menu.getShipName() == null || menu.getShipName().isEmpty()) return false;
+        int x0 = leftPos + BTN_X + INFO_PAD, y0 = topPos + shipNameY;
+        return mx >= x0 && mx <= x0 + imageWidth - BTN_X * 2 - INFO_PAD * 2 && my >= y0 && my <= y0 + shipNameH;
+    }
+
+    private void startEditing() {
+        editing = true;
+        editOriginal = menu.getShipName();
+        int prefixW = font.width(Component.translatable("screen.aeroclaims.claim_settings.ship", "").getString());
+        renameBox.setValue(editOriginal);
+        renameBox.setX(leftPos + BTN_X + INFO_PAD + prefixW);
+        renameBox.setY(topPos + shipNameY);
+        renameBox.setWidth(imageWidth - BTN_X * 2 - INFO_PAD * 2 - prefixW);
+        renameBox.visible = true;
+        renameBox.setFocused(true);
+        setFocused(renameBox);
+    }
+
+    private void confirmRename() {
+        String newName = renameBox.getValue().trim();
+        if (!newName.isEmpty() && !newName.equals(editOriginal)) {
+            menu.setShipName(newName);
+            PacketDistributor.sendToServer(new RenameShipPacket(menu.getCenter(), newName));
+        }
+        stopEditing();
+    }
+
+    private void stopEditing() {
+        editing = false;
+        renameBox.visible = false;
+        renameBox.setFocused(false);
+        setFocused(null);
     }
 
     private void updateRefreshButton() {
