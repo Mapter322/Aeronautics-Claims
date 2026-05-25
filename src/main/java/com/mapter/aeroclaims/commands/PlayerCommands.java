@@ -2,6 +2,7 @@ package com.mapter.aeroclaims.commands;
 
 import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.claim.ClaimBriefInfo;
+import com.mapter.aeroclaims.screen.AeroClaimsMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
@@ -14,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleMenuProvider;
 
 import java.util.Map;
 import java.util.UUID;
@@ -37,6 +39,9 @@ public class PlayerCommands {
                             );
                         })))
 
+                .then(Commands.literal("menu")
+                    .executes(ctx -> executeOpenMenu(ctx.getSource())))
+
                 .then(Commands.literal("transfer")
                     .then(Commands.literal("to")
                         .then(Commands.literal("opac")
@@ -54,6 +59,15 @@ public class PlayerCommands {
         );
     }
 
+
+    static int executeOpenMenu(CommandSourceStack source) {
+        ServerPlayer player = CommandUtils.requirePlayer(source);
+        if (player == null) return 0;
+        player.openMenu(new SimpleMenuProvider(
+                (id, inv, p) -> new AeroClaimsMenu(id, inv),
+                Component.translatable("screen.aeroclaims.menu.title")));
+        return 1;
+    }
 
     static int executeInfo(CommandSourceStack source, UUID targetUuid, String targetName) {
 

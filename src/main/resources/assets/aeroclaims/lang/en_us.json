@@ -1,5 +1,6 @@
 {
   "block.aeroclaims.claim_block": "Ship Claim Block",
+  "screen.aeroclaims.menu.title": "AeroClaims Menu",
   "screen.aeroclaims.claim_settings.title": "Claim Settings",
   "screen.aeroclaims.claim_settings.refresh": "Refresh",
   "screen.aeroclaims.claim_settings.activate": "Activate",
