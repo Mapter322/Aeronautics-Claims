@@ -25,6 +25,7 @@
   "commands.aeroclaims.info.entry.hover.claims": "§7Aero claims: §f%s",
   "commands.aeroclaims.info.entry.hover.blocks": "§7Blocks: §f%s / %s",
   "commands.aeroclaims.info.entry.hover.blocks_unknown": "§7Blocks: §7(unknown)",
+  "commands.aeroclaims.info.entry.hover.coords": "§7Pos: §f%s, %s, %s",
   "commands.aeroclaims.claim_info.opac_free": "§eFree opac claims: %s",
   "commands.aeroclaims.claim_info.opac_unavailable": "§7opac is not available",
   "commands.aeroclaims.transfer.success": "§aSuccessfully transferred %s claim(s). §eAero claims: %s / %s",
@@ -68,5 +69,12 @@
   "commands.aeroclaims.sublevels.delete.disabled": "§cThis command is disabled in config. Enable 'enableClearCommand' to use it.",
   "commands.aeroclaims.sublevels.delete.none": "There are no unclaimed sublevels",
   "commands.aeroclaims.ships.delete.none": "There are no unclaimed sublevels",
-  "commands.aeroclaims.ships.delete.done": "Clearing unclaimed sublevels finished. Deleted: %s, failed: %s, total: %s"
+  "commands.aeroclaims.ships.delete.done": "Clearing unclaimed sublevels finished. Deleted: %s, failed: %s, total: %s",
+  "screen.aeroclaims.menu.no_ships": "No registered ships",
+  "screen.aeroclaims.menu.tooltip.id": "UUID: %s",
+  "screen.aeroclaims.menu.tooltip.status": "Status: %s",
+  "screen.aeroclaims.menu.tooltip.claims": "Aero claims: %s",
+  "screen.aeroclaims.menu.tooltip.blocks": "Blocks: %s / %s",
+  "screen.aeroclaims.menu.tooltip.blocks_unknown": "Blocks: (unknown)",
+  "screen.aeroclaims.menu.tooltip.coords": "Pos: %s, %s, %s"
 }

@@ -24,6 +24,7 @@
   "commands.aeroclaims.info.entry.hover.claims": "§7Аероклеймов: §f%s",
   "commands.aeroclaims.info.entry.hover.blocks": "§7Блоков: §f%s / %s",
   "commands.aeroclaims.info.entry.hover.blocks_unknown": "§7Блоков: §7(неизвестно)",
+  "commands.aeroclaims.info.entry.hover.coords": "§7Координаты: §f%s, %s, %s",
   "commands.aeroclaims.claim_info.opac_free": "§eСвободно приватов opac: §f%s",
   "commands.aeroclaims.claim_info.opac_unavailable": "§7OPAC недоступен",
   "commands.aeroclaims.transfer.success": "§aУспешно перенесено %s приват(ов). §eПриваты aero: %s / %s",
@@ -67,5 +68,13 @@
   "commands.aeroclaims.sublevels.delete.disabled": "§cЭта команда отключена в конфиге. Включите 'enableClearCommand' чтобы использовать её.",
   "commands.aeroclaims.sublevels.delete.none": "Незаприваченых сублевелов нет",
   "commands.aeroclaims.ships.delete.none": "Незаприваченых сублевелов нет",
-  "commands.aeroclaims.ships.delete.done": "Удаление незаприваченых сублевелов завершено. Удалено: %s, не удалось удалить: %s, всего было: %s"
+  "commands.aeroclaims.ships.delete.done": "Удаление незаприваченых сублевелов завершено. Удалено: %s, не удалось удалить: %s, всего было: %s",
+  "screen.aeroclaims.menu.title": "Меню AeroClaims",
+  "screen.aeroclaims.menu.no_ships": "Нет зарегистрированных кораблей",
+  "screen.aeroclaims.menu.tooltip.id": "UUID: %s",
+  "screen.aeroclaims.menu.tooltip.status": "Статус: %s",
+  "screen.aeroclaims.menu.tooltip.claims": "Аероклеймов: %s",
+  "screen.aeroclaims.menu.tooltip.blocks": "Блоков: %s / %s",
+  "screen.aeroclaims.menu.tooltip.blocks_unknown": "Блоков: (неизвестно)",
+  "screen.aeroclaims.menu.tooltip.coords": "Позиция: %s, %s, %s"
 }

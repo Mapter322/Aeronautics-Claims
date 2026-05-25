@@ -63,9 +63,33 @@ public class PlayerCommands {
     static int executeOpenMenu(CommandSourceStack source) {
         ServerPlayer player = CommandUtils.requirePlayer(source);
         if (player == null) return 0;
+
+        Map<String, String> ships = RegisteredSublevelManager.getRegisteredShips(player.getUUID());
+        ServerLevel level = player.serverLevel();
+
         player.openMenu(new SimpleMenuProvider(
                 (id, inv, p) -> new AeroClaimsMenu(id, inv),
-                Component.translatable("screen.aeroclaims.menu.title")));
+                Component.translatable("screen.aeroclaims.menu.title")),
+                buf -> {
+                    buf.writeVarInt(ships.size());
+                    for (Map.Entry<String, String> entry : ships.entrySet()) {
+                        String shipId = entry.getKey();
+                        String shipName = entry.getValue();
+                        ClaimBriefInfo info = ClaimBriefInfo.ofShip(level, shipId);
+                        RegisteredSublevelManager.ShipRegistration reg = RegisteredSublevelManager.getRegistration(shipId);
+                        buf.writeUtf(shipName);
+                        buf.writeUtf(shipId);
+                        buf.writeBoolean(info != null && info.isActive());
+                        buf.writeInt(info != null ? info.getClaimsForBlock() : 0);
+                        buf.writeInt(info != null && info.isBlockCountKnown() ? info.getBlockCount() : -1);
+                        buf.writeInt(info != null ? info.getBlockLimit() : 0);
+                        boolean hasCoords = reg != null && reg.worldX != null && reg.worldY != null && reg.worldZ != null;
+                        buf.writeBoolean(hasCoords);
+                        buf.writeInt(hasCoords ? reg.worldX.intValue() : 0);
+                        buf.writeInt(hasCoords ? reg.worldY.intValue() : 0);
+                        buf.writeInt(hasCoords ? reg.worldZ.intValue() : 0);
+                    }
+                });
         return 1;
     }
 
@@ -107,7 +131,8 @@ public class PlayerCommands {
                 String shipId   = entry.getKey();
                 String shipName = entry.getValue();
                 ClaimBriefInfo info = ClaimBriefInfo.ofShip(level, shipId);
-                source.sendSuccess(() -> buildShipEntry(shipName, shipId, info), false);
+                RegisteredSublevelManager.ShipRegistration reg = RegisteredSublevelManager.getRegistration(shipId);
+                source.sendSuccess(() -> buildShipEntry(shipName, shipId, info, reg), false);
             }
         }
 
@@ -115,7 +140,8 @@ public class PlayerCommands {
     }
 
 
-    private static MutableComponent buildShipEntry(String shipName, String shipId, ClaimBriefInfo info) {
+    private static MutableComponent buildShipEntry(String shipName, String shipId, ClaimBriefInfo info,
+                                                       RegisteredSublevelManager.ShipRegistration reg) {
         MutableComponent hover = Component.translatable("commands.aeroclaims.info.entry.hover", shipId);
         if (info != null) {
             hover = hover.append(Component.literal("\n"))
@@ -129,6 +155,11 @@ public class PlayerCommands {
                 hover = hover.append(Component.literal("\n"))
                         .append(Component.translatable("commands.aeroclaims.info.entry.hover.blocks_unknown"));
             }
+        }
+        if (reg != null && reg.worldX != null && reg.worldY != null && reg.worldZ != null) {
+            hover = hover.append(Component.literal("\n"))
+                    .append(Component.translatable("commands.aeroclaims.info.entry.hover.coords",
+                            reg.worldX.intValue(), reg.worldY.intValue(), reg.worldZ.intValue()));
         }
         final MutableComponent finalHover = hover;
         return Component.translatable("commands.aeroclaims.info.entry", shipName)

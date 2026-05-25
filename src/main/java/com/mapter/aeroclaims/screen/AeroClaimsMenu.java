@@ -7,15 +7,33 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AeroClaimsMenu extends AbstractContainerMenu {
+
+    public record ShipEntry(String shipName, String shipId, boolean active, int claims, int blockCount, int blockLimit,
+                            boolean hasCoords, int worldX, int worldY, int worldZ) {}
+
+    private final List<ShipEntry> ships = new ArrayList<>();
 
     public AeroClaimsMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
         this(containerId, playerInventory);
+        int count = buf.readVarInt();
+        for (int i = 0; i < count; i++) {
+            ships.add(new ShipEntry(
+                    buf.readUtf(), buf.readUtf(), buf.readBoolean(),
+                    buf.readInt(), buf.readInt(), buf.readInt(),
+                    buf.readBoolean(), buf.readInt(), buf.readInt(), buf.readInt()
+            ));
+        }
     }
 
     public AeroClaimsMenu(int containerId, Inventory playerInventory) {
         super(ModMenus.AEROCLAIMS_MENU.get(), containerId);
     }
+
+    public List<ShipEntry> getShips() { return ships; }
 
     @Override
     public boolean stillValid(Player player) { return true; }
