@@ -1,11 +1,13 @@
 package com.mapter.aeroclaims.commands;
 
 import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.claim.ClaimBriefInfo;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -86,10 +88,12 @@ public class PlayerCommands {
         if (ships.isEmpty()) {
             source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.empty"), false);
         } else {
+            ServerLevel level = source.getLevel();
             for (Map.Entry<String, String> entry : ships.entrySet()) {
                 String shipId   = entry.getKey();
                 String shipName = entry.getValue();
-                source.sendSuccess(() -> buildShipEntry(shipName, shipId), false);
+                ClaimBriefInfo info = ClaimBriefInfo.ofShip(level, shipId);
+                source.sendSuccess(() -> buildShipEntry(shipName, shipId, info), false);
             }
         }
 
@@ -97,17 +101,26 @@ public class PlayerCommands {
     }
 
 
-    private static MutableComponent buildShipEntry(String shipName, String shipId) {
+    private static MutableComponent buildShipEntry(String shipName, String shipId, ClaimBriefInfo info) {
+        MutableComponent hover = Component.translatable("commands.aeroclaims.info.entry.hover", shipId);
+        if (info != null) {
+            hover = hover.append(Component.literal("\n"))
+                    .append(Component.translatable("commands.aeroclaims.info.entry.hover.claims",
+                            info.getClaimsForBlock()));
+            if (info.isBlockCountKnown()) {
+                hover = hover.append(Component.literal("\n"))
+                        .append(Component.translatable("commands.aeroclaims.info.entry.hover.blocks",
+                                info.getBlockCount(), info.getBlockLimit()));
+            } else {
+                hover = hover.append(Component.literal("\n"))
+                        .append(Component.translatable("commands.aeroclaims.info.entry.hover.blocks_unknown"));
+            }
+        }
+        final MutableComponent finalHover = hover;
         return Component.translatable("commands.aeroclaims.info.entry", shipName)
                 .withStyle(style -> style
-                        .withHoverEvent(new HoverEvent(
-                                HoverEvent.Action.SHOW_TEXT,
-                                Component.translatable("commands.aeroclaims.info.entry.hover", shipId)
-                        ))
-                        .withClickEvent(new ClickEvent(
-                                ClickEvent.Action.COPY_TO_CLIPBOARD,
-                                shipId
-                        ))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, finalHover))
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, shipId))
                 );
     }
 
