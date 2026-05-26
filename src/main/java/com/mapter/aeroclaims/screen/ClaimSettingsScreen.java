@@ -219,7 +219,6 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     @Override
     public void render(GuiGraphics g, int mx, int my, float partialTick) {
-        renderBackground(g, mx, my, partialTick);
         super.render(g, mx, my, partialTick);
         renderTooltip(g, mx, my);
 

@@ -17,6 +17,10 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
 
     private final List<ShipEntry> ships = new ArrayList<>();
 
+    private int opacFree;
+    private int aeroTotal;
+    private int aeroUsed;
+
     public AeroClaimsMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
         this(containerId, playerInventory);
         int count = buf.readVarInt();
@@ -27,6 +31,9 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
                     buf.readBoolean(), buf.readInt(), buf.readInt(), buf.readInt()
             ));
         }
+        opacFree  = buf.readInt();
+        aeroTotal = buf.readInt();
+        aeroUsed  = buf.readInt();
     }
 
     public AeroClaimsMenu(int containerId, Inventory playerInventory) {
@@ -34,6 +41,16 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
     }
 
     public List<ShipEntry> getShips() { return ships; }
+
+    public int getOpacFree()  { return opacFree; }
+    public int getAeroTotal() { return aeroTotal; }
+    public int getAeroUsed()  { return aeroUsed; }
+
+    public void setStats(int opacFree, int aeroTotal, int aeroUsed) {
+        this.opacFree  = opacFree;
+        this.aeroTotal = aeroTotal;
+        this.aeroUsed  = aeroUsed;
+    }
 
     @Override
     public boolean stillValid(Player player) { return true; }

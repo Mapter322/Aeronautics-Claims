@@ -1,4 +1,4 @@
-{
+﻿{
   "block.aeroclaims.claim_block": "Ship Claim Block",
   "screen.aeroclaims.menu.title": "AeroClaims Menu",
   "screen.aeroclaims.claim_settings.title": "Claim Settings",
@@ -19,6 +19,7 @@
   "commands.aeroclaims.info.header": "§6=== Info for %s ===",
   "commands.aeroclaims.info.registered_count": "§eRegistered ships: %s",
   "commands.aeroclaims.info.ship_slots": "§eAero claims: %s / %s",
+  "commands.aeroclaims.info.ship_slots_free": "§eAero free: %s",
   "commands.aeroclaims.info.empty": "List is empty",
   "commands.aeroclaims.info.entry": "§a- %s",
   "commands.aeroclaims.info.entry.hover": "§7UUID: §f%s\n§7Click to copy UUID",
@@ -70,6 +71,9 @@
   "commands.aeroclaims.sublevels.delete.none": "There are no unclaimed sublevels",
   "commands.aeroclaims.ships.delete.none": "There are no unclaimed sublevels",
   "commands.aeroclaims.ships.delete.done": "Clearing unclaimed sublevels finished. Deleted: %s, failed: %s, total: %s",
+  "screen.aeroclaims.menu.info.opac": "OPAC free: %s",
+  "screen.aeroclaims.menu.info.aero": "AERO: %s / %s",
+  "screen.aeroclaims.menu.info.aero_free": "AERO free: %s",
   "screen.aeroclaims.menu.no_ships": "No registered ships",
   "screen.aeroclaims.menu.tooltip.id": "UUID: %s",
   "screen.aeroclaims.menu.tooltip.status": "Status: %s",

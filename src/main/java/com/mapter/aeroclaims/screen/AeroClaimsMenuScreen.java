@@ -1,12 +1,15 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.network.TransferSlotsPacket;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.ChatFormatting;
 import net.minecraft.world.entity.player.Inventory;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +34,15 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private static final int LIST_H  = 80;
     private static final int ENTRY_H = 12;
 
+    private static final int INFO_Y    = LIST_Y + LIST_H + 8;
+    private static final int INFO_H    = PAD + ENTRY_H * 3 + PAD;
+    private static final int BTN_W     = 14;
+    private static final int BTN_H     = 12;
+    private static final int COLOR_TEXT = 0xDDDDDD;
+
+    private Button btnPlusSlot;
+    private Button btnMinusSlot;
+
     private int scrollOffset = 0;
 
     public AeroClaimsMenuScreen(AeroClaimsMenu menu, Inventory inv, Component title) {
@@ -43,6 +55,21 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     protected void init() {
         super.init();
         scrollOffset = 0;
+
+        int boxRight  = leftPos + imageWidth - BTN_X;
+        int freeLineY = topPos + INFO_Y + PAD + ENTRY_H * 2 + (ENTRY_H - BTN_H) / 2;
+
+        btnMinusSlot = Button.builder(Component.literal("-"), b ->
+                PacketDistributor.sendToServer(new TransferSlotsPacket(false)))
+                .bounds(boxRight - PAD - BTN_W * 2 - 2, freeLineY, BTN_W, BTN_H)
+                .build();
+        btnPlusSlot = Button.builder(Component.literal("+"), b ->
+                PacketDistributor.sendToServer(new TransferSlotsPacket(true)))
+                .bounds(boxRight - PAD - BTN_W, freeLineY, BTN_W, BTN_H)
+                .build();
+
+        addRenderableWidget(btnPlusSlot);
+        addRenderableWidget(btnMinusSlot);
     }
 
     @Override
@@ -53,11 +80,13 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         g.fill(leftPos + BTN_X, topPos + LIST_Y,
                 leftPos + BTN_X + bw, topPos + LIST_Y + LIST_H,
                 COLOR_INFO_BG);
+        g.fill(leftPos + BTN_X, topPos + INFO_Y,
+                leftPos + BTN_X + bw, topPos + INFO_Y + INFO_H,
+                COLOR_INFO_BG);
     }
 
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        renderBackground(g, mouseX, mouseY, partialTick);
         super.render(g, mouseX, mouseY, partialTick);
         renderShipList(g, mouseX, mouseY);
     }
@@ -68,6 +97,27 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         g.drawString(font, title, (imageWidth - font.width(title)) / 2, 7, COLOR_TITLE, false);
         separator(g, 18);
         separator(g, LIST_Y + LIST_H + 1);
+        renderInfoPanel(g);
+    }
+
+    private void renderInfoPanel(GuiGraphics g) {
+        int x = BTN_X + PAD;
+        int y = INFO_Y + PAD;
+        int opacFree  = menu.getOpacFree();
+        int aeroTotal = menu.getAeroTotal();
+        int aeroUsed  = menu.getAeroUsed();
+        int aeroFree  = aeroTotal - aeroUsed;
+
+        String opacLine = Component.translatable("screen.aeroclaims.menu.info.opac", opacFree).getString();
+        g.drawString(font, opacLine, x, y, COLOR_TEXT, false);
+
+        String aeroLine = Component.translatable("screen.aeroclaims.menu.info.aero",
+                aeroUsed, aeroTotal).getString();
+        g.drawString(font, aeroLine, x, y + ENTRY_H, COLOR_TEXT, false);
+
+        String aeroFreeLine = Component.translatable("screen.aeroclaims.menu.info.aero_free",
+                aeroFree).getString();
+        g.drawString(font, aeroFreeLine, x, y + ENTRY_H * 2, COLOR_TEXT, false);
     }
 
     private void renderShipList(GuiGraphics g, int mx, int my) {

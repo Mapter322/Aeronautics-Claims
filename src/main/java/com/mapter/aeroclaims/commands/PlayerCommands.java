@@ -89,6 +89,9 @@ public class PlayerCommands {
                         buf.writeInt(hasCoords ? reg.worldY.intValue() : 0);
                         buf.writeInt(hasCoords ? reg.worldZ.intValue() : 0);
                     }
+                    buf.writeInt(AeroClaimManager.getFreeOpacClaims(player));
+                    buf.writeInt(AeroClaimManager.getMigratedSlots(level, player.getUUID()));
+                    buf.writeInt(AeroClaimManager.getUsedSlots(level, player.getUUID()));
                 });
         return 1;
     }
@@ -105,12 +108,14 @@ public class PlayerCommands {
         Map<String, String> ships = RegisteredSublevelManager.getRegisteredShips(targetUuid);
         int migratedSlots = AeroClaimManager.getMigratedSlots(source.getLevel(), targetUuid);
         int usedSlots     = AeroClaimManager.getUsedSlots(source.getLevel(), targetUuid);
+        int freeSlots     = AeroClaimManager.getFreeSlots(source.getLevel(), targetUuid);
 
         final UUID   finalUuid = targetUuid;
         final String finalName = targetName;
 
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.header", finalName), false);
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots", usedSlots, migratedSlots), false);
+        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots_free", freeSlots), false);
 
         if (source.getEntity() instanceof ServerPlayer caller && caller.getUUID().equals(finalUuid)) {
             int freeOpac = AeroClaimManager.getFreeOpacClaims(caller);
