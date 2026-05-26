@@ -1,4 +1,4 @@
-﻿{
+{
   "block.aeroclaims.claim_block": "Блок привата корабля",
   "screen.aeroclaims.claim_settings.title": "Настройки привата",
   "screen.aeroclaims.claim_settings.refresh": "Обновить",
@@ -72,8 +72,13 @@
   "commands.aeroclaims.ships.delete.done": "Удаление незаприваченых сублевелов завершено. Удалено: %s, не удалось удалить: %s, всего было: %s",
   "screen.aeroclaims.menu.title": "Меню AeroClaims",
   "screen.aeroclaims.menu.info.opac": "OPAC своб.: %s",
+  "screen.aeroclaims.menu.info.opac.label": "OPAC своб.: ",
   "screen.aeroclaims.menu.info.aero": "AERO: %s / %s",
+  "screen.aeroclaims.menu.info.aero.label": "AERO: ",
   "screen.aeroclaims.menu.info.aero_free": "AERO своб.: %s",
+  "screen.aeroclaims.menu.info.aero_free.label": "AERO своб.: ",
+  "screen.aeroclaims.menu.label.ships": "Субклеймы:",
+  "screen.aeroclaims.menu.label.transfer": "Перенос:",
   "screen.aeroclaims.menu.no_ships": "Нет зарегистрированных кораблей",
   "screen.aeroclaims.menu.tooltip.id": "UUID: %s",
   "screen.aeroclaims.menu.tooltip.status": "Статус: %s",

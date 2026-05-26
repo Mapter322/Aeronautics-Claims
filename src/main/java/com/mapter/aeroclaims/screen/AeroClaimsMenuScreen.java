@@ -30,15 +30,20 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private static final int BTN_X      = 10;
     private static final int PAD        = 4;
 
-    private static final int LIST_Y  = 20;
-    private static final int LIST_H  = 80;
-    private static final int ENTRY_H = 12;
+    private static final int LABEL_H      = 13;
+    private static final int LIST_LABEL_Y  = 22;
+    private static final int LIST_Y        = LIST_LABEL_Y + LABEL_H;
+    private static final int LIST_H        = 80;
+    private static final int ENTRY_H       = 12;
 
-    private static final int INFO_Y    = LIST_Y + LIST_H + 8;
-    private static final int INFO_H    = PAD + ENTRY_H * 3 + PAD;
-    private static final int BTN_W     = 14;
-    private static final int BTN_H     = 12;
-    private static final int COLOR_TEXT = 0xDDDDDD;
+    private static final int INFO_LABEL_Y  = LIST_Y + LIST_H + 4;
+    private static final int INFO_Y        = INFO_LABEL_Y + LABEL_H;
+    private static final int INFO_H        = PAD + ENTRY_H * 3 + PAD - 5;
+    private static final int BTN_W     = 18;
+    private static final int BTN_H     = 16;
+    private static final int COLOR_TEXT      = 0xDDDDDD;
+    private static final int COLOR_YELLOW     = 0xFFFF55;
+    private static final int COLOR_CYAN       = 0x55FFFF;
 
     private Button btnPlusSlot;
     private Button btnMinusSlot;
@@ -57,7 +62,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         scrollOffset = 0;
 
         int boxRight  = leftPos + imageWidth - BTN_X;
-        int freeLineY = topPos + INFO_Y + PAD + ENTRY_H * 2 + (ENTRY_H - BTN_H) / 2;
+        int freeLineY = topPos + INFO_Y + (INFO_H - BTN_H) / 2;
 
         btnMinusSlot = Button.builder(Component.literal("-"), b ->
                 PacketDistributor.sendToServer(new TransferSlotsPacket(false)))
@@ -96,7 +101,13 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         String title = Component.translatable("screen.aeroclaims.menu.title").getString();
         g.drawString(font, title, (imageWidth - font.width(title)) / 2, 7, COLOR_TITLE, false);
         separator(g, 18);
-        separator(g, LIST_Y + LIST_H + 1);
+
+        String listLabel = Component.translatable("screen.aeroclaims.menu.label.ships").getString();
+        g.drawString(font, listLabel, BTN_X + PAD, LIST_LABEL_Y + 2, COLOR_TITLE, false);
+
+        String transferLabel = Component.translatable("screen.aeroclaims.menu.label.transfer").getString();
+        g.drawString(font, transferLabel, BTN_X + PAD, INFO_LABEL_Y + 2, COLOR_TITLE, false);
+
         renderInfoPanel(g);
     }
 
@@ -108,16 +119,18 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         int aeroUsed  = menu.getAeroUsed();
         int aeroFree  = aeroTotal - aeroUsed;
 
-        String opacLine = Component.translatable("screen.aeroclaims.menu.info.opac", opacFree).getString();
-        g.drawString(font, opacLine, x, y, COLOR_TEXT, false);
+        String opacLabel = Component.translatable("screen.aeroclaims.menu.info.opac.label").getString();
+        g.drawString(font, opacLabel, x, y, COLOR_TEXT, false);
+        g.drawString(font, String.valueOf(opacFree), x + font.width(opacLabel), y, COLOR_WHITE, false);
 
-        String aeroLine = Component.translatable("screen.aeroclaims.menu.info.aero",
-                aeroUsed, aeroTotal).getString();
-        g.drawString(font, aeroLine, x, y + ENTRY_H, COLOR_TEXT, false);
+        String aeroLabel = Component.translatable("screen.aeroclaims.menu.info.aero.label").getString();
+        g.drawString(font, aeroLabel, x, y + ENTRY_H, COLOR_TEXT, false);
+        g.drawString(font, aeroUsed + " / " + aeroTotal, x + font.width(aeroLabel), y + ENTRY_H, COLOR_WHITE, false);
 
-        String aeroFreeLine = Component.translatable("screen.aeroclaims.menu.info.aero_free",
-                aeroFree).getString();
-        g.drawString(font, aeroFreeLine, x, y + ENTRY_H * 2, COLOR_TEXT, false);
+        String aeroFreeLabel = Component.translatable("screen.aeroclaims.menu.info.aero_free.label").getString();
+        g.drawString(font, aeroFreeLabel, x, y + ENTRY_H * 2, COLOR_TEXT, false);
+        int aeroFreeColor = aeroFree > 0 ? 0x55FF55 : 0xFF5555;
+        g.drawString(font, String.valueOf(aeroFree), x + font.width(aeroFreeLabel), y + ENTRY_H * 2, aeroFreeColor, false);
     }
 
     private void renderShipList(GuiGraphics g, int mx, int my) {

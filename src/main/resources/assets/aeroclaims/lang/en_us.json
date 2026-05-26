@@ -1,4 +1,4 @@
-﻿{
+{
   "block.aeroclaims.claim_block": "Ship Claim Block",
   "screen.aeroclaims.menu.title": "AeroClaims Menu",
   "screen.aeroclaims.claim_settings.title": "Claim Settings",
@@ -72,8 +72,13 @@
   "commands.aeroclaims.ships.delete.none": "There are no unclaimed sublevels",
   "commands.aeroclaims.ships.delete.done": "Clearing unclaimed sublevels finished. Deleted: %s, failed: %s, total: %s",
   "screen.aeroclaims.menu.info.opac": "OPAC free: %s",
+  "screen.aeroclaims.menu.info.opac.label": "OPAC free: ",
   "screen.aeroclaims.menu.info.aero": "AERO: %s / %s",
+  "screen.aeroclaims.menu.info.aero.label": "AERO: ",
   "screen.aeroclaims.menu.info.aero_free": "AERO free: %s",
+  "screen.aeroclaims.menu.info.aero_free.label": "AERO free: ",
+  "screen.aeroclaims.menu.label.ships": "Sublevels:",
+  "screen.aeroclaims.menu.label.transfer": "Transfer:",
   "screen.aeroclaims.menu.no_ships": "No registered ships",
   "screen.aeroclaims.menu.tooltip.id": "UUID: %s",
   "screen.aeroclaims.menu.tooltip.status": "Status: %s",
