@@ -85,5 +85,7 @@
   "screen.aeroclaims.menu.tooltip.claims": "Аероклеймов: %s",
   "screen.aeroclaims.menu.tooltip.blocks": "Блоков: %s / %s",
   "screen.aeroclaims.menu.tooltip.blocks_unknown": "Блоков: (неизвестно)",
-  "screen.aeroclaims.menu.tooltip.coords": "Позиция: %s, %s, %s"
+  "screen.aeroclaims.menu.tooltip.coords": "Позиция: %s, %s, %s",
+  "screen.aeroclaims.menu.context.copy_uuid": "Скопировать UUID",
+  "screen.aeroclaims.menu.context.copy_pos": "Скопировать координаты"
 }

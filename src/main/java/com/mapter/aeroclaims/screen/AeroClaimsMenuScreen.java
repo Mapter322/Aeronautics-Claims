@@ -1,6 +1,7 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import net.minecraft.client.Minecraft;
 import com.mapter.aeroclaims.network.NavigateMenuPacket;
 import com.mapter.aeroclaims.network.TransferSlotsPacket;
 import net.minecraft.ChatFormatting;
@@ -55,6 +56,8 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
 
     private int scrollOffset = 0;
 
+    private final ContextMenu contextMenu = new ContextMenu();
+
     public AeroClaimsMenuScreen(AeroClaimsMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
         imageWidth  = TEXTURE_W;
@@ -99,6 +102,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
         renderShipList(g, mouseX, mouseY);
+        contextMenu.render(g, mouseX, mouseY);
     }
 
     @Override
@@ -196,7 +200,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
             g.fill(listX + bw - 3, scrollbarY, listX + bw - 1, scrollbarY + scrollbarH, 0x88AAAAAA);
         }
 
-        if (hoveredIndex >= 0) {
+        if (hoveredIndex >= 0 && !contextMenu.isVisible()) {
             List<Component> tooltip = buildTooltip(ships.get(hoveredIndex));
             g.renderTooltip(font, tooltip, Optional.empty(), mx, my);
         }
@@ -232,14 +236,58 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+
+        if (contextMenu.isVisible()) {
+            return contextMenu.mouseClicked(mx, my, button);
+        }
+
         double relMx = mx - leftPos;
         double relMy = my - topPos;
+
+
         if (relMx >= CLOSE_X && relMx < CLOSE_X + CLOSE_SIZE
                 && relMy >= CLOSE_Y && relMy < CLOSE_Y + CLOSE_SIZE) {
             onClose();
             return true;
         }
+
+        if (button == 0 || button == 1) {
+            int listX = leftPos + BTN_X;
+            int listY = topPos + LIST_Y;
+            int bw = imageWidth - BTN_X * 2;
+            if (mx >= listX && mx < listX + bw && my >= listY && my < listY + LIST_H) {
+                int relY = (int) my - listY - PAD + scrollOffset;
+                int index = relY / ENTRY_H;
+                List<AeroClaimsMenu.ShipEntry> ships = menu.getShips();
+                if (index >= 0 && index < ships.size()) {
+                    AeroClaimsMenu.ShipEntry ship = ships.get(index);
+                    openContextMenuForShip(ship, (int) mx, (int) my);
+                    return true;
+                }
+            }
+        }
+
         return super.mouseClicked(mx, my, button);
+    }
+
+    private void openContextMenuForShip(AeroClaimsMenu.ShipEntry ship, int screenX, int screenY) {
+        contextMenu.dismiss();
+        ContextMenu menu = this.contextMenu;
+        buildContextMenu(ship);
+        contextMenu.open(screenX, screenY);
+    }
+
+    private void buildContextMenu(AeroClaimsMenu.ShipEntry ship) {
+        contextMenu.clearItems();
+        contextMenu.addItem("screen.aeroclaims.menu.context.copy_uuid", () -> {
+            Minecraft.getInstance().keyboardHandler.setClipboard(ship.shipId());
+        });
+        if (ship.hasCoords()) {
+            contextMenu.addItem("screen.aeroclaims.menu.context.copy_pos", () -> {
+                String pos = ship.worldX() + " " + ship.worldY() + " " + ship.worldZ();
+                Minecraft.getInstance().keyboardHandler.setClipboard(pos);
+            });
+        }
     }
 
     @Override

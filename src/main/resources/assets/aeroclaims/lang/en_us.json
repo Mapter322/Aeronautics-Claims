@@ -85,5 +85,7 @@
   "screen.aeroclaims.menu.tooltip.claims": "Aero claims: %s",
   "screen.aeroclaims.menu.tooltip.blocks": "Blocks: %s / %s",
   "screen.aeroclaims.menu.tooltip.blocks_unknown": "Blocks: (unknown)",
-  "screen.aeroclaims.menu.tooltip.coords": "Pos: %s, %s, %s"
+  "screen.aeroclaims.menu.tooltip.coords": "Pos: %s, %s, %s",
+  "screen.aeroclaims.menu.context.copy_uuid": "Copy UUID",
+  "screen.aeroclaims.menu.context.copy_pos": "Copy Position"
 }
