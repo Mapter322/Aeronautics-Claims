@@ -6,7 +6,7 @@ import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.network.SyncClaimStatePacket;
-import com.mapter.aeroclaims.screen.ClaimSettingsMenu;
+import com.mapter.aeroclaims.screen.ClaimBlockMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
@@ -186,7 +186,7 @@ public class ClaimBlock extends BaseEntityBlock {
                 ? ClaimManager.getClaimByCenter(serverLevel, pos) : null;
         if (claim == null) return null;
         return new SimpleMenuProvider(
-                (containerId, inv, p) -> new ClaimSettingsMenu(
+                (containerId, inv, p) -> new ClaimBlockMenu(
                         containerId, inv, pos, claim.getOwner(), "",
                         false, claim.isActive(),
                         claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),

@@ -1,12 +1,14 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.network.NavigateMenuPacket;
 import com.mapter.aeroclaims.network.TransferSlotsPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -44,6 +46,9 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private static final int COLOR_TEXT      = 0xDDDDDD;
     private static final int COLOR_YELLOW     = 0xFFFF55;
     private static final int COLOR_CYAN       = 0x55FFFF;
+    private static final int CLOSE_X = 8;
+    private static final int CLOSE_Y = 7;
+    private static final int CLOSE_SIZE = 10;
 
     private Button btnPlusSlot;
     private Button btnMinusSlot;
@@ -98,6 +103,12 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
 
     @Override
     protected void renderLabels(GuiGraphics g, int mouseX, int mouseY) {
+        int relMx = mouseX - leftPos;
+        int relMy = mouseY - topPos;
+        boolean closeHovered = relMx >= CLOSE_X && relMx < CLOSE_X + CLOSE_SIZE
+                && relMy >= CLOSE_Y && relMy < CLOSE_Y + CLOSE_SIZE;
+        g.drawString(font, "\u2715", CLOSE_X, CLOSE_Y, closeHovered ? 0xFFFFFF : 0xAAAAAA, false);
+
         String title = Component.translatable("screen.aeroclaims.menu.title").getString();
         g.drawString(font, title, (imageWidth - font.width(title)) / 2, 7, COLOR_TITLE, false);
         separator(g, 18);
@@ -217,6 +228,29 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
                     .withStyle(ChatFormatting.GRAY));
         }
         return lines;
+    }
+
+    @Override
+    public boolean mouseClicked(double mx, double my, int button) {
+        double relMx = mx - leftPos;
+        double relMy = my - topPos;
+        if (relMx >= CLOSE_X && relMx < CLOSE_X + CLOSE_SIZE
+                && relMy >= CLOSE_Y && relMy < CLOSE_Y + CLOSE_SIZE) {
+            onClose();
+            return true;
+        }
+        return super.mouseClicked(mx, my, button);
+    }
+
+    @Override
+    public void onClose() {
+        BlockPos returnPos = menu.getReturnClaimPos();
+        if (returnPos != null) {
+            // Сервер откроет ClaimSettingsScreen — текущий экран закроется автоматически
+            PacketDistributor.sendToServer(NavigateMenuPacket.backToClaim(returnPos));
+        } else {
+            super.onClose();
+        }
     }
 
     @Override

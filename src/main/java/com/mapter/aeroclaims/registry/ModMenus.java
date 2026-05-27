@@ -1,7 +1,7 @@
 package com.mapter.aeroclaims.registry;
 
 import com.mapter.aeroclaims.screen.AeroClaimsMenu;
-import com.mapter.aeroclaims.screen.ClaimSettingsMenu;
+import com.mapter.aeroclaims.screen.ClaimBlockMenu;
 import com.mapter.aeroclaims.Aeroclaims;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.MenuType;
@@ -15,9 +15,9 @@ public class ModMenus {
     public static final DeferredRegister<MenuType<?>> MENUS =
             DeferredRegister.create(BuiltInRegistries.MENU, Aeroclaims.MODID);
 
-    public static final DeferredHolder<MenuType<?>, MenuType<ClaimSettingsMenu>> CLAIM_SETTINGS_MENU =
+    public static final DeferredHolder<MenuType<?>, MenuType<ClaimBlockMenu>> CLAIM_SETTINGS_MENU =
             MENUS.register("claim_settings",
-                    () -> IMenuTypeExtension.create(ClaimSettingsMenu::new));
+                    () -> IMenuTypeExtension.create(ClaimBlockMenu::new));
 
     public static final DeferredHolder<MenuType<?>, MenuType<AeroClaimsMenu>> AEROCLAIMS_MENU =
             MENUS.register("aeroclaims_menu",

@@ -3,7 +3,7 @@ package com.mapter.aeroclaims.client;
 import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.registry.ModMenus;
 import com.mapter.aeroclaims.screen.AeroClaimsMenuScreen;
-import com.mapter.aeroclaims.screen.ClaimSettingsScreen;
+import com.mapter.aeroclaims.screen.ClaimBlockScreen;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -14,7 +14,7 @@ public class ClientModEvents {
 
     @SubscribeEvent
     public static void onRegisterScreens(RegisterMenuScreensEvent event) {
-        event.register(ModMenus.CLAIM_SETTINGS_MENU.get(), ClaimSettingsScreen::new);
+        event.register(ModMenus.CLAIM_SETTINGS_MENU.get(), ClaimBlockScreen::new);
         event.register(ModMenus.AEROCLAIMS_MENU.get(), AeroClaimsMenuScreen::new);
     }
 }

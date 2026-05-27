@@ -9,7 +9,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 @EventBusSubscriber(modid = Aeroclaims.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class AeroClaimsNetwork {
 
-    private static final String PROTOCOL_VERSION = "4";
+    private static final String PROTOCOL_VERSION = "6";
 
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
@@ -24,6 +24,7 @@ public class AeroClaimsNetwork {
         registrar.playBidirectional(SyncClaimStatePacket.TYPE, SyncClaimStatePacket.STREAM_CODEC, SyncClaimStatePacket::handle);
         registrar.playToClient(ClaimRefreshParticlesPacket.TYPE, ClaimRefreshParticlesPacket.STREAM_CODEC, ClaimRefreshParticlesPacket::handle);
         registrar.playToServer(TransferSlotsPacket.TYPE, TransferSlotsPacket.STREAM_CODEC, TransferSlotsPacket::handle);
+        registrar.playToServer(NavigateMenuPacket.TYPE, NavigateMenuPacket.STREAM_CODEC, NavigateMenuPacket::handle);
         registrar.playToClient(SyncMenuStatsPacket.TYPE, SyncMenuStatsPacket.STREAM_CODEC, SyncMenuStatsPacket::handle);
     }
 }

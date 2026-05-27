@@ -17,7 +17,7 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.UUID;
 
-public class ClaimSettingsMenu extends AbstractContainerMenu {
+public class ClaimBlockMenu extends AbstractContainerMenu {
 
     private final BlockPos center;
     private final UUID owner;
@@ -32,8 +32,9 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
     private int freeSlots;
     private int blocksPerClaim;
     private int shipBlockCount;
+    private boolean navigatingAway = false;
 
-    public ClaimSettingsMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
+    public ClaimBlockMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
         this(
                 containerId, playerInventory,
                 buf.readBlockPos(),
@@ -51,11 +52,11 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
         );
     }
 
-    public ClaimSettingsMenu(int containerId, Inventory playerInventory,
-                             BlockPos center, UUID owner, String shipName,
-                             boolean onShip, boolean claimActive,
-                             boolean allowParty, boolean allowAllies, boolean allowOthers,
-                             int claimsForBlock, int freeSlots, int blocksPerClaim, int shipBlockCount) {
+    public ClaimBlockMenu(int containerId, Inventory playerInventory,
+                          BlockPos center, UUID owner, String shipName,
+                          boolean onShip, boolean claimActive,
+                          boolean allowParty, boolean allowAllies, boolean allowOthers,
+                          int claimsForBlock, int freeSlots, int blocksPerClaim, int shipBlockCount) {
         super(ModMenus.CLAIM_SETTINGS_MENU.get(), containerId);
         this.center = center;
         this.owner = owner;
@@ -100,6 +101,7 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
 
     public int getShipBlockCount()              { return shipBlockCount; }
     public void setShipBlockCount(int v)        { shipBlockCount = v; }
+    public void setNavigatingAway(boolean v)     { navigatingAway = v; }
 
     public int getBlockLimit()                  { return claimsForBlock * blocksPerClaim; }
 
@@ -112,7 +114,7 @@ public class ClaimSettingsMenu extends AbstractContainerMenu {
     @Override
     public void removed(Player player) {
         Level level = player.level();
-        if (!level.isClientSide) {
+        if (!level.isClientSide && !navigatingAway) {
             ServerLevel serverLevel = (ServerLevel) level;
 
             Claim claim = ClaimManager.getClaimByCenter(serverLevel, center);

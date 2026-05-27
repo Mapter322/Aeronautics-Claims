@@ -77,7 +77,7 @@
   "screen.aeroclaims.menu.info.aero.label": "AERO: ",
   "screen.aeroclaims.menu.info.aero_free": "AERO free: %s",
   "screen.aeroclaims.menu.info.aero_free.label": "AERO free: ",
-  "screen.aeroclaims.menu.label.ships": "Sublevels:",
+  "screen.aeroclaims.menu.label.ships": "Subclaims:",
   "screen.aeroclaims.menu.label.transfer": "Transfer:",
   "screen.aeroclaims.menu.no_ships": "No registered ships",
   "screen.aeroclaims.menu.tooltip.id": "UUID: %s",

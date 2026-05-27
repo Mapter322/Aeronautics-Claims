@@ -78,7 +78,7 @@
   "screen.aeroclaims.menu.info.aero_free": "AERO своб.: %s",
   "screen.aeroclaims.menu.info.aero_free.label": "AERO своб.: ",
   "screen.aeroclaims.menu.label.ships": "Субклеймы:",
-  "screen.aeroclaims.menu.label.transfer": "Перенос:",
+  "screen.aeroclaims.menu.label.transfer": "Трансфер:",
   "screen.aeroclaims.menu.no_ships": "Нет зарегистрированных кораблей",
   "screen.aeroclaims.menu.tooltip.id": "UUID: %s",
   "screen.aeroclaims.menu.tooltip.status": "Статус: %s",

@@ -1,8 +1,8 @@
 package com.mapter.aeroclaims.network;
 
 import com.mapter.aeroclaims.Aeroclaims;
-import com.mapter.aeroclaims.screen.ClaimSettingsMenu;
-import com.mapter.aeroclaims.screen.ClaimSettingsScreen;
+import com.mapter.aeroclaims.screen.ClaimBlockMenu;
+import com.mapter.aeroclaims.screen.ClaimBlockScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -61,7 +61,7 @@ public record SyncClaimStatePacket(
         context.enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.screen == null) return;
-            if (!(mc.player != null && mc.player.containerMenu instanceof ClaimSettingsMenu menu)) return;
+            if (!(mc.player != null && mc.player.containerMenu instanceof ClaimBlockMenu menu)) return;
             if (!menu.getCenter().equals(msg.center)) return;
 
             menu.setClaimActive(msg.claimActive);
@@ -75,7 +75,7 @@ public record SyncClaimStatePacket(
                 menu.setShipBlockCount(msg.shipBlockCount);
             }
 
-            if (mc.screen instanceof ClaimSettingsScreen screen) {
+            if (mc.screen instanceof ClaimBlockScreen screen) {
                 screen.syncFromMenu();
             }
         });

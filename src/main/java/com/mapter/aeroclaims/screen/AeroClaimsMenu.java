@@ -1,6 +1,7 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.registry.ModMenus;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -20,6 +21,7 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
     private int opacFree;
     private int aeroTotal;
     private int aeroUsed;
+    private BlockPos returnClaimPos;
 
     public AeroClaimsMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
         this(containerId, playerInventory);
@@ -34,6 +36,11 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
         opacFree  = buf.readInt();
         aeroTotal = buf.readInt();
         aeroUsed  = buf.readInt();
+        if (buf.isReadable()) {
+            if (buf.readBoolean()) {
+                this.returnClaimPos = buf.readBlockPos();
+            }
+        }
     }
 
     public AeroClaimsMenu(int containerId, Inventory playerInventory) {
@@ -45,6 +52,7 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
     public int getOpacFree()  { return opacFree; }
     public int getAeroTotal() { return aeroTotal; }
     public int getAeroUsed()  { return aeroUsed; }
+    public BlockPos getReturnClaimPos() { return returnClaimPos; }
 
     public void setStats(int opacFree, int aeroTotal, int aeroUsed) {
         this.opacFree  = opacFree;

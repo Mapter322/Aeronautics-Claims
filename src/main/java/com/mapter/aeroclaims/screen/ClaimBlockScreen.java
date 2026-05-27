@@ -2,9 +2,9 @@ package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.network.ActivateClaimPacket;
-import com.mapter.aeroclaims.network.AdjustBlockClaimsPacket;
 import com.mapter.aeroclaims.network.DeactivateClaimPacket;
 import com.mapter.aeroclaims.network.RefreshClaimPacket;
+import com.mapter.aeroclaims.network.NavigateMenuPacket;
 import com.mapter.aeroclaims.network.RenameShipPacket;
 import com.mapter.aeroclaims.network.SyncClaimStatePacket;
 import com.mapter.aeroclaims.network.UpdateClaimSettingsPacket;
@@ -23,7 +23,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMenu> {
+public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
 
     private static final ResourceLocation BACKGROUND =
             ResourceLocation.fromNamespaceAndPath(Aeroclaims.MODID, "textures/screen/claim-menu.png");
@@ -37,6 +37,9 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     private static final int COLOR_WHITE   = 0xFFFFFF;
     private static final int COLOR_DIV     = 0x66888888;
     private static final int COLOR_INFO_BG = 0xCC333333;
+    private static final int CLOSE_X = 8;
+    private static final int CLOSE_Y = 7;
+    private static final int CLOSE_SIZE = 10;
 
     private static final long REFRESH_COOLDOWN_MS = 10_000L;
     private static final Map<BlockPos, Long>    refreshCooldowns       = new HashMap<>();
@@ -64,7 +67,7 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     private boolean inActivateMode = false;
 
-    public ClaimSettingsScreen(ClaimSettingsMenu menu, Inventory inv, Component title) {
+    public ClaimBlockScreen(ClaimBlockMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
         imageWidth  = TEXTURE_W;
         imageHeight = TEXTURE_H + 10;
@@ -93,9 +96,16 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
         updateRefreshButton();
         updateActionButton();
 
+        int aeroMenuBtnY = rowY + BTN_H + GAP + 3;
+        Button aeroMenuButton = Button.builder(
+                Component.translatable("screen.aeroclaims.menu.title"),
+                b -> PacketDistributor.sendToServer(NavigateMenuPacket.toAeroMenu()))
+                .bounds(leftPos + BTN_X, topPos + aeroMenuBtnY, bw, BTN_H).build();
+
         addRenderableWidget(accessButton);
         addRenderableWidget(refreshButton);
         addRenderableWidget(actionButton);
+        addRenderableWidget(aeroMenuButton);
 
         renameBox = new EditBox(font, leftPos + BTN_X + INFO_PAD, topPos + INFO_Y, imageWidth - BTN_X * 2 - INFO_PAD * 2, font.lineHeight + 2, Component.empty());
         renameBox.setMaxLength(48);
@@ -127,6 +137,12 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
     @Override
     protected void renderLabels(GuiGraphics g, int mx, int my) {
         int bw   = imageWidth - BTN_X * 2;
+
+        int relMx = mx - leftPos;
+        int relMy = my - topPos;
+        boolean closeHovered = relMx >= CLOSE_X && relMx < CLOSE_X + CLOSE_SIZE
+                && relMy >= CLOSE_Y && relMy < CLOSE_Y + CLOSE_SIZE;
+        g.drawString(font, "\u2715", CLOSE_X, CLOSE_Y, closeHovered ? 0xFFFFFF : 0xAAAAAA, false);
 
         String title = Component.translatable("screen.aeroclaims.claim_settings.title").getString();
         g.drawString(font, title, (imageWidth - font.width(title)) / 2, 7, COLOR_TITLE, false);
@@ -237,6 +253,13 @@ public class ClaimSettingsScreen extends AbstractContainerScreen<ClaimSettingsMe
 
     @Override
     public boolean mouseClicked(double mx, double my, int button) {
+        double relMx = mx - leftPos;
+        double relMy = my - topPos;
+        if (relMx >= CLOSE_X && relMx < CLOSE_X + CLOSE_SIZE
+                && relMy >= CLOSE_Y && relMy < CLOSE_Y + CLOSE_SIZE) {
+            onClose();
+            return true;
+        }
         if (editing) {
             if (!renameBox.isMouseOver(mx, my)) { confirmRename(); return true; }
             return renameBox.mouseClicked(mx, my, button);
