@@ -4,6 +4,7 @@ import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.claim.Claim;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.SubLevelAccess;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -14,7 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.util.List;
-
 
 @EventBusSubscriber(modid = Aeroclaims.MODID)
 public class SublevelWorldScanner {
@@ -35,34 +35,31 @@ public class SublevelWorldScanner {
             if (subLevels == null || subLevels.isEmpty()) continue;
 
             for (ServerSubLevel subLevel : subLevels) {
-                processSubLevel(level, serverContainer, subLevel);
+                processSubLevel(level, subLevel);
             }
         }
     }
 
-    private static void processSubLevel(ServerLevel level,
-                                        ServerSubLevelContainer container,
-                                        ServerSubLevel subLevel) {
-        String shipId = subLevel.getUniqueId().toString();
-        String shipName = subLevel.getName() != null ? subLevel.getName() : "ship";
+    private static void processSubLevel(ServerLevel level, SubLevelAccess subLevel) {
+        String shipId   = subLevel.getUniqueId().toString();
+        String shipName = SableShipUtils.getShipName(subLevel);
 
         if (RegisteredSublevelManager.getRegisteredName(shipId) != null
                 || UnregisteredSublevelManager.contains(shipId)) {
             return;
         }
 
-        Claim claim = SableSubLevelEventHandler.findClaimOnSubLevel(level, container, subLevel);
+        Claim claim = SableSubLevelEventHandler.findClaimOnSubLevel(level, subLevel);
 
         if (claim != null) {
-            java.util.UUID ownerUuid = claim.getOwner();
             String ownerName = null;
             if (claim.getShipId() != null) {
-                RegisteredSublevelManager.ShipRegistration existingReg =
+                RegisteredSublevelManager.ShipRegistration existing =
                         RegisteredSublevelManager.getRegistration(claim.getShipId());
-                if (existingReg != null) ownerName = existingReg.owner;
+                if (existing != null) ownerName = existing.owner;
             }
-            RegisteredSublevelManager.registerShip(shipId, shipName, ownerUuid, ownerName);
-            LOGGER.info("[Scanner] Discovered claimed ship: id={} name={} owner={}", shipId, shipName, ownerUuid);
+            RegisteredSublevelManager.registerShip(shipId, shipName, claim.getOwner(), ownerName);
+            LOGGER.info("[Scanner] Discovered claimed ship: id={} name={} owner={}", shipId, shipName, claim.getOwner());
         } else {
             UnregisteredSublevelManager.addShip(shipId, shipName);
             LOGGER.info("[Scanner] Discovered unclaimed ship: id={} name={}", shipId, shipName);

@@ -5,6 +5,10 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mapter.aeroclaims.Aeroclaims;
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.SubLevelAccess;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -12,11 +16,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-
-import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
-import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
-import dev.ryanhcode.sable.sublevel.ServerSubLevel;
-import dev.ryanhcode.sable.sublevel.SubLevel;
 
 import java.io.File;
 import java.io.FileReader;
@@ -51,8 +50,7 @@ public class RegisteredSublevelManager {
         public Integer blocksUsed;
         public Integer blocksMax;
 
-        public ShipRegistration() {
-        }
+        public ShipRegistration() {}
 
         public ShipRegistration(String name, UUID ownerUuid, String owner) {
             this.name = name;
@@ -104,18 +102,14 @@ public class RegisteredSublevelManager {
             JsonObject obj = element.getAsJsonObject();
             Map<String, ShipRegistration> result = new HashMap<>();
             for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                String shipId = entry.getKey();
-                JsonElement value = entry.getValue();
-
-                ShipRegistration reg = GSON.fromJson(value, ShipRegistration.class);
+                ShipRegistration reg = GSON.fromJson(entry.getValue(), ShipRegistration.class);
                 if (reg != null && reg.name != null) {
-                    if (value.isJsonObject()) {
-                        readCoords(value.getAsJsonObject(), reg);
+                    if (entry.getValue().isJsonObject()) {
+                        readCoords(entry.getValue().getAsJsonObject(), reg);
                     }
-                    result.put(shipId, reg);
+                    result.put(entry.getKey(), reg);
                 }
             }
-
             registeredShips = result;
         } catch (IOException e) {
             e.printStackTrace();
@@ -130,20 +124,41 @@ public class RegisteredSublevelManager {
             for (Map.Entry<String, ShipRegistration> entry : registeredShips.entrySet()) {
                 ShipRegistration reg = entry.getValue();
                 JsonObject shipObj = GSON.toJsonTree(reg).getAsJsonObject();
-                if (reg != null) {
-                    shipObj.remove("worldX");
-                    shipObj.remove("worldY");
-                    shipObj.remove("worldZ");
-                    String coords = formatCoords(reg.worldX, reg.worldY, reg.worldZ);
-                    if (coords != null) {
-                        shipObj.addProperty("coords", coords);
-                    }
-                }
+                shipObj.remove("worldX");
+                shipObj.remove("worldY");
+                shipObj.remove("worldZ");
+                String coords = formatCoords(reg.worldX, reg.worldY, reg.worldZ);
+                if (coords != null) shipObj.addProperty("coords", coords);
                 obj.add(entry.getKey(), shipObj);
             }
             GSON.toJson(obj, writer);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public static void updateAllWorldPositions() {
+        if (server == null) return;
+        for (ServerLevel level : server.getAllLevels()) {
+            SubLevelContainer container = SubLevelContainer.getContainer(level);
+            if (!(container instanceof ServerSubLevelContainer serverContainer)) continue;
+            java.util.List<ServerSubLevel> subLevels = serverContainer.getAllSubLevels();
+            if (subLevels == null) continue;
+            for (ServerSubLevel subLevel : subLevels) {
+                updatePositionFor(subLevel);
+            }
+        }
+    }
+
+    private static void updatePositionFor(SubLevelAccess subLevel) {
+        String id = subLevel.getUniqueId().toString();
+        ShipRegistration reg = registeredShips.get(id);
+        if (reg == null) return;
+        double[] pos = SableShipUtils.getShipWorldPos(subLevel);
+        if (pos != null) {
+            reg.worldX = pos[0];
+            reg.worldY = pos[1];
+            reg.worldZ = pos[2];
         }
     }
 
@@ -160,44 +175,17 @@ public class RegisteredSublevelManager {
                     reg.worldX = Double.parseDouble(parts[0]);
                     reg.worldY = Double.parseDouble(parts[1]);
                     reg.worldZ = Double.parseDouble(parts[2]);
-                } catch (NumberFormatException ignored) {
-                }
+                } catch (NumberFormatException ignored) {}
             }
         }
     }
-
 
     public static void saveNow() {
         updateAllWorldPositions();
         saveRegisteredShips();
     }
 
-    public static void updateAllWorldPositions() {
-        if (server == null) return;
-        for (ServerLevel level : server.getAllLevels()) {
-            SubLevelContainer container = SubLevelContainer.getContainer(level);
-            if (!(container instanceof ServerSubLevelContainer serverContainer)) continue;
-            java.util.List<ServerSubLevel> subLevels = serverContainer.getAllSubLevels();
-            if (subLevels == null) continue;
-            for (ServerSubLevel subLevel : subLevels) {
-                String id = subLevel.getUniqueId().toString();
-                ShipRegistration reg = registeredShips.get(id);
-                if (reg == null) continue;
-                double[] pos = SableShipUtils.getShipWorldPos(subLevel);
-                if (pos != null) {
-                    reg.worldX = pos[0];
-                    reg.worldY = pos[1];
-                    reg.worldZ = pos[2];
-                }
-            }
-        }
-    }
-
-
-    public static int getCount() {
-        return registeredShips.size();
-    }
-
+    public static int getCount() { return registeredShips.size(); }
 
     public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName) {
         registeredShips.put(shipId, new ShipRegistration(name, ownerUuid, ownerName));
@@ -211,13 +199,9 @@ public class RegisteredSublevelManager {
         registeredShips.put(shipId, reg);
     }
 
-    public static void unregisterShip(String shipId) {
-        registeredShips.remove(shipId);
-    }
+    public static void unregisterShip(String shipId) { registeredShips.remove(shipId); }
 
-    public static ShipRegistration getRegistration(String shipId) {
-        return registeredShips.get(shipId);
-    }
+    public static ShipRegistration getRegistration(String shipId) { return registeredShips.get(shipId); }
 
     public static String getRegisteredName(String shipId) {
         ShipRegistration reg = registeredShips.get(shipId);
@@ -226,10 +210,7 @@ public class RegisteredSublevelManager {
 
     public static Map<String, String> getRegisteredShips(UUID playerUuid) {
         Map<String, String> result = new HashMap<>();
-        if (playerUuid == null) {
-            return result;
-        }
-
+        if (playerUuid == null) return result;
         String uuidString = playerUuid.toString();
         for (Map.Entry<String, ShipRegistration> entry : registeredShips.entrySet()) {
             ShipRegistration reg = entry.getValue();
@@ -237,7 +218,6 @@ public class RegisteredSublevelManager {
                 result.put(entry.getKey(), reg.name);
             }
         }
-
         return result;
     }
 }

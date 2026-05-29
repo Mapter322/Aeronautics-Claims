@@ -11,7 +11,7 @@ import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import com.mojang.serialization.MapCodec;
-import dev.ryanhcode.sable.sublevel.SubLevel;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -96,7 +96,7 @@ public class ClaimBlock extends BaseEntityBlock {
         if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
             ServerLevel serverLevel = (ServerLevel) level;
 
-            SubLevel ship = SableShipUtils.getShipAt(serverLevel, pos);
+            var ship = SableShipUtils.getShipAt(serverLevel, pos);
             String shipId = SableShipUtils.getShipId(ship);
             if (shipId != null) {
                 String shipName = SableShipUtils.getShipName(ship);
@@ -129,7 +129,6 @@ public class ClaimBlock extends BaseEntityBlock {
         Claim claim = ClaimManager.getClaimByCenter(serverLevel, pos);
 
         // Claim missing for this position, recover using owner stored in the BlockEntity
-        // This handles cases where saved data is out of sync
         if (claim == null) {
             UUID storedOwner = level.getBlockEntity(pos) instanceof ClaimBlockEntity be ? be.getOwner() : null;
             if (storedOwner == null) return InteractionResult.PASS;
@@ -148,7 +147,7 @@ public class ClaimBlock extends BaseEntityBlock {
             level.playSound(null, pos, SoundEvents.IRON_TRAPDOOR_OPEN, SoundSource.BLOCKS, 1.0F, 1.0F);
         }
 
-        SubLevel ship = SableShipUtils.getShipAt(serverLevel, pos);
+        var ship = SableShipUtils.getShipAt(serverLevel, pos);
         boolean onShip = ship != null;
         String shipId = SableShipUtils.getShipId(ship);
         String registeredName = shipId != null ? RegisteredSublevelManager.getRegisteredName(shipId) : null;

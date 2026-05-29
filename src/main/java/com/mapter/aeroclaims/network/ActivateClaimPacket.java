@@ -11,7 +11,6 @@ import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import com.mapter.aeroclaims.util.TeamColorHelper;
-import dev.ryanhcode.sable.sublevel.SubLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -103,7 +102,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
         String shipId = data.getCachedShipId(center);
 
         if (shipId == null) {
-            SubLevel ship = SableShipUtils.getShipAt(level, center);
+            var ship = SableShipUtils.getShipAt(level, center);
             shipId = SableShipUtils.getShipId(ship);
         }
 

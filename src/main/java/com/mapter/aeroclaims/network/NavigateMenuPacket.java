@@ -12,7 +12,7 @@ import com.mapter.aeroclaims.screen.AeroClaimsMenu;
 import com.mapter.aeroclaims.screen.ClaimBlockMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
-import dev.ryanhcode.sable.sublevel.SubLevel;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -133,7 +133,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
             level.setBlock(pos, state.setValue(ClaimBlock.OPEN, true), 3);
         }
 
-        SubLevel ship = SableShipUtils.getShipAt(level, pos);
+        var ship = SableShipUtils.getShipAt(level, pos);
         boolean onShip = ship != null;
         String shipId = SableShipUtils.getShipId(ship);
         String registeredName = shipId != null ? RegisteredSublevelManager.getRegisteredName(shipId) : null;

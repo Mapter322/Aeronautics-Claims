@@ -4,7 +4,7 @@ import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
-import dev.ryanhcode.sable.sublevel.SubLevel;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -17,8 +17,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// Client → server packet: player manually registers ship (sublevel) by block position.
-// Server determines sublevel at position and adds to registered list
+
 public record RegisterShipPacket(BlockPos pos) implements CustomPacketPayload {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RegisterShipPacket.class);
@@ -40,7 +39,7 @@ public record RegisterShipPacket(BlockPos pos) implements CustomPacketPayload {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
             ServerLevel level = player.serverLevel();
-            SubLevel ship = SableShipUtils.getShipAt(level, msg.pos);
+            var ship = SableShipUtils.getShipAt(level, msg.pos);
 
             if (ship == null) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_not_found_at_pos"));

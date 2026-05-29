@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.mapter.aeroclaims.Aeroclaims;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.companion.SubLevelAccess;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -82,7 +83,6 @@ public class UnregisteredSublevelManager {
         }
     }
 
-
     public static void addShip(String shipId, String name) {
         if (ships.containsKey(shipId)) return;
         ships.put(shipId, new UnregisteredShip(name));
@@ -95,21 +95,14 @@ public class UnregisteredSublevelManager {
         }
     }
 
-    public static boolean contains(String shipId) {
-        return ships.containsKey(shipId);
-    }
+    public static boolean contains(String shipId) { return ships.containsKey(shipId); }
 
-    public static Collection<UnregisteredShip> getAll() {
-        return Collections.unmodifiableCollection(ships.values());
-    }
+    public static Collection<UnregisteredShip> getAll() { return Collections.unmodifiableCollection(ships.values()); }
 
-    public static Set<String> getShipIds() {
-        return Collections.unmodifiableSet(new HashSet<>(ships.keySet()));
-    }
+    public static Set<String> getShipIds() { return Collections.unmodifiableSet(new HashSet<>(ships.keySet())); }
 
-    public static int getCount() {
-        return ships.size();
-    }
+    public static int getCount() { return ships.size(); }
+
 
     public static void updateAllWorldPositions() {
         if (server == null) return;
@@ -119,33 +112,35 @@ public class UnregisteredSublevelManager {
             java.util.List<ServerSubLevel> subLevels = serverContainer.getAllSubLevels();
             if (subLevels == null) continue;
             for (ServerSubLevel subLevel : subLevels) {
-                String id = subLevel.getUniqueId().toString();
-                UnregisteredShip ship = ships.get(id);
-                if (ship == null) continue;
-                double[] pos = SableShipUtils.getShipWorldPos(subLevel);
-                if (pos != null) {
-                    ship.worldX = pos[0];
-                    ship.worldY = pos[1];
-                    ship.worldZ = pos[2];
-                }
+                updatePositionFor(subLevel);
             }
         }
     }
 
+    private static void updatePositionFor(SubLevelAccess subLevel) {
+        String id = subLevel.getUniqueId().toString();
+        UnregisteredShip ship = ships.get(id);
+        if (ship == null) return;
+        double[] pos = SableShipUtils.getShipWorldPos(subLevel);
+        if (pos != null) {
+            ship.worldX = pos[0];
+            ship.worldY = pos[1];
+            ship.worldZ = pos[2];
+        }
+    }
 
     public static void save() {
         if (saveFile == null) return;
         try {
             JsonObject obj = new JsonObject();
             for (Map.Entry<String, UnregisteredShip> entry : ships.entrySet()) {
-                String shipId = entry.getKey();
                 UnregisteredShip s = entry.getValue();
                 JsonObject shipObj = new JsonObject();
                 shipObj.addProperty("name", s.name);
                 shipObj.addProperty("createdAt", s.createdAt);
                 String coords = formatCoords(s.worldX, s.worldY, s.worldZ);
                 if (coords != null) shipObj.addProperty("coords", coords);
-                obj.add(shipId, shipObj);
+                obj.add(entry.getKey(), shipObj);
             }
             Files.writeString(saveFile, GSON.toJson(obj));
         } catch (IOException e) {
@@ -171,8 +166,7 @@ public class UnregisteredSublevelManager {
                     ship.worldX = Double.parseDouble(parts[0]);
                     ship.worldY = Double.parseDouble(parts[1]);
                     ship.worldZ = Double.parseDouble(parts[2]);
-                } catch (NumberFormatException ignored) {
-                }
+                } catch (NumberFormatException ignored) {}
             }
         }
     }
@@ -183,20 +177,15 @@ public class UnregisteredSublevelManager {
         try {
             String content = Files.readString(saveFile);
             JsonElement element = JsonParser.parseString(content);
-            if (element.isJsonObject()) {
-                JsonObject obj = element.getAsJsonObject();
-                for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
-                    String shipId = entry.getKey();
-                    JsonElement value = entry.getValue();
-                    if (value.isJsonObject()) {
-                        JsonObject shipObj = value.getAsJsonObject();
-                        String name = shipObj.get("name").getAsString();
-                        String createdAt = shipObj.get("createdAt").getAsString();
-                        UnregisteredShip ship = new UnregisteredShip(name, createdAt);
-                        readCoords(shipObj, ship);
-                        ships.put(shipId, ship);
-                    }
-                }
+            if (!element.isJsonObject()) return;
+            for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+                if (!entry.getValue().isJsonObject()) continue;
+                JsonObject shipObj = entry.getValue().getAsJsonObject();
+                String name      = shipObj.get("name").getAsString();
+                String createdAt = shipObj.get("createdAt").getAsString();
+                UnregisteredShip ship = new UnregisteredShip(name, createdAt);
+                readCoords(shipObj, ship);
+                ships.put(entry.getKey(), ship);
             }
         } catch (Exception e) {
             LOGGER.error("Failed to load {}: {}", FILE_NAME, e.toString());

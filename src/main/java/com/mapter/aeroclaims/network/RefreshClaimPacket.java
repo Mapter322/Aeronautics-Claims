@@ -8,7 +8,7 @@ import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
-import dev.ryanhcode.sable.sublevel.SubLevel;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -109,7 +109,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
     }
 
     private static boolean hasDuplicateClaimBlock(ServerLevel level, BlockPos center) {
-        SubLevel ship = SableShipUtils.getShipAt(level, center);
+        var ship = SableShipUtils.getShipAt(level, center);
         String shipId = SableShipUtils.getShipId(ship);
         if (shipId == null) return false;
 
@@ -122,7 +122,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
     }
 
     private static void cacheShipStructure(ServerLevel level, BlockPos center, int blockCount) {
-        SubLevel ship = SableShipUtils.getShipAt(level, center);
+        var ship = SableShipUtils.getShipAt(level, center);
         String shipId = SableShipUtils.getShipId(ship);
 
         AeroClaimSavedData data = AeroClaimSavedData.get(level);

@@ -6,10 +6,12 @@ import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.claim.AeroClaimManager;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelObserver;
+import dev.ryanhcode.sable.companion.SableCompanion;
+import dev.ryanhcode.sable.companion.SubLevelAccess;
 import dev.ryanhcode.sable.platform.SableEventPlatform;
 import dev.ryanhcode.sable.sublevel.SubLevel;
-import dev.ryanhcode.sable.sublevel.plot.LevelPlot;
 import dev.ryanhcode.sable.sublevel.storage.SubLevelRemovalReason;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,15 +36,15 @@ public class SableSubLevelEventHandler {
 
             @Override
             public void onSubLevelAdded(SubLevel subLevel) {
-                String shipId = subLevel.getUniqueId().toString();
-                String shipName = subLevel.getName() != null ? subLevel.getName() : "ship";
+                String shipId   = subLevel.getUniqueId().toString();
+                String shipName = SableShipUtils.getShipName(subLevel);
 
                 if (RegisteredSublevelManager.getRegisteredName(shipId) != null
                         || UnregisteredSublevelManager.contains(shipId)) {
                     return;
                 }
 
-                Claim matchedClaim = findClaimOnSubLevel(serverLevel, container, subLevel);
+                Claim matchedClaim = findClaimOnSubLevel(serverLevel, subLevel);
 
                 if (matchedClaim != null) {
                     String oldId = matchedClaim.getShipId();
@@ -96,7 +98,6 @@ public class SableSubLevelEventHandler {
                         java.util.UUID ownerId = java.util.UUID.fromString(reg.ownerUuid);
                         Claim claim = ClaimManager.getClaimByShipId(serverLevel, shipId);
                         if (claim != null) {
-
                             AeroClaimManager.releaseAllClaimsForBlock(serverLevel, ownerId, claim.getCenter());
                             ClaimManager.removeClaim(serverLevel, claim.getCenter());
                         }
@@ -108,7 +109,8 @@ public class SableSubLevelEventHandler {
         });
     }
 
-    static Claim findClaimOnSubLevel(ServerLevel level, SubLevelContainer container, SubLevel subLevel) {
+
+    static Claim findClaimOnSubLevel(ServerLevel level, SubLevelAccess subLevel) {
         String shipId = subLevel.getUniqueId().toString();
 
         for (Claim claim : ClaimSavedData.get(level).getClaims()) {
@@ -116,12 +118,10 @@ public class SableSubLevelEventHandler {
                 return claim;
             }
 
-            net.minecraft.core.BlockPos center = claim.getCenter();
-            if (container.inBounds(center)) {
-                LevelPlot plot = container.getPlot(center.getX() >> 4, center.getZ() >> 4);
-                if (plot != null && plot.getSubLevel() == subLevel) {
-                    return claim;
-                }
+            BlockPos center = claim.getCenter();
+            SubLevelAccess found = SableCompanion.INSTANCE.getContaining(level, center);
+            if (found != null && found.getUniqueId().equals(subLevel.getUniqueId())) {
+                return claim;
             }
         }
         return null;
