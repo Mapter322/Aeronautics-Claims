@@ -115,7 +115,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
 
-    api "dev.ryanhcode.sable:sable-common-1.21.1:1.2.2"
+    api "dev.ryanhcode.sable:sable-common-1.21.1:2.0.0"
     implementation "curse.maven:open-parties-and-claims-636608:8091499"
     compileOnly "curse.maven:ftb-teams-forge-404468:7878281"
     implementation "curse.maven:create-328085:7408951"
