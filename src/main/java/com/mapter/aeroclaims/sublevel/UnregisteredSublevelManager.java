@@ -34,7 +34,7 @@ public class UnregisteredSublevelManager {
     private static Path saveFile = null;
     private static MinecraftServer server;
     private static int tickCounter = 0;
-    private static final int COORD_UPDATE_INTERVAL = 6000;
+    private static final int COORD_UPDATE_INTERVAL = 100;
 
     public static class UnregisteredShip {
         public final String name;
