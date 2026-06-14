@@ -22,6 +22,7 @@
   "commands.aeroclaims.info.ship_slots_free": "§eAero free: %s",
   "commands.aeroclaims.info.empty": "List is empty",
   "commands.aeroclaims.info.entry": "§a- %s",
+  "commands.aeroclaims.info.entry.hover.name": "§7Name: §f%s",
   "commands.aeroclaims.info.entry.hover": "§7UUID: §f%s\n§7Click to copy UUID",
   "commands.aeroclaims.info.entry.hover.claims": "§7Aero claims: §f%s",
   "commands.aeroclaims.info.entry.hover.blocks": "§7Blocks: §f%s / %s",
@@ -80,12 +81,14 @@
   "screen.aeroclaims.menu.label.ships": "Subclaims:",
   "screen.aeroclaims.menu.label.transfer": "Transfer:",
   "screen.aeroclaims.menu.no_ships": "No registered ships",
+  "screen.aeroclaims.menu.tooltip.name": "Name: %s",
   "screen.aeroclaims.menu.tooltip.id": "UUID: %s",
   "screen.aeroclaims.menu.tooltip.status": "Status: %s",
   "screen.aeroclaims.menu.tooltip.claims": "Aero claims: %s",
   "screen.aeroclaims.menu.tooltip.blocks": "Blocks: %s / %s",
   "screen.aeroclaims.menu.tooltip.blocks_unknown": "Blocks: (unknown)",
   "screen.aeroclaims.menu.tooltip.coords": "Pos: %s, %s, %s",
+  "screen.aeroclaims.menu.context.copy_name": "Copy Name",
   "screen.aeroclaims.menu.context.copy_uuid": "Copy UUID",
   "screen.aeroclaims.menu.context.copy_pos": "Copy Position"
 }

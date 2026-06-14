@@ -208,6 +208,8 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
 
     private List<Component> buildTooltip(AeroClaimsMenu.ShipEntry ship) {
         List<Component> lines = new ArrayList<>();
+        lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.name", ship.shipName())
+                .withStyle(ChatFormatting.GRAY));
         lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.id", ship.shipId())
                 .withStyle(ChatFormatting.GRAY));
         String statusLabel = Component.translatable("screen.aeroclaims.menu.tooltip.status",
@@ -279,6 +281,9 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
 
     private void buildContextMenu(AeroClaimsMenu.ShipEntry ship) {
         contextMenu.clearItems();
+        contextMenu.addItem("screen.aeroclaims.menu.context.copy_name", () -> {
+            Minecraft.getInstance().keyboardHandler.setClipboard(ship.shipName());
+        });
         contextMenu.addItem("screen.aeroclaims.menu.context.copy_uuid", () -> {
             Minecraft.getInstance().keyboardHandler.setClipboard(ship.shipId());
         });

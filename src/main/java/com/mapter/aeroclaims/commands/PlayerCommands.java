@@ -147,7 +147,9 @@ public class PlayerCommands {
 
     private static MutableComponent buildShipEntry(String shipName, String shipId, ClaimBriefInfo info,
                                                        RegisteredSublevelManager.ShipRegistration reg) {
-        MutableComponent hover = Component.translatable("commands.aeroclaims.info.entry.hover", shipId);
+        MutableComponent hover = Component.translatable("commands.aeroclaims.info.entry.hover.name", shipName)
+                .append(Component.literal("\n"))
+                .append(Component.translatable("commands.aeroclaims.info.entry.hover", shipId));
         if (info != null) {
             hover = hover.append(Component.literal("\n"))
                     .append(Component.translatable("commands.aeroclaims.info.entry.hover.claims",
