@@ -108,7 +108,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                         buf.writeInt(hasCoords ? reg.worldY.intValue() : 0);
                         buf.writeInt(hasCoords ? reg.worldZ.intValue() : 0);
                     }
-                    buf.writeInt(AeroClaimManager.getFreeOpacClaims(player));
+                    buf.writeInt(AeroClaimManager.getFreeProviderClaims(player));
                     buf.writeInt(AeroClaimManager.getMigratedSlots(level, player.getUUID()));
                     buf.writeInt(AeroClaimManager.getUsedSlots(level, player.getUUID()));
                     buf.writeBoolean(returnPos != null);

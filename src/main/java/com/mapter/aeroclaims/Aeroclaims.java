@@ -1,5 +1,6 @@
 package com.mapter.aeroclaims;
 
+import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.registry.ModBlocks;
@@ -36,6 +37,7 @@ public class Aeroclaims {
         boolean opacLoaded = ModList.get().isLoaded("openpartiesandclaims");
 
         ClaimManager.init(ftbLoaded, opacLoaded);
+        AeroClaimManager.init(opacLoaded);
     }
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {

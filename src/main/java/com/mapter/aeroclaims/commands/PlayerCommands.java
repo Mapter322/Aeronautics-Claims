@@ -89,7 +89,7 @@ public class PlayerCommands {
                         buf.writeInt(hasCoords ? reg.worldY.intValue() : 0);
                         buf.writeInt(hasCoords ? reg.worldZ.intValue() : 0);
                     }
-                    buf.writeInt(AeroClaimManager.getFreeOpacClaims(player));
+                    buf.writeInt(AeroClaimManager.getFreeProviderClaims(player));
                     buf.writeInt(AeroClaimManager.getMigratedSlots(level, player.getUUID()));
                     buf.writeInt(AeroClaimManager.getUsedSlots(level, player.getUUID()));
                 });
@@ -118,7 +118,7 @@ public class PlayerCommands {
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots_free", freeSlots), false);
 
         if (source.getEntity() instanceof ServerPlayer caller && caller.getUUID().equals(finalUuid)) {
-            int freeOpac = AeroClaimManager.getFreeOpacClaims(caller);
+            int freeOpac = AeroClaimManager.getFreeProviderClaims(caller);
             if (freeOpac >= 0) {
                 source.sendSuccess(() -> Component.translatable("commands.aeroclaims.claim_info.opac_free", freeOpac), false);
             } else {
@@ -181,8 +181,8 @@ public class PlayerCommands {
         ServerPlayer player = CommandUtils.requirePlayer(source);
         if (player == null) return 0;
 
-        int freeOpac = AeroClaimManager.getFreeOpacClaims(player);
-        AeroClaimManager.TransferResult result = AeroClaimManager.transferFromOpac(player, amount);
+        int freeOpac = AeroClaimManager.getFreeProviderClaims(player);
+        AeroClaimManager.TransferResult result = AeroClaimManager.transferFromProvider(player, amount);
 
         switch (result) {
             case SUCCESS -> {
@@ -193,7 +193,7 @@ public class PlayerCommands {
                         "commands.aeroclaims.transfer.success", amount, newUsed, newMigrated
                 ), false);
             }
-            case OPAC_NOT_LOADED ->
+            case CLAIM_PROVIDER_UNAVAILABLE ->
                     source.sendFailure(Component.translatable("commands.aeroclaims.transfer.opac_not_loaded"));
             case NOT_ENOUGH_FREE ->
                     source.sendFailure(Component.translatable(
@@ -211,7 +211,7 @@ public class PlayerCommands {
         if (player == null) return 0;
 
         int freeShipClaims = AeroClaimManager.getFreeSlots(player.serverLevel(), player.getUUID());
-        AeroClaimManager.TransferResult result = AeroClaimManager.transferToOpac(player, amount);
+        AeroClaimManager.TransferResult result = AeroClaimManager.transferToProvider(player, amount);
 
         switch (result) {
             case SUCCESS -> {
@@ -222,7 +222,7 @@ public class PlayerCommands {
                         "commands.aeroclaims.transfer_back.success", amount, newUsed, newMigrated
                 ), false);
             }
-            case OPAC_NOT_LOADED ->
+            case CLAIM_PROVIDER_UNAVAILABLE ->
                     source.sendFailure(Component.translatable("commands.aeroclaims.transfer.opac_not_loaded"));
             case NOT_ENOUGH_FREE ->
                     source.sendFailure(Component.translatable(

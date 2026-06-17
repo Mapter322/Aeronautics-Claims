@@ -31,23 +31,23 @@ public record TransferSlotsPacket(boolean toAero) implements CustomPacketPayload
             if (!(context.player() instanceof ServerPlayer player)) return;
 
             AeroClaimManager.TransferResult result = msg.toAero()
-                    ? AeroClaimManager.transferFromOpac(player, 1)
-                    : AeroClaimManager.transferToOpac(player, 1);
+                    ? AeroClaimManager.transferFromProvider(player, 1)
+                    : AeroClaimManager.transferToProvider(player, 1);
 
             if (result == AeroClaimManager.TransferResult.NOT_ENOUGH_FREE) {
                 player.sendSystemMessage(msg.toAero()
                         ? Component.translatable("commands.aeroclaims.transfer.not_enough",
-                            AeroClaimManager.getFreeOpacClaims(player), 1)
+                            AeroClaimManager.getFreeProviderClaims(player), 1)
                         : Component.translatable("commands.aeroclaims.transfer_back.not_enough",
                             AeroClaimManager.getFreeSlots(player.serverLevel(), player.getUUID()), 1));
-            } else if (result == AeroClaimManager.TransferResult.OPAC_NOT_LOADED) {
+            } else if (result == AeroClaimManager.TransferResult.CLAIM_PROVIDER_UNAVAILABLE) {
                 player.sendSystemMessage(Component.translatable("commands.aeroclaims.transfer.opac_not_loaded"));
             }
 
-            int opacFree = AeroClaimManager.getFreeOpacClaims(player);
+            int providerFree = AeroClaimManager.getFreeProviderClaims(player);
             int aeroTotal = AeroClaimManager.getMigratedSlots(player.serverLevel(), player.getUUID());
             int aeroUsed = AeroClaimManager.getUsedSlots(player.serverLevel(), player.getUUID());
-            PacketDistributor.sendToPlayer(player, new SyncMenuStatsPacket(opacFree, aeroTotal, aeroUsed));
+            PacketDistributor.sendToPlayer(player, new SyncMenuStatsPacket(providerFree, aeroTotal, aeroUsed));
         });
     }
 }

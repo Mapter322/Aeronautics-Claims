@@ -10,14 +10,14 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
-public record SyncMenuStatsPacket(int opacFree, int aeroTotal, int aeroUsed) implements CustomPacketPayload {
+public record SyncMenuStatsPacket(int providerFree, int aeroTotal, int aeroUsed) implements CustomPacketPayload {
 
     public static final Type<SyncMenuStatsPacket> TYPE =
             new Type<>(ResourceLocation.fromNamespaceAndPath(Aeroclaims.MODID, "sync_menu_stats"));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, SyncMenuStatsPacket> STREAM_CODEC =
             StreamCodec.composite(
-                    ByteBufCodecs.INT, SyncMenuStatsPacket::opacFree,
+                    ByteBufCodecs.INT, SyncMenuStatsPacket::providerFree,
                     ByteBufCodecs.INT, SyncMenuStatsPacket::aeroTotal,
                     ByteBufCodecs.INT, SyncMenuStatsPacket::aeroUsed,
                     SyncMenuStatsPacket::new
@@ -30,7 +30,7 @@ public record SyncMenuStatsPacket(int opacFree, int aeroTotal, int aeroUsed) imp
         context.enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && mc.player.containerMenu instanceof AeroClaimsMenu menu) {
-                menu.setStats(msg.opacFree(), msg.aeroTotal(), msg.aeroUsed());
+                menu.setStats(msg.providerFree(), msg.aeroTotal(), msg.aeroUsed());
             }
         });
     }

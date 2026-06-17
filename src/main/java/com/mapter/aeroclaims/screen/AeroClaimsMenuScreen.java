@@ -129,14 +129,14 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private void renderInfoPanel(GuiGraphics g) {
         int x = BTN_X + PAD;
         int y = INFO_Y + PAD;
-        int opacFree  = menu.getOpacFree();
-        int aeroTotal = menu.getAeroTotal();
-        int aeroUsed  = menu.getAeroUsed();
-        int aeroFree  = aeroTotal - aeroUsed;
+        int providerFree = menu.getProviderFree();
+        int aeroTotal    = menu.getAeroTotal();
+        int aeroUsed     = menu.getAeroUsed();
+        int aeroFree     = aeroTotal - aeroUsed;
 
         String opacLabel = Component.translatable("screen.aeroclaims.menu.info.opac.label").getString();
         g.drawString(font, opacLabel, x, y, COLOR_TEXT, false);
-        g.drawString(font, String.valueOf(opacFree), x + font.width(opacLabel), y, COLOR_WHITE, false);
+        g.drawString(font, String.valueOf(providerFree), x + font.width(opacLabel), y, COLOR_WHITE, false);
 
         String aeroLabel = Component.translatable("screen.aeroclaims.menu.info.aero.label").getString();
         g.drawString(font, aeroLabel, x, y + ENTRY_H, COLOR_TEXT, false);

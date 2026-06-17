@@ -7,6 +7,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec SPEC;
 
     public static final ModConfigSpec.EnumValue<PartyProvider> PARTY_PROVIDER;
+    public static final ModConfigSpec.EnumValue<ClaimProvider> CLAIM_PROVIDER;
     public static final ModConfigSpec.IntValue BLOCKS_PER_CLAIM;
     public static final ModConfigSpec.BooleanValue DEACTIVATE_ON_OVERFLOW;
     public static final ModConfigSpec.IntValue CLAIM_MARGIN_BLOCKS;
@@ -14,9 +15,12 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.BooleanValue KINETIC_BLOCK_PROTECTION;
     public static final ModConfigSpec.BooleanValue ENABLE_DELETE_COMMAND;
 
-
     public enum PartyProvider {
         FTB,
+        OPAC
+    }
+
+    public enum ClaimProvider {
         OPAC
     }
 
@@ -30,6 +34,13 @@ public class AeroClaimsConfig {
                     "Default: OPAC"
                 )
                 .defineEnum("partyProvider", PartyProvider.OPAC);
+        CLAIM_PROVIDER = builder
+                .comment(
+                    "Which external claim mod supplies claim slots for AeroClaims.",
+                    "Currently only OPAC is supported.",
+                    "Default: OPAC"
+                )
+                .defineEnum("claimProvider", ClaimProvider.OPAC);
         BLOCKS_PER_CLAIM = builder
                 .comment("How many ship blocks one aero claim covers. Example: 100 means 1 claim = 100 block limit.")
                 .defineInRange("blocksPerClaim", 250, 1, Integer.MAX_VALUE);
