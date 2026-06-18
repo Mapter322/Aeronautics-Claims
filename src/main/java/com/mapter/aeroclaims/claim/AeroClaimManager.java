@@ -96,7 +96,48 @@ public class AeroClaimManager {
     }
 
     public static void releaseAllClaimsForBlock(ServerLevel level, UUID owner, BlockPos pos) {
+        int current = AeroClaimSavedData.get(level).getClaimsForBlock(pos);
+        if (current == 0) return;
+
         AeroClaimSavedData.get(level).removeClaimsForBlock(pos, owner);
+
+        ServerPlayer player = level.getServer().getPlayerList().getPlayer(owner);
+        if (player != null) {
+            transferToProvider(player, current);
+        } else {
+            AeroClaimSavedData data = AeroClaimSavedData.get(level);
+            int migrated = data.getMigratedSlots(owner);
+            int returned = Math.min(current, migrated);
+            if (returned > 0) {
+                data.setMigratedSlots(owner, migrated - returned);
+            }
+        }
+    }
+
+    public static void releaseAllClaimsForBlock(ServerLevel level, ServerPlayer player, BlockPos pos) {
+        int current = AeroClaimSavedData.get(level).getClaimsForBlock(pos);
+        if (current == 0) return;
+
+        AeroClaimSavedData.get(level).removeClaimsForBlock(pos, player.getUUID());
+        transferToProvider(player, current);
+    }
+
+    public static boolean tryEnsureSlots(ServerLevel level, ServerPlayer player, BlockPos pos, int needed) {
+        if (needed <= 0) return true;
+
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        UUID owner = player.getUUID();
+        int free = data.getFreeSlots(owner);
+
+        if (free < needed) {
+            int transferAmount = needed - free;
+            TransferResult result = transferFromProvider(player, transferAmount);
+            if (result != TransferResult.SUCCESS) {
+                return false;
+            }
+        }
+
+        return adjustClaimsForBlock(level, owner, pos, needed);
     }
 
     public static int getMigratedSlots(ServerLevel level, UUID playerId) {

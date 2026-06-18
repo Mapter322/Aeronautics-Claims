@@ -74,25 +74,19 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             int neededClaims = (blockCount + blocksPerClaim - 1) / blocksPerClaim;
             int currentClaims = AeroClaimSavedData.get(level).getClaimsForBlock(msg.center);
             int delta = neededClaims - currentClaims;
-            boolean autoAdjustOk = true;
             if (delta > 0) {
                 int free = AeroClaimSavedData.get(level).getFreeSlots(player.getUUID());
                 int applied = Math.min(delta, free);
                 if (applied > 0) {
                     AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, applied);
                 }
-                if (applied < delta) {
-                    autoAdjustOk = false;
-                }
             } else if (delta < 0) {
-                autoAdjustOk = AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
+                AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
             }
 
             maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
 
-            if (!autoAdjustOk) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_ship_slots"));
-            } else if (hasClaims && blockCount > maxSize) {
+            if (hasClaims && blockCount > maxSize) {
                 String msgKey = deactivateOnOverflow
                         ? "message.aeroclaims.ship_too_large_deactivated"
                         : "message.aeroclaims.ship_too_large";

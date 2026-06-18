@@ -39,7 +39,7 @@ public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayl
             Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 
-            AeroClaimManager.releaseAllClaimsForBlock(level, claim.getOwner(), msg.center);
+            AeroClaimManager.releaseAllClaimsForBlock(level, player, msg.center);
 
             ClaimManager.deactivateClaim(level, msg.center);
             player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_deactivated"));

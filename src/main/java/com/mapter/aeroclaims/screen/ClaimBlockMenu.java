@@ -6,6 +6,7 @@ import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.registry.ModMenus;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -119,7 +120,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
 
             Claim claim = ClaimManager.getClaimByCenter(serverLevel, center);
             if (claim != null && !claim.isActive() && player.getUUID().equals(claim.getOwner())) {
-                AeroClaimManager.releaseAllClaimsForBlock(serverLevel, claim.getOwner(), center);
+                AeroClaimManager.releaseAllClaimsForBlock(serverLevel, (ServerPlayer) player, center);
             }
 
             BlockState state = level.getBlockState(center);

@@ -51,29 +51,41 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 return;
             }
 
-            int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
-            if (maxSize <= 0) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_claims_allocated"));
-                sync(player, msg.center, claim, level, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN);
-                return;
-            }
-
             AeroClaimSavedData data = AeroClaimSavedData.get(level);
+            int blocksPerClaim = AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
+            int currentClaims = data.getClaimsForBlock(msg.center);
             Integer cachedCount = data.getCachedShipBlockCount(msg.center);
 
             int blockCount;
             if (cachedCount != null) {
                 blockCount = cachedCount;
+            } else if (currentClaims > 0) {
+                int currentLimit = currentClaims * blocksPerClaim;
+                blockCount = ClaimManager.countShipBlocks(level, msg.center, currentLimit + 1);
             } else {
-                blockCount = ClaimManager.countShipBlocks(level, msg.center, maxSize + 1);
+                blockCount = ClaimManager.countShipBlocksExact(level, msg.center);
             }
 
-            if (blockCount > maxSize) {
-                int exact = cachedCount != null ? cachedCount : ClaimManager.countShipBlocksExact(level, msg.center);
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_too_large", exact, maxSize));
-                sync(player, msg.center, claim, level, exact);
-                return;
+            int neededClaims = blockCount > 0
+                    ? Math.max(1, (blockCount + blocksPerClaim - 1) / blocksPerClaim)
+                    : 0;
+            int delta = neededClaims - currentClaims;
+
+            if (delta > 0) {
+                if (!AeroClaimManager.tryEnsureSlots(level, player, msg.center, delta)) {
+                    int exact = cachedCount != null ? cachedCount
+                            : ClaimManager.countShipBlocksExact(level, msg.center);
+                    player.sendSystemMessage(Component.translatable(
+                            "message.aeroclaims.ship_too_large", exact,
+                            currentClaims * blocksPerClaim));
+                    sync(player, msg.center, claim, level, exact);
+                    return;
+                }
+            } else if (delta < 0) {
+                AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
             }
+
+            int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
 
             if (!ClaimManager.activateClaim(level, msg.center)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_failed"));

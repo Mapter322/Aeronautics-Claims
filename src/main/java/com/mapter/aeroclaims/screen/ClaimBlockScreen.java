@@ -398,7 +398,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     }
 
     private void sendActivate() {
-        if (!onCooldown() || blocksOverLimit()) return;
+        if (!onCooldown()) return;
         PacketDistributor.sendToServer(new ActivateClaimPacket(menu.getCenter()));
         activateUsedInCooldown.put(menu.getCenter(), true);
         actionButton.active = false;
@@ -416,8 +416,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     }
 
     private boolean blocksKnownAndOk() {
-        return menu.getShipBlockCount() != SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN
-                && !blocksOverLimit();
+        return menu.getShipBlockCount() != SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
     }
 
     private int neededClaimsCount() {
