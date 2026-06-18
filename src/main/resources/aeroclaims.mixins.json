@@ -2,6 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.mapter.aeroclaims.mixin",
+  "plugin": "com.mapter.aeroclaims.mixin.AeroClaimsMixinPlugin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "MixinBlockEntityConfigurationPacket",
@@ -17,7 +18,8 @@
     "MixinPlaceMergingGluePacket",
     "MixinKineticBlockEntityPlacer",
     "MixinBlockBreakingKineticBlockEntity",
-    "MixinBlockBreakingMovementBehaviour"
+    "MixinBlockBreakingMovementBehaviour",
+    "ChunkTeamDataMixin"
   ],
   "client": [],
   "server": [],

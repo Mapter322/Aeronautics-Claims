@@ -21,7 +21,8 @@ public class AeroClaimsConfig {
     }
 
     public enum ClaimProvider {
-        OPAC
+        OPAC,
+        FTB_CHUNKS
     }
 
     static {
@@ -37,7 +38,7 @@ public class AeroClaimsConfig {
         CLAIM_PROVIDER = builder
                 .comment(
                     "Which external claim mod supplies claim slots for AeroClaims.",
-                    "Currently only OPAC is supported.",
+                    "Supported: OPAC (Open Parties and Claims), FTB_CHUNKS (FTB Chunks).",
                     "Default: OPAC"
                 )
                 .defineEnum("claimProvider", ClaimProvider.OPAC);

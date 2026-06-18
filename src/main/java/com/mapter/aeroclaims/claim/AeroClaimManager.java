@@ -15,6 +15,7 @@ public class AeroClaimManager {
 
     private static IClaimProvider CLAIM_PROVIDER = null;
     private static boolean opacLoaded = false;
+    private static boolean ftbChunksLoaded = false;
 
     public enum TransferResult {
         SUCCESS,
@@ -23,11 +24,12 @@ public class AeroClaimManager {
         API_ERROR
     }
 
-    public static void init(boolean opacLoaded) {
+    public static void init(boolean opacLoaded, boolean ftbChunksLoaded) {
         AeroClaimManager.opacLoaded = opacLoaded;
+        AeroClaimManager.ftbChunksLoaded = ftbChunksLoaded;
         CLAIM_PROVIDER = null;
 
-        if (!opacLoaded) {
+        if (!opacLoaded && !ftbChunksLoaded) {
             LOGGER.warn("[AeroClaims] No claim provider available.");
         }
     }
@@ -47,6 +49,14 @@ public class AeroClaimManager {
                 if (opacLoaded) {
                     LOGGER.info("[AeroClaims] Using Open Parties and Claims as claim provider.");
                     yield new OpacClaimProvider();
+                } else {
+                    yield null;
+                }
+            }
+            case FTB_CHUNKS -> {
+                if (ftbChunksLoaded) {
+                    LOGGER.info("[AeroClaims] Using FTB Chunks as claim provider.");
+                    yield new FtbChunksClaimProvider();
                 } else {
                     yield null;
                 }

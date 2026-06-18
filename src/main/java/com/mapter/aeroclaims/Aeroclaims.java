@@ -35,9 +35,10 @@ public class Aeroclaims {
 
         boolean ftbLoaded  = ModList.get().isLoaded("ftbteams");
         boolean opacLoaded = ModList.get().isLoaded("openpartiesandclaims");
+        boolean ftbChunksLoaded = ModList.get().isLoaded("ftbchunks");
 
         ClaimManager.init(ftbLoaded, opacLoaded);
-        AeroClaimManager.init(opacLoaded);
+        AeroClaimManager.init(opacLoaded, ftbChunksLoaded);
     }
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {
