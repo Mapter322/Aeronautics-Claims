@@ -67,6 +67,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     @Override
     protected void init() {
         super.init();
+        CursorHelper.restoreCursor();
         scrollOffset = 0;
 
         int boxRight  = leftPos + imageWidth - BTN_X;
@@ -299,7 +300,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     public void onClose() {
         BlockPos returnPos = menu.getReturnClaimPos();
         if (returnPos != null) {
-            // Сервер откроет ClaimSettingsScreen — текущий экран закроется автоматически
+            CursorHelper.saveCursor();
             PacketDistributor.sendToServer(NavigateMenuPacket.backToClaim(returnPos));
         } else {
             super.onClose();

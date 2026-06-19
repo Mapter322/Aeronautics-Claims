@@ -76,6 +76,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     @Override
     protected void init() {
         super.init();
+        CursorHelper.restoreCursor();
 
         int bw    = imageWidth - BTN_X * 2;
         int halfW = bw / 2 - 2;
@@ -99,7 +100,10 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         int aeroMenuBtnY = rowY + BTN_H + GAP + 3;
         Button aeroMenuButton = Button.builder(
                 Component.translatable("screen.aeroclaims.menu.title"),
-                b -> PacketDistributor.sendToServer(NavigateMenuPacket.toAeroMenu()))
+                b -> {
+                    CursorHelper.saveCursor();
+                    PacketDistributor.sendToServer(NavigateMenuPacket.toAeroMenu());
+                })
                 .bounds(leftPos + BTN_X, topPos + aeroMenuBtnY, bw, BTN_H).build();
 
         addRenderableWidget(accessButton);
