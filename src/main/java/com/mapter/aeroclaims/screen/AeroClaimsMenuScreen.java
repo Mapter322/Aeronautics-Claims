@@ -181,7 +181,9 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
 
             if (hovered) {
                 hoveredIndex = i;
-                g.fill(listX, entryY, listX + bw, entryY + ENTRY_H, COLOR_HOVER);
+                if (!contextMenu.isVisible()) {
+                    g.fill(listX, entryY, listX + bw, entryY + ENTRY_H, COLOR_HOVER);
+                }
             }
 
             int indicatorColor = ship.active() ? 0xFF22AA22 : 0xFFCC3333;
