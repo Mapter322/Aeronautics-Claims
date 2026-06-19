@@ -1,14 +1,19 @@
 package com.mapter.aeroclaims.claim;
 
+import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
+@EventBusSubscriber(modid = Aeroclaims.MODID)
 public class AeroClaimManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AeroClaimManager.class);
@@ -156,5 +161,18 @@ public class AeroClaimManager {
         IClaimProvider provider = getClaimProvider();
         if (provider == null) return -1;
         return provider.getFreeClaims(player);
+    }
+
+    // TODO: remove this after release
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+
+        ServerLevel level = player.serverLevel();
+        int freeSlots = getFreeSlots(level, player.getUUID());
+
+        if (freeSlots > 0) {
+            transferToProvider(player, freeSlots);
+        }
     }
 }
