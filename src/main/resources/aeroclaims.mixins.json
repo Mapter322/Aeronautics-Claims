@@ -19,6 +19,7 @@
     "MixinKineticBlockEntityPlacer",
     "MixinBlockBreakingKineticBlockEntity",
     "MixinBlockBreakingMovementBehaviour",
+    "MixinThrottleLeverSignalPacket",
     "ChunkTeamDataMixin"
   ],
   "client": [],
