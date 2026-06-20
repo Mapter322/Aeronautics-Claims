@@ -115,7 +115,6 @@ public class PlayerCommands {
 
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.header", finalName), false);
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots", usedSlots, migratedSlots), false);
-        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots_free", freeSlots), false);
 
         if (source.getEntity() instanceof ServerPlayer caller && caller.getUUID().equals(finalUuid)) {
             int freeOpac = AeroClaimManager.getFreeProviderClaims(caller);
@@ -169,7 +168,10 @@ public class PlayerCommands {
                             reg.worldX.intValue(), reg.worldY.intValue(), reg.worldZ.intValue()));
         }
         final MutableComponent finalHover = hover;
-        return Component.translatable("commands.aeroclaims.info.entry", shipName)
+        boolean isActive = info != null && info.isActive();
+        return Component.literal("- ")
+                .withStyle(style -> style.withColor(isActive ? 0x00FF00 : 0xFF0000))
+                .append(Component.literal(shipName).withStyle(style -> style.withColor(0xFFFFFF)))
                 .withStyle(style -> style
                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, finalHover))
                         .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, shipId))
