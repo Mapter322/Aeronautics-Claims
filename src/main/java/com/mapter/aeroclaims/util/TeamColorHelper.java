@@ -19,7 +19,7 @@ public class TeamColorHelper {
     private static final int DEFAULT_COLOR = 0x33D9FF;
 
     public static int getTeamColor(ServerPlayer player, UUID ownerUuid) {
-        if (AeroClaimsConfig.PARTY_PROVIDER.get() == AeroClaimsConfig.PartyProvider.FTB) {
+        if (AeroClaimsConfig.PARTY_PROVIDER.get() == AeroClaimsConfig.PartyProvider.FTB_TEAMS) {
             return getFtbTeamColor(ownerUuid);
         } else {
             return getOpacPartyColor(player, ownerUuid);

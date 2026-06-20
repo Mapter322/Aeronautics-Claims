@@ -45,12 +45,12 @@ public class ClaimManager {
         AeroClaimsConfig.PartyProvider provider = AeroClaimsConfig.PARTY_PROVIDER.get();
 
         return switch (provider) {
-            case FTB -> {
+            case FTB_TEAMS -> {
                 if (ftbLoaded) {
                     LOGGER.info("[AeroClaims] Using FTB Teams for party permission checks.");
                     yield new FtbTeamsPermissionResolver();
                 } else {
-                    LOGGER.warn("[AeroClaims] partyProvider = FTB, but 'ftbteams' is not loaded! " +
+                    LOGGER.warn("[AeroClaims] partyProvider = FTB_TEAMS, but 'ftbteams' is not loaded! " +
                             "Falling back to owner-only resolver.");
                     yield new DefaultPermissionResolver();
                 }

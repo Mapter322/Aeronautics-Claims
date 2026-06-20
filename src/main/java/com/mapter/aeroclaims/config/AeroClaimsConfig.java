@@ -16,7 +16,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.BooleanValue ENABLE_DELETE_COMMAND;
 
     public enum PartyProvider {
-        FTB,
+        FTB_TEAMS,
         OPAC
     }
 
