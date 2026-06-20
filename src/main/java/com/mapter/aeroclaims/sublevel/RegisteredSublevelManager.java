@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.claim.Claim;
+import com.mapter.aeroclaims.claim.ClaimManager;
 import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
 import dev.ryanhcode.sable.companion.SubLevelAccess;
@@ -49,6 +51,8 @@ public class RegisteredSublevelManager {
 
         public Integer blocksUsed;
         public Integer blocksMax;
+
+        public Boolean active;
 
         public ShipRegistration() {}
 
@@ -119,6 +123,7 @@ public class RegisteredSublevelManager {
 
     private static void saveRegisteredShips() {
         if (shipsDataFile == null) return;
+        updateAllActiveStatus();
         try (FileWriter writer = new FileWriter(shipsDataFile)) {
             JsonObject obj = new JsonObject();
             for (Map.Entry<String, ShipRegistration> entry : registeredShips.entrySet()) {
@@ -134,6 +139,15 @@ public class RegisteredSublevelManager {
             GSON.toJson(obj, writer);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static void updateAllActiveStatus() {
+        if (server == null) return;
+        ServerLevel level = server.overworld();
+        for (Map.Entry<String, ShipRegistration> entry : registeredShips.entrySet()) {
+            Claim claim = ClaimManager.getClaimByShipId(level, entry.getKey());
+            entry.getValue().active = claim != null ? claim.isActive() : null;
         }
     }
 
