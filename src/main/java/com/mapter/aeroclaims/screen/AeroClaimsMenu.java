@@ -18,7 +18,6 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
 
     private final List<ShipEntry> ships = new ArrayList<>();
 
-    private int providerFree;
     private int aeroTotal;
     private int aeroUsed;
     private BlockPos returnClaimPos;
@@ -33,7 +32,7 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
                     buf.readBoolean(), buf.readInt(), buf.readInt(), buf.readInt()
             ));
         }
-        providerFree = buf.readInt();
+        buf.readInt();
         aeroTotal = buf.readInt();
         aeroUsed  = buf.readInt();
         if (buf.isReadable()) {
@@ -49,13 +48,11 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
 
     public List<ShipEntry> getShips() { return ships; }
 
-    public int getProviderFree() { return providerFree; }
     public int getAeroTotal()    { return aeroTotal; }
     public int getAeroUsed()     { return aeroUsed; }
     public BlockPos getReturnClaimPos() { return returnClaimPos; }
 
-    public void setStats(int providerFree, int aeroTotal, int aeroUsed) {
-        this.providerFree = providerFree;
+    public void setStats(int aeroTotal, int aeroUsed) {
         this.aeroTotal = aeroTotal;
         this.aeroUsed  = aeroUsed;
     }

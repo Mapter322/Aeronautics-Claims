@@ -30,7 +30,7 @@ public record SyncMenuStatsPacket(int providerFree, int aeroTotal, int aeroUsed)
         context.enqueueWork(() -> {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && mc.player.containerMenu instanceof AeroClaimsMenu menu) {
-                menu.setStats(msg.providerFree(), msg.aeroTotal(), msg.aeroUsed());
+                menu.setStats(msg.aeroTotal(), msg.aeroUsed());
             }
         });
     }

@@ -3,10 +3,8 @@ package com.mapter.aeroclaims.screen;
 import com.mapter.aeroclaims.Aeroclaims;
 import net.minecraft.client.Minecraft;
 import com.mapter.aeroclaims.network.NavigateMenuPacket;
-import com.mapter.aeroclaims.network.TransferSlotsPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
@@ -36,23 +34,16 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private static final int LABEL_H      = 13;
     private static final int LIST_LABEL_Y  = 22;
     private static final int LIST_Y        = LIST_LABEL_Y + LABEL_H;
-    private static final int LIST_H        = 80;
+    private static final int LIST_H        = 90;
     private static final int ENTRY_H       = 12;
 
     private static final int INFO_LABEL_Y  = LIST_Y + LIST_H + 4;
     private static final int INFO_Y        = INFO_LABEL_Y + LABEL_H;
-    private static final int INFO_H        = PAD + ENTRY_H * 3 + PAD - 5;
-    private static final int BTN_W     = 18;
-    private static final int BTN_H     = 16;
+    private static final int INFO_H        = PAD + ENTRY_H * 2 + PAD - 5;
     private static final int COLOR_TEXT      = 0xDDDDDD;
-    private static final int COLOR_YELLOW     = 0xFFFF55;
-    private static final int COLOR_CYAN       = 0x55FFFF;
     private static final int CLOSE_X = 8;
     private static final int CLOSE_Y = 7;
     private static final int CLOSE_SIZE = 10;
-
-    private Button btnPlusSlot;
-    private Button btnMinusSlot;
 
     private int scrollOffset = 0;
 
@@ -69,21 +60,6 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         super.init();
         CursorHelper.restoreCursor();
         scrollOffset = 0;
-
-        int boxRight  = leftPos + imageWidth - BTN_X;
-        int freeLineY = topPos + INFO_Y + (INFO_H - BTN_H) / 2;
-
-        btnMinusSlot = Button.builder(Component.literal("-"), b ->
-                PacketDistributor.sendToServer(new TransferSlotsPacket(false)))
-                .bounds(boxRight - PAD - BTN_W * 2 - 2, freeLineY, BTN_W, BTN_H)
-                .build();
-        btnPlusSlot = Button.builder(Component.literal("+"), b ->
-                PacketDistributor.sendToServer(new TransferSlotsPacket(true)))
-                .bounds(boxRight - PAD - BTN_W, freeLineY, BTN_W, BTN_H)
-                .build();
-
-        addRenderableWidget(btnPlusSlot);
-        addRenderableWidget(btnMinusSlot);
     }
 
     @Override
@@ -121,8 +97,8 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         String listLabel = Component.translatable("screen.aeroclaims.menu.label.ships").getString();
         g.drawString(font, listLabel, BTN_X + PAD, LIST_LABEL_Y + 2, COLOR_TITLE, false);
 
-        String transferLabel = Component.translatable("screen.aeroclaims.menu.label.transfer").getString();
-        g.drawString(font, transferLabel, BTN_X + PAD, INFO_LABEL_Y + 2, COLOR_TITLE, false);
+        String infoLabel = Component.translatable("screen.aeroclaims.menu.label.info").getString();
+        g.drawString(font, infoLabel, BTN_X + PAD, INFO_LABEL_Y + 2, COLOR_TITLE, false);
 
         renderInfoPanel(g);
     }
@@ -130,23 +106,16 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private void renderInfoPanel(GuiGraphics g) {
         int x = BTN_X + PAD;
         int y = INFO_Y + PAD;
-        int providerFree = menu.getProviderFree();
-        int aeroTotal    = menu.getAeroTotal();
-        int aeroUsed     = menu.getAeroUsed();
-        int aeroFree     = aeroTotal - aeroUsed;
+        int aeroUsed = menu.getAeroUsed();
 
-        String opacLabel = Component.translatable("screen.aeroclaims.menu.info.opac.label").getString();
-        g.drawString(font, opacLabel, x, y, COLOR_TEXT, false);
-        g.drawString(font, String.valueOf(providerFree), x + font.width(opacLabel), y, COLOR_WHITE, false);
+        String aeroLabel = Component.translatable("screen.aeroclaims.menu.info.aero_claims.label").getString();
+        g.drawString(font, aeroLabel, x, y, COLOR_TEXT, false);
+        g.drawString(font, String.valueOf(aeroUsed), x + font.width(aeroLabel), y, COLOR_WHITE, false);
 
-        String aeroLabel = Component.translatable("screen.aeroclaims.menu.info.aero.label").getString();
-        g.drawString(font, aeroLabel, x, y + ENTRY_H, COLOR_TEXT, false);
-        g.drawString(font, aeroUsed + " / " + aeroTotal, x + font.width(aeroLabel), y + ENTRY_H, COLOR_WHITE, false);
-
-        String aeroFreeLabel = Component.translatable("screen.aeroclaims.menu.info.aero_free.label").getString();
-        g.drawString(font, aeroFreeLabel, x, y + ENTRY_H * 2, COLOR_TEXT, false);
-        int aeroFreeColor = aeroFree > 0 ? 0x55FF55 : 0xFF5555;
-        g.drawString(font, String.valueOf(aeroFree), x + font.width(aeroFreeLabel), y + ENTRY_H * 2, aeroFreeColor, false);
+        String sublevelsLabel = Component.translatable("screen.aeroclaims.menu.info.sublevels.label").getString();
+        g.drawString(font, sublevelsLabel, x, y + ENTRY_H, COLOR_TEXT, false);
+        g.drawString(font, String.valueOf(menu.getShips().size()),
+                x + font.width(sublevelsLabel), y + ENTRY_H, COLOR_WHITE, false);
     }
 
     private void renderShipList(GuiGraphics g, int mx, int my) {
