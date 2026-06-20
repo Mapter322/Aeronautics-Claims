@@ -1,6 +1,5 @@
 package com.mapter.aeroclaims.commands;
 
-import com.mapter.aeroclaims.claim.AeroClaimManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,10 +18,5 @@ final class CommandUtils {
         }
         source.sendFailure(Component.translatable("commands.aeroclaims.only_player"));
         return null;
-    }
-
-
-    static int toResult(AeroClaimManager.TransferResult result) {
-        return result == AeroClaimManager.TransferResult.SUCCESS ? 1 : 0;
     }
 }
