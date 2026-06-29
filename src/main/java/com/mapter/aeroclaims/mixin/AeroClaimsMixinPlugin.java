@@ -10,12 +10,22 @@ import java.util.Set;
 
 public class AeroClaimsMixinPlugin implements IMixinConfigPlugin {
 
-    private static final boolean FTB_CHUNKS = ModList.get().isLoaded("ftbchunks");
-
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (mixinClassName.contains("ChunkTeamDataMixin")) return FTB_CHUNKS;
+        if (mixinClassName.contains("ChunkTeamDataMixin")) {
+            return isModLoaded("ftbchunks");
+        }
         return true;
+    }
+
+
+    private static boolean isModLoaded(String modId) {
+        try {
+            ModList modList = ModList.get();
+            return modList != null && modList.isLoaded(modId);
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     @Override public void onLoad(String mixinPackage) {}
