@@ -60,28 +60,48 @@ public class ProtectionEvents {
         return true;
     }
 
+    // Permission check helpers
+
+    private static boolean isClaimProtected(ServerPlayer player, BlockPos pos, String messageKey) {
+        Claim claim = getClaimAtWithMargin(player.serverLevel(), pos);
+        if (claim == null) return false;
+
+        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
+            if (shouldSendMessage(player)) {
+                player.sendSystemMessage(Component.translatable(messageKey));
+            }
+            return true;
+        }
+        return false;
+    }
+
     // Event listeners
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer player)) return;
-
-        Claim claim = getClaimAtWithMargin(player.serverLevel(), event.getPos());
-        if (claim == null) return;
-
-        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
+        if (isClaimProtected(player, event.getPos(), "message.aeroclaims.foreign_territory"))
             event.setCanceled(true);
-            if (shouldSendMessage(player)) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
-            }
-        }
+    }
+
+    @SubscribeEvent
+    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (isClaimProtected(player, event.getPos(), "message.aeroclaims.foreign_territory"))
+            event.setCanceled(true);
+    }
+
+    @SubscribeEvent
+    public static void onBlockMultiPlace(BlockEvent.EntityMultiPlaceEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (isClaimProtected(player, event.getPos(), "message.aeroclaims.foreign_territory"))
+            event.setCanceled(true);
     }
 
     @SubscribeEvent
     public static void onRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         ServerLevel level = player.serverLevel();
-
 
         BlockPos clickedPos = event.getPos();
         BlockPos targetPos  = clickedPos.relative(event.getFace());
@@ -122,36 +142,6 @@ public class ProtectionEvents {
         if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onBlockPlace(BlockEvent.EntityPlaceEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
-        Claim claim = getClaimAtWithMargin(player.serverLevel(), event.getPos());
-        if (claim == null) return;
-
-        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
-            event.setCanceled(true);
-            if (shouldSendMessage(player)) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
-            }
-        }
-    }
-
-    @SubscribeEvent
-    public static void onBlockMultiPlace(BlockEvent.EntityMultiPlaceEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-
-        Claim claim = getClaimAtWithMargin(player.serverLevel(), event.getPos());
-        if (claim == null) return;
-
-        if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
-            event.setCanceled(true);
-            if (shouldSendMessage(player)) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.foreign_territory"));
-            }
         }
     }
 
