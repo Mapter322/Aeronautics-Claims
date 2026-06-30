@@ -115,19 +115,14 @@ public class AeroClaimManager {
         int current = AeroClaimSavedData.get(level).getClaimsForBlock(pos);
         if (current == 0) return;
 
-        AeroClaimSavedData.get(level).removeClaimsForBlock(pos, owner);
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        data.removeClaimsForBlock(pos, owner);
 
         ServerPlayer player = level.getServer().getPlayerList().getPlayer(owner);
         if (player != null) {
             transferToProvider(player, current);
-        } else {
-            AeroClaimSavedData data = AeroClaimSavedData.get(level);
-            int migrated = data.getMigratedSlots(owner);
-            int returned = Math.min(current, migrated);
-            if (returned > 0) {
-                data.setMigratedSlots(owner, migrated - returned);
-            }
         }
+
     }
 
     public static void releaseAllClaimsForBlock(ServerLevel level, ServerPlayer player, BlockPos pos) {
@@ -174,7 +169,6 @@ public class AeroClaimManager {
         return provider.getFreeClaims(player);
     }
 
-    // TODO: remove this after release
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
