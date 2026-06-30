@@ -13,8 +13,8 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @EventBusSubscriber(modid = Aeroclaims.MODID)
 public class UnregisteredSublevelManager {
 
-    private static final Logger LOGGER = LogManager.getLogger("aeroclaims/UnregisteredShipsManager");
+    private static final Logger LOGGER = LoggerFactory.getLogger("aeroclaims/UnregisteredShipsManager");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String FILE_NAME = "unclaimed_sublevels.json";
 

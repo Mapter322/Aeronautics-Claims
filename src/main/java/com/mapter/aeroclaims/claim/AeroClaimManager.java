@@ -8,6 +8,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +40,12 @@ public class AeroClaimManager {
         }
     }
 
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        ClaimManager.getPermissionResolver();
+        getClaimProvider();
+    }
+
     public static IClaimProvider getClaimProvider() {
         if (CLAIM_PROVIDER == null) {
             CLAIM_PROVIDER = buildProvider();
@@ -55,6 +62,8 @@ public class AeroClaimManager {
                     LOGGER.info("[AeroClaims] Using Open Parties and Claims as claim provider.");
                     yield new OpacClaimProvider();
                 } else {
+                    LOGGER.warn("[AeroClaims] claimProvider = OPAC, but 'openpartiesandclaims' is not loaded! " +
+                            "Claim slot transfers will be unavailable.");
                     yield null;
                 }
             }
@@ -63,6 +72,8 @@ public class AeroClaimManager {
                     LOGGER.info("[AeroClaims] Using FTB Chunks as claim provider.");
                     yield new FtbChunksClaimProvider();
                 } else {
+                    LOGGER.warn("[AeroClaims] claimProvider = FTB_CHUNKS, but 'ftbchunks' is not loaded! " +
+                            "Claim slot transfers will be unavailable.");
                     yield null;
                 }
             }
