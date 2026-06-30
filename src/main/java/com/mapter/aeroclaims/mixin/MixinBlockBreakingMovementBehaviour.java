@@ -46,30 +46,34 @@ public class MixinBlockBreakingMovementBehaviour {
     )
     private BlockState aeroclaims$protectClaimedBlock(BlockState original, MovementContext context) {
         BlockPos pos = CAPTURED_POS.get();
-        if (pos == null || context.world == null || context.world.isClientSide()) {
-            return original;
-        }
-        if (!AeroClaimsConfig.KINETIC_BLOCK_PROTECTION.get()) {
-            return original;
-        }
-        if (!(context.world instanceof ServerLevel serverLevel)) {
-            return original;
-        }
+        try {
+            if (pos == null || context.world == null || context.world.isClientSide()) {
+                return original;
+            }
+            if (!AeroClaimsConfig.KINETIC_BLOCK_PROTECTION.get()) {
+                return original;
+            }
+            if (!(context.world instanceof ServerLevel serverLevel)) {
+                return original;
+            }
 
-        Claim claim = ClaimManager.getClaimAt(serverLevel, pos);
-        if (claim == null || !claim.isActive()) {
-            return original;
-        }
+            Claim claim = ClaimManager.getClaimAt(serverLevel, pos);
+            if (claim == null || !claim.isActive()) {
+                return original;
+            }
 
-        UUID placerUUID = null;
-        if (context.blockEntityData != null && context.blockEntityData.hasUUID("aeroclaims:Placer")) {
-            placerUUID = context.blockEntityData.getUUID("aeroclaims:Placer");
-        }
+            UUID placerUUID = null;
+            if (context.blockEntityData != null && context.blockEntityData.hasUUID("aeroclaims:Placer")) {
+                placerUUID = context.blockEntityData.getUUID("aeroclaims:Placer");
+            }
 
-        if (CreateProtectionHelper.isBreakingAllowedForPlacer(placerUUID, serverLevel, claim)) {
-            return original;
-        }
+            if (CreateProtectionHelper.isBreakingAllowedForPlacer(placerUUID, serverLevel, claim)) {
+                return original;
+            }
 
-        return Blocks.BEDROCK.defaultBlockState();
+            return Blocks.BEDROCK.defaultBlockState();
+        } finally {
+            CAPTURED_POS.remove();
+        }
     }
 }
