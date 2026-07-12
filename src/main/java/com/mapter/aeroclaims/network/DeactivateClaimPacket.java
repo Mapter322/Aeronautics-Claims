@@ -6,6 +6,7 @@ import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
+import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -16,6 +17,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+
+import java.util.UUID;
 
 public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayload {
 
@@ -40,6 +43,9 @@ public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayl
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 
             AeroClaimManager.releaseAllClaimsForBlock(level, player, msg.center);
+
+            String shipId = claim.getShipId();
+            if (shipId != null) SubLevelTicketManager.remove(level, UUID.fromString(shipId));
 
             ClaimManager.deactivateClaim(level, msg.center);
             player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_deactivated"));

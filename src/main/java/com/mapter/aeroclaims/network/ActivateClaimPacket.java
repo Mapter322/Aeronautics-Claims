@@ -9,7 +9,10 @@ import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
+
+import java.util.UUID;
 import com.mapter.aeroclaims.util.TeamColorHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -125,6 +128,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 blockCount, maxSize);
         UnregisteredSublevelManager.removeShip(shipId);
         claim.setShipId(shipId);
+        SubLevelTicketManager.add(level, UUID.fromString(shipId));
         ClaimSavedData.get(level).setDirty();
     }
 
