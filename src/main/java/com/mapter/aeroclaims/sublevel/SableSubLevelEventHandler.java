@@ -16,6 +16,8 @@ import net.minecraft.server.level.ServerLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 public class SableSubLevelEventHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("aeroclaims/SableShipEventHandler");
@@ -99,6 +101,8 @@ public class SableSubLevelEventHandler {
                         Claim claim = ClaimManager.getClaimByShipId(serverLevel, shipId);
                         if (claim != null) {
                             AeroClaimManager.releaseAllClaimsForBlock(serverLevel, ownerId, claim.getCenter());
+                            AeroClaimManager.releaseAllForceloadsForBlock(serverLevel, ownerId, claim.getCenter());
+                            SubLevelTicketManager.remove(serverLevel, UUID.fromString(shipId));
                             ClaimManager.removeClaim(serverLevel, claim.getCenter());
                         }
                     } catch (Exception e) {

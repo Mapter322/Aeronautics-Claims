@@ -21,14 +21,18 @@ public class AeroClaimSavedData extends SavedData {
             null
     );
 
+    // --- claims ---
     private final Map<UUID, Integer> migratedSlots = new HashMap<>();
-
     private final Map<UUID, Integer> usedSlots = new HashMap<>();
-
     private final Map<Long, Integer> claimsPerBlock = new HashMap<>();
 
-    private final Map<Long, Integer> shipBlockCountCache = new HashMap<>();
+    // --- forceloads ---
+    private final Map<UUID, Integer> migratedForceloads = new HashMap<>();
+    private final Map<UUID, Integer> usedForceloads = new HashMap<>();
+    private final Map<Long, Integer> forceloadsPerBlock = new HashMap<>();
 
+    // --- cache ---
+    private final Map<Long, Integer> shipBlockCountCache = new HashMap<>();
     private final Map<Long, String> shipIdCache = new HashMap<>();
 
 
@@ -50,6 +54,18 @@ public class AeroClaimSavedData extends SavedData {
         for (Tag t : tag.getList("claimsPerBlock", Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;
             data.claimsPerBlock.put(e.getLong("pos"), e.getInt("claims"));
+        }
+        for (Tag t : tag.getList("migratedForceloads", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.migratedForceloads.put(e.getUUID("uuid"), e.getInt("amount"));
+        }
+        for (Tag t : tag.getList("usedForceloads", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.usedForceloads.put(e.getUUID("uuid"), e.getInt("amount"));
+        }
+        for (Tag t : tag.getList("forceloadsPerBlock", Tag.TAG_COMPOUND)) {
+            CompoundTag e = (CompoundTag) t;
+            data.forceloadsPerBlock.put(e.getLong("pos"), e.getInt("amount"));
         }
         for (Tag t : tag.getList("shipBlockCountCache", Tag.TAG_COMPOUND)) {
             CompoundTag e = (CompoundTag) t;
@@ -91,6 +107,33 @@ public class AeroClaimSavedData extends SavedData {
             perBlock.add(entry);
         }
         tag.put("claimsPerBlock", perBlock);
+
+        ListTag mf = new ListTag();
+        for (Map.Entry<UUID, Integer> e : migratedForceloads.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("uuid", e.getKey());
+            entry.putInt("amount", e.getValue());
+            mf.add(entry);
+        }
+        tag.put("migratedForceloads", mf);
+
+        ListTag uf = new ListTag();
+        for (Map.Entry<UUID, Integer> e : usedForceloads.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putUUID("uuid", e.getKey());
+            entry.putInt("amount", e.getValue());
+            uf.add(entry);
+        }
+        tag.put("usedForceloads", uf);
+
+        ListTag fpb = new ListTag();
+        for (Map.Entry<Long, Integer> e : forceloadsPerBlock.entrySet()) {
+            CompoundTag entry = new CompoundTag();
+            entry.putLong("pos", e.getKey());
+            entry.putInt("amount", e.getValue());
+            fpb.add(entry);
+        }
+        tag.put("forceloadsPerBlock", fpb);
 
         ListTag shipCache = new ListTag();
         for (Map.Entry<Long, Integer> e : shipBlockCountCache.entrySet()) {
@@ -167,6 +210,49 @@ public class AeroClaimSavedData extends SavedData {
 
         claimsPerBlock.remove(pos.asLong());
         usedSlots.put(owner, Math.max(0, getUsedSlots(owner) - current));
+        setDirty();
+    }
+
+    // --- forceloads ---
+
+    public int getMigratedForceloads(UUID playerId) {
+        return migratedForceloads.getOrDefault(playerId, 0);
+    }
+
+    public void setMigratedForceloads(UUID playerId, int amount) {
+        migratedForceloads.put(playerId, Math.max(0, amount));
+        setDirty();
+    }
+
+    public void addMigratedForceloads(UUID playerId, int amount) {
+        setMigratedForceloads(playerId, getMigratedForceloads(playerId) + amount);
+    }
+
+    public int getUsedForceloads(UUID playerId) {
+        return usedForceloads.getOrDefault(playerId, 0);
+    }
+
+    public int getFreeForceloads(UUID playerId) {
+        return Math.max(0, getMigratedForceloads(playerId) - getUsedForceloads(playerId));
+    }
+
+    public int getForceloadsForBlock(BlockPos pos) {
+        return forceloadsPerBlock.getOrDefault(pos.asLong(), 0);
+    }
+
+    public void setForceloadsForBlock(BlockPos pos, UUID owner, int newCount) {
+        int delta = newCount - getForceloadsForBlock(pos);
+        if (newCount <= 0) forceloadsPerBlock.remove(pos.asLong());
+        else forceloadsPerBlock.put(pos.asLong(), newCount);
+        usedForceloads.put(owner, Math.max(0, getUsedForceloads(owner) + delta));
+        setDirty();
+    }
+
+    public void removeForceloadsForBlock(BlockPos pos, UUID owner) {
+        int current = getForceloadsForBlock(pos);
+        if (current == 0) return;
+        forceloadsPerBlock.remove(pos.asLong());
+        usedForceloads.put(owner, Math.max(0, getUsedForceloads(owner) - current));
         setDirty();
     }
 

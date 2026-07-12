@@ -20,7 +20,8 @@ public record SyncClaimStatePacket(
         int claimsForBlock,
         int freeSlots,
         int blocksPerClaim,
-        int shipBlockCount
+        int shipBlockCount,
+        int forceloadsForBlock
 ) implements CustomPacketPayload {
 
     public static final int SHIP_BLOCK_COUNT_UNKNOWN = -1;
@@ -40,6 +41,7 @@ public record SyncClaimStatePacket(
                         buf.writeInt(p.freeSlots());
                         buf.writeInt(p.blocksPerClaim());
                         buf.writeInt(p.shipBlockCount());
+                        buf.writeInt(p.forceloadsForBlock());
                     },
                     buf -> new SyncClaimStatePacket(
                             BlockPos.STREAM_CODEC.decode(buf),
@@ -47,6 +49,7 @@ public record SyncClaimStatePacket(
                             buf.readBoolean(),
                             buf.readBoolean(),
                             buf.readBoolean(),
+                            buf.readInt(),
                             buf.readInt(),
                             buf.readInt(),
                             buf.readInt(),
@@ -71,6 +74,7 @@ public record SyncClaimStatePacket(
             menu.setClaimsForBlock(msg.claimsForBlock);
             menu.setFreeSlots(msg.freeSlots);
             menu.setBlocksPerClaim(msg.blocksPerClaim);
+            menu.setForceloadsForBlock(msg.forceloadsForBlock);
             if (msg.shipBlockCount != SHIP_BLOCK_COUNT_UNKNOWN) {
                 menu.setShipBlockCount(msg.shipBlockCount);
             }

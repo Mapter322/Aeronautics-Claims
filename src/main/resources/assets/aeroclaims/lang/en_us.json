@@ -15,6 +15,7 @@
   "screen.aeroclaims.claim_settings.blocks_usage": "Blocks: %s / %s",
   "screen.aeroclaims.claim_settings.blocks_unknown": "Blocks: (press Refresh)",
   "screen.aeroclaims.claim_settings.claims_label": "Aero claims: ",
+  "screen.aeroclaims.claim_settings.forceloads_label": "Forceloads: ",
   "commands.aeroclaims.only_player": "This command can only be used by a player",
   "commands.aeroclaims.info.header": "§6=== Info for %s ===",
   "commands.aeroclaims.info.registered_count": "§eSublevels: %s",

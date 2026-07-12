@@ -169,15 +169,75 @@ public class AeroClaimManager {
         return provider.getFreeClaims(player);
     }
 
+    // Forceloads
+
+    public static TransferResult transferForceloadsFromProvider(ServerPlayer player, int amount) {
+        IClaimProvider provider = getClaimProvider();
+        if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+        return provider.transferForceloadsToAero(player, amount);
+    }
+
+    public static TransferResult transferForceloadsToProvider(ServerPlayer player, int amount) {
+        IClaimProvider provider = getClaimProvider();
+        if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+        return provider.transferForceloadsFromAero(player, amount);
+    }
+
+    public static boolean adjustForceloadsForBlock(ServerLevel level, UUID owner, BlockPos pos, int delta) {
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        int newCount = data.getForceloadsForBlock(pos) + delta;
+        if (newCount < 0) return false;
+        if (delta > 0 && data.getFreeForceloads(owner) < delta) return false;
+        data.setForceloadsForBlock(pos, owner, newCount);
+        return true;
+    }
+
+    public static void releaseAllForceloadsForBlock(ServerLevel level, UUID owner, BlockPos pos) {
+        int current = AeroClaimSavedData.get(level).getForceloadsForBlock(pos);
+        if (current == 0) return;
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        data.removeForceloadsForBlock(pos, owner);
+        ServerPlayer player = level.getServer().getPlayerList().getPlayer(owner);
+        if (player != null) transferForceloadsToProvider(player, current);
+    }
+
+    public static void releaseAllForceloadsForBlock(ServerLevel level, ServerPlayer player, BlockPos pos) {
+        int current = AeroClaimSavedData.get(level).getForceloadsForBlock(pos);
+        if (current == 0) return;
+        AeroClaimSavedData.get(level).removeForceloadsForBlock(pos, player.getUUID());
+        transferForceloadsToProvider(player, current);
+    }
+
+    public static boolean tryEnsureForceloads(ServerLevel level, ServerPlayer player, BlockPos pos, int needed) {
+        if (needed <= 0) return true;
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        UUID owner = player.getUUID();
+        int free = data.getFreeForceloads(owner);
+        if (free < needed) {
+            TransferResult result = transferForceloadsFromProvider(player, needed - free);
+            if (result != TransferResult.SUCCESS) return false;
+        }
+        return adjustForceloadsForBlock(level, owner, pos, needed);
+    }
+
+    public static int getFreeForceloads(ServerLevel level, UUID playerId) {
+        return AeroClaimSavedData.get(level).getFreeForceloads(playerId);
+    }
+
+    public static int getMigratedForceloads(ServerLevel level, UUID playerId) {
+        return AeroClaimSavedData.get(level).getMigratedForceloads(playerId);
+    }
+
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
 
         ServerLevel level = player.serverLevel();
-        int freeSlots = getFreeSlots(level, player.getUUID());
+        UUID id = player.getUUID();
+        int freeSlots = getFreeSlots(level, id);
+        int freeForceloads = getFreeForceloads(level, id);
 
-        if (freeSlots > 0) {
-            transferToProvider(player, freeSlots);
-        }
+        if (freeSlots > 0) transferToProvider(player, freeSlots);
+        if (freeForceloads > 0) transferForceloadsToProvider(player, freeForceloads);
     }
 }

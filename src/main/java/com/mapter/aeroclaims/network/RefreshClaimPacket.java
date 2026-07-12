@@ -79,9 +79,12 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 int applied = Math.min(delta, free);
                 if (applied > 0) {
                     AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, applied);
+                    AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center,
+                            Math.min(applied, AeroClaimSavedData.get(level).getFreeForceloads(player.getUUID())));
                 }
             } else if (delta < 0) {
                 AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
+                AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
             }
 
             maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
@@ -138,7 +141,8 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 data.getClaimsForBlock(center),
                 data.getFreeSlots(player.getUUID()),
                 AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
-                shipBlockCount
+                shipBlockCount,
+                data.getForceloadsForBlock(center)
         ));
     }
 }

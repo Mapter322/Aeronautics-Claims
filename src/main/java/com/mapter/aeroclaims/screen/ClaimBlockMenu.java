@@ -5,6 +5,7 @@ import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.registry.ModMenus;
+import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
@@ -33,6 +34,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
     private int freeSlots;
     private int blocksPerClaim;
     private int shipBlockCount;
+    private int forceloadsForBlock;
     private boolean navigatingAway = false;
 
     public ClaimBlockMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
@@ -49,6 +51,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
                 buf.readInt(),
                 buf.readInt(),
                 buf.readInt(),
+                buf.readInt(),
                 buf.readInt()
         );
     }
@@ -57,7 +60,8 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
                           BlockPos center, UUID owner, String shipName,
                           boolean onShip, boolean claimActive,
                           boolean allowParty, boolean allowAllies, boolean allowOthers,
-                          int claimsForBlock, int freeSlots, int blocksPerClaim, int shipBlockCount) {
+                          int claimsForBlock, int freeSlots, int blocksPerClaim, int shipBlockCount,
+                          int forceloadsForBlock) {
         super(ModMenus.CLAIM_SETTINGS_MENU.get(), containerId);
         this.center = center;
         this.owner = owner;
@@ -71,6 +75,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
         this.freeSlots = freeSlots;
         this.blocksPerClaim = blocksPerClaim;
         this.shipBlockCount = shipBlockCount;
+        this.forceloadsForBlock = forceloadsForBlock;
     }
 
     public BlockPos getCenter()     { return center; }
@@ -102,6 +107,8 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
 
     public int getShipBlockCount()              { return shipBlockCount; }
     public void setShipBlockCount(int v)        { shipBlockCount = v; }
+    public int getForceloadsForBlock()          { return forceloadsForBlock; }
+    public void setForceloadsForBlock(int v)    { forceloadsForBlock = v; }
     public void setNavigatingAway(boolean v)     { navigatingAway = v; }
 
     public int getBlockLimit()                  { return claimsForBlock * blocksPerClaim; }
@@ -121,6 +128,9 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
             Claim claim = ClaimManager.getClaimByCenter(serverLevel, center);
             if (claim != null && !claim.isActive() && player.getUUID().equals(claim.getOwner())) {
                 AeroClaimManager.releaseAllClaimsForBlock(serverLevel, (ServerPlayer) player, center);
+                AeroClaimManager.releaseAllForceloadsForBlock(serverLevel, (ServerPlayer) player, center);
+                String sid = claim.getShipId();
+                if (sid != null) SubLevelTicketManager.remove(serverLevel, UUID.fromString(sid));
             }
 
             BlockState state = level.getBlockState(center);

@@ -153,7 +153,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
 
         separator(g, 18);
 
-        // --- info block ---
+        // info block
         int textX = BTN_X + INFO_PAD;
         int textW = bw - INFO_PAD * 2;
         int y = INFO_Y + INFO_PAD;
@@ -214,6 +214,15 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         g.drawString(font, claimsValues, textX + font.width(claimsLabel), y, claimsColor, false);
         y += font.lineHeight + 2;
 
+        // Forceloads used / needed
+        int usedForceloads   = menu.getForceloadsForBlock();
+        int forceloadsColor  = (neededClaims > usedForceloads) ? COLOR_ERR : COLOR_OK;
+        String forceloadsLabel  = Component.translatable("screen.aeroclaims.claim_settings.forceloads_label").getString();
+        String forceloadsValues = usedForceloads + " / " + neededClaims;
+        g.drawString(font, forceloadsLabel, textX, y, COLOR_WHITE, false);
+        g.drawString(font, forceloadsValues, textX + font.width(forceloadsLabel), y, forceloadsColor, false);
+        y += font.lineHeight + 2;
+
         // Block count
         String blocksLine = blocksText();
         int blocksColor = blocksOverLimit() ? COLOR_ERR : COLOR_WHITE;
@@ -233,7 +242,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             int textW = imageWidth - BTN_X * 2 - INFO_PAD * 2;
             lines += Math.max(1, (menu.getShipName().length() * 6) / textW + 1);
         }
-        lines += 2; // claims used/needed + block count
+        lines += 3; // claims used/needed + forceloads used/needed + block count
         return INFO_PAD * 2 + lines * (font.lineHeight + 2);
     }
 

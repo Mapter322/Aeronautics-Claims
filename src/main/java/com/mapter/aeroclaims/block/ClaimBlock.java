@@ -9,6 +9,7 @@ import com.mapter.aeroclaims.network.SyncClaimStatePacket;
 import com.mapter.aeroclaims.screen.ClaimBlockMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import com.mojang.serialization.MapCodec;
 
@@ -102,11 +103,13 @@ public class ClaimBlock extends BaseEntityBlock {
                 String shipName = SableShipUtils.getShipName(ship);
                 RegisteredSublevelManager.unregisterShip(shipId);
                 UnregisteredSublevelManager.addShip(shipId, shipName);
+                SubLevelTicketManager.remove(serverLevel, UUID.fromString(shipId));
             }
 
             Claim claim = ClaimManager.getClaimByCenter(serverLevel, pos);
             if (claim != null) {
                 AeroClaimManager.releaseAllClaimsForBlock(serverLevel, claim.getOwner(), pos);
+                AeroClaimManager.releaseAllForceloadsForBlock(serverLevel, claim.getOwner(), pos);
             }
 
             ClaimManager.removeClaim(serverLevel, pos);
@@ -174,6 +177,7 @@ public class ClaimBlock extends BaseEntityBlock {
             buf.writeInt(freeSlots);
             buf.writeInt(AeroClaimsConfig.BLOCKS_PER_CLAIM.get());
             buf.writeInt(initialBlockCount);
+            buf.writeInt(data.getForceloadsForBlock(pos));
         });
 
         return InteractionResult.CONSUME;
@@ -189,7 +193,7 @@ public class ClaimBlock extends BaseEntityBlock {
                         containerId, inv, pos, claim.getOwner(), "",
                         false, claim.isActive(),
                         claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
-                        0, 0, 0, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN),
+                        0, 0, 0, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN, 0),
                 Component.translatable("screen.aeroclaims.claim_settings.title")
         );
     }

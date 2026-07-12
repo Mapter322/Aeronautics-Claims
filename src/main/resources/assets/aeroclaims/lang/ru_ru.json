@@ -14,6 +14,7 @@
   "screen.aeroclaims.claim_settings.blocks_usage": "Блоков: %s / %s",
   "screen.aeroclaims.claim_settings.blocks_unknown": "Блоков: (нажмите Обновить)",
   "screen.aeroclaims.claim_settings.claims_label": "Аероклеймы: ",
+  "screen.aeroclaims.claim_settings.forceloads_label": "Форслоады: ",
   "commands.aeroclaims.only_player": "Эта команда доступна только игроку",
   "commands.aeroclaims.info.header": "§6=== Информация о %s ===",
   "commands.aeroclaims.info.registered_count": "§eСублевелов: %s",

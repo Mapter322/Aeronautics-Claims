@@ -63,6 +63,19 @@ public class FtbChunksClaimProvider implements IClaimProvider {
         }
     }
 
+    @Override
+    public AeroClaimManager.TransferResult transferForceloadsToAero(ServerPlayer player, int amount) {
+        return AeroClaimManager.TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+    }
+
+    @Override
+    public AeroClaimManager.TransferResult transferForceloadsFromAero(ServerPlayer player, int amount) {
+        return AeroClaimManager.TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+    }
+
+    @Override
+    public int getFreeForceloads(ServerPlayer player) { return -1; }
+
     private static ClaimedChunkManager getManager() {
         if (!FTBChunksAPI.api().isManagerLoaded()) return null;
         return FTBChunksAPI.api().getManager();

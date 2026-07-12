@@ -60,6 +60,8 @@ public record AdjustBlockClaimsPacket(BlockPos center, int delta) implements Cus
 
             if (!AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, msg.delta)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.no_ship_slots"));
+            } else {
+                AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, msg.delta);
             }
 
             sync(player, msg.center, claim, data);
@@ -76,7 +78,8 @@ public record AdjustBlockClaimsPacket(BlockPos center, int delta) implements Cus
                 data.getClaimsForBlock(center),
                 data.getFreeSlots(player.getUUID()),
                 AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
-                SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN
+                SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN,
+                data.getForceloadsForBlock(center)
         ));
     }
 }

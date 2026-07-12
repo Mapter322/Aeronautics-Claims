@@ -140,8 +140,9 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
         String shipName = registeredName != null ? registeredName : SableShipUtils.getShipName(ship);
 
         AeroClaimSavedData data = AeroClaimSavedData.get(level);
-        int claimsForBlock    = data.getClaimsForBlock(pos);
-        int freeSlots         = data.getFreeSlots(player.getUUID());
+        int claimsForBlock      = data.getClaimsForBlock(pos);
+        int freeSlots           = data.getFreeSlots(player.getUUID());
+        int forceloadsForBlock  = data.getForceloadsForBlock(pos);
         Integer cachedCount   = data.getCachedShipBlockCount(pos);
         int initialBlockCount = (cachedCount != null) ? cachedCount : SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
         String finalShipName  = shipName != null ? shipName : "";
@@ -152,7 +153,8 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                                 id, inv, pos, claim.getOwner(), finalShipName,
                                 onShip, claim.isActive(),
                                 claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
-                                claimsForBlock, freeSlots, AeroClaimsConfig.BLOCKS_PER_CLAIM.get(), initialBlockCount),
+                                claimsForBlock, freeSlots, AeroClaimsConfig.BLOCKS_PER_CLAIM.get(), initialBlockCount,
+                                forceloadsForBlock),
                         Component.translatable("screen.aeroclaims.claim_settings.title")),
                 buf -> {
                     buf.writeBlockPos(pos);
@@ -167,6 +169,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                     buf.writeInt(freeSlots);
                     buf.writeInt(AeroClaimsConfig.BLOCKS_PER_CLAIM.get());
                     buf.writeInt(initialBlockCount);
+                    buf.writeInt(forceloadsForBlock);
                 });
     }
 }

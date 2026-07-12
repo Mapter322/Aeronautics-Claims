@@ -11,8 +11,6 @@ import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
-
-import java.util.UUID;
 import com.mapter.aeroclaims.util.TeamColorHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -26,6 +24,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayload {
 
@@ -75,7 +74,8 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
             int delta = neededClaims - currentClaims;
 
             if (delta > 0) {
-                if (!AeroClaimManager.tryEnsureSlots(level, player, msg.center, delta)) {
+                if (!AeroClaimManager.tryEnsureSlots(level, player, msg.center, delta)
+                        || !AeroClaimManager.tryEnsureForceloads(level, player, msg.center, delta)) {
                     int exact = cachedCount != null ? cachedCount
                             : ClaimManager.countShipBlocksExact(level, msg.center);
                     player.sendSystemMessage(Component.translatable(
@@ -86,6 +86,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 }
             } else if (delta < 0) {
                 AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
+                AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
             }
 
             int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
@@ -147,7 +148,8 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 data.getClaimsForBlock(center),
                 data.getFreeSlots(player.getUUID()),
                 AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
-                shipBlockCount
+                shipBlockCount,
+                data.getForceloadsForBlock(center)
         ));
     }
 }
