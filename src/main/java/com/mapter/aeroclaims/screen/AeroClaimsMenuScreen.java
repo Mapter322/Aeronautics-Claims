@@ -1,6 +1,7 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import net.minecraft.client.Minecraft;
 import com.mapter.aeroclaims.network.NavigateMenuPacket;
 import net.minecraft.ChatFormatting;
@@ -34,12 +35,12 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private static final int LABEL_H      = 13;
     private static final int LIST_LABEL_Y  = 22;
     private static final int LIST_Y        = LIST_LABEL_Y + LABEL_H;
-    private static final int LIST_H        = 90;
+    private static final int LIST_H        = 78;
     private static final int ENTRY_H       = 12;
 
     private static final int INFO_LABEL_Y  = LIST_Y + LIST_H + 4;
     private static final int INFO_Y        = INFO_LABEL_Y + LABEL_H;
-    private static final int INFO_H        = PAD + ENTRY_H * 2 + PAD - 5;
+    private static final int INFO_H        = PAD + ENTRY_H * 2 + PAD + 7;
     private static final int COLOR_TEXT      = 0xDDDDDD;
     private static final int CLOSE_X = 8;
     private static final int CLOSE_Y = 7;
@@ -106,16 +107,24 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
     private void renderInfoPanel(GuiGraphics g) {
         int x = BTN_X + PAD;
         int y = INFO_Y + PAD;
-        int aeroUsed = menu.getAeroUsed();
 
         String aeroLabel = Component.translatable("screen.aeroclaims.menu.info.aero_claims.label").getString();
         g.drawString(font, aeroLabel, x, y, COLOR_TEXT, false);
-        g.drawString(font, String.valueOf(aeroUsed), x + font.width(aeroLabel), y, COLOR_WHITE, false);
+        g.drawString(font, String.valueOf(menu.getAeroUsed()), x + font.width(aeroLabel), y, COLOR_WHITE, false);
 
+        boolean showForceloads = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+        if (showForceloads) {
+            String flLabel = Component.translatable("screen.aeroclaims.menu.info.forceloads.label").getString();
+            g.drawString(font, flLabel, x, y + ENTRY_H, COLOR_TEXT, false);
+            g.drawString(font, String.valueOf(menu.getForceloadUsed()),
+                    x + font.width(flLabel), y + ENTRY_H, COLOR_WHITE, false);
+        }
+
+        int line2 = showForceloads ? ENTRY_H * 2 : ENTRY_H;
         String sublevelsLabel = Component.translatable("screen.aeroclaims.menu.info.sublevels.label").getString();
-        g.drawString(font, sublevelsLabel, x, y + ENTRY_H, COLOR_TEXT, false);
+        g.drawString(font, sublevelsLabel, x, y + line2, COLOR_TEXT, false);
         g.drawString(font, String.valueOf(menu.getShips().size()),
-                x + font.width(sublevelsLabel), y + ENTRY_H, COLOR_WHITE, false);
+                x + font.width(sublevelsLabel), y + line2, COLOR_WHITE, false);
     }
 
     private void renderShipList(GuiGraphics g, int mx, int my) {

@@ -14,16 +14,10 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.BooleanValue EXPLOSION_PROTECTION;
     public static final ModConfigSpec.BooleanValue KINETIC_BLOCK_PROTECTION;
     public static final ModConfigSpec.BooleanValue ENABLE_DELETE_COMMAND;
+    public static final ModConfigSpec.BooleanValue PROVIDER_SLOTS_FORCELOAD;
 
-    public enum PartyProvider {
-        FTB_TEAMS,
-        OPAC
-    }
-
-    public enum ClaimProvider {
-        OPAC,
-        FTB_CHUNKS
-    }
+    public enum PartyProvider { FTB_TEAMS, OPAC }
+    public enum ClaimProvider { OPAC, FTB_CHUNKS }
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -64,6 +58,13 @@ public class AeroClaimsConfig {
                     "Default: false"
                 )
                 .define("enableDeleteCommand", false);
+        PROVIDER_SLOTS_FORCELOAD = builder
+                .comment(
+                    "If true, sublevel forceloading consumes OPAC/FTB forceload slots.",
+                    "If false, all activated claims get a free sub-level forceload.",
+                    "Default: true"
+                )
+                .define("providerSlotsForceload", true);
         builder.pop();
 
         SPEC = builder.build();

@@ -20,6 +20,8 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
 
     private int aeroTotal;
     private int aeroUsed;
+    private int forceloadTotal;
+    private int forceloadUsed;
     private BlockPos returnClaimPos;
 
     public AeroClaimsMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
@@ -35,6 +37,8 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
         buf.readInt();
         aeroTotal = buf.readInt();
         aeroUsed  = buf.readInt();
+        forceloadTotal = buf.readInt();
+        forceloadUsed  = buf.readInt();
         if (buf.isReadable()) {
             if (buf.readBoolean()) {
                 this.returnClaimPos = buf.readBlockPos();
@@ -48,8 +52,10 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
 
     public List<ShipEntry> getShips() { return ships; }
 
-    public int getAeroTotal()    { return aeroTotal; }
-    public int getAeroUsed()     { return aeroUsed; }
+    public int getAeroTotal()       { return aeroTotal; }
+    public int getAeroUsed()        { return aeroUsed; }
+    public int getForceloadTotal()  { return forceloadTotal; }
+    public int getForceloadUsed()   { return forceloadUsed; }
     public BlockPos getReturnClaimPos() { return returnClaimPos; }
 
     public void setStats(int aeroTotal, int aeroUsed) {

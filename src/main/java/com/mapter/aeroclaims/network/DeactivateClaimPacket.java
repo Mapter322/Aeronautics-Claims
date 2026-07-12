@@ -43,7 +43,8 @@ public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayl
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 
             AeroClaimManager.releaseAllClaimsForBlock(level, player, msg.center);
-            AeroClaimManager.releaseAllForceloadsForBlock(level, player, msg.center);
+            if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get())
+                AeroClaimManager.releaseAllForceloadsForBlock(level, player, msg.center);
 
             String shipId = claim.getShipId();
             if (shipId != null) SubLevelTicketManager.remove(level, UUID.fromString(shipId));

@@ -228,6 +228,10 @@ public class AeroClaimManager {
         return AeroClaimSavedData.get(level).getMigratedForceloads(playerId);
     }
 
+    public static int getUsedForceloads(ServerLevel level, UUID playerId) {
+        return AeroClaimSavedData.get(level).getUsedForceloads(playerId);
+    }
+
     @SubscribeEvent
     public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;

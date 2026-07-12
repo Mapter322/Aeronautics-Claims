@@ -1,6 +1,7 @@
 package com.mapter.aeroclaims.screen;
 
 import com.mapter.aeroclaims.Aeroclaims;
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.network.ActivateClaimPacket;
 import com.mapter.aeroclaims.network.DeactivateClaimPacket;
 import com.mapter.aeroclaims.network.RefreshClaimPacket;
@@ -97,7 +98,8 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         updateRefreshButton();
         updateActionButton();
 
-        int aeroMenuBtnY = rowY + BTN_H + GAP + 3;
+        boolean showForceloads = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+        int aeroMenuBtnY = rowY + BTN_H + GAP + (showForceloads ? -2 : 3);
         Button aeroMenuButton = Button.builder(
                 Component.translatable("screen.aeroclaims.menu.title"),
                 b -> {
@@ -214,14 +216,17 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         g.drawString(font, claimsValues, textX + font.width(claimsLabel), y, claimsColor, false);
         y += font.lineHeight + 2;
 
-        // Forceloads used / needed
-        int usedForceloads   = menu.getForceloadsForBlock();
-        int forceloadsColor  = (neededClaims > usedForceloads) ? COLOR_ERR : COLOR_OK;
-        String forceloadsLabel  = Component.translatable("screen.aeroclaims.claim_settings.forceloads_label").getString();
-        String forceloadsValues = usedForceloads + " / " + neededClaims;
-        g.drawString(font, forceloadsLabel, textX, y, COLOR_WHITE, false);
-        g.drawString(font, forceloadsValues, textX + font.width(forceloadsLabel), y, forceloadsColor, false);
-        y += font.lineHeight + 2;
+        // Forceloads used / needed (PROVIDER mode only)
+        boolean showForceloads = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+        if (showForceloads) {
+            int usedForceloads   = menu.getForceloadsForBlock();
+            int forceloadsColor  = (neededClaims > usedForceloads) ? COLOR_ERR : COLOR_OK;
+            String forceloadsLabel  = Component.translatable("screen.aeroclaims.claim_settings.forceloads_label").getString();
+            String forceloadsValues = usedForceloads + " / " + neededClaims;
+            g.drawString(font, forceloadsLabel, textX, y, COLOR_WHITE, false);
+            g.drawString(font, forceloadsValues, textX + font.width(forceloadsLabel), y, forceloadsColor, false);
+            y += font.lineHeight + 2;
+        }
 
         // Block count
         String blocksLine = blocksText();
@@ -242,7 +247,8 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             int textW = imageWidth - BTN_X * 2 - INFO_PAD * 2;
             lines += Math.max(1, (menu.getShipName().length() * 6) / textW + 1);
         }
-        lines += 3; // claims used/needed + forceloads used/needed + block count
+        lines += 2; // claims used/needed + block count
+        if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get()) lines += 1;
         return INFO_PAD * 2 + lines * (font.lineHeight + 2);
     }
 

@@ -73,9 +73,12 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                     : 0;
             int delta = neededClaims - currentClaims;
 
+            boolean useProvider = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+
             if (delta > 0) {
-                if (!AeroClaimManager.tryEnsureSlots(level, player, msg.center, delta)
-                        || !AeroClaimManager.tryEnsureForceloads(level, player, msg.center, delta)) {
+                boolean ok = AeroClaimManager.tryEnsureSlots(level, player, msg.center, delta);
+                if (useProvider) ok &= AeroClaimManager.tryEnsureForceloads(level, player, msg.center, delta);
+                if (!ok) {
                     int exact = cachedCount != null ? cachedCount
                             : ClaimManager.countShipBlocksExact(level, msg.center);
                     player.sendSystemMessage(Component.translatable(
@@ -86,7 +89,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 }
             } else if (delta < 0) {
                 AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
-                AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
+                if (useProvider) AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
             }
 
             int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);

@@ -2,6 +2,7 @@ package com.mapter.aeroclaims.commands;
 
 import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.claim.ClaimBriefInfo;
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.screen.AeroClaimsMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mojang.brigadier.CommandDispatcher;
@@ -76,6 +77,8 @@ public class PlayerCommands {
                     buf.writeInt(AeroClaimManager.getFreeProviderClaims(player));
                     buf.writeInt(AeroClaimManager.getMigratedSlots(level, player.getUUID()));
                     buf.writeInt(AeroClaimManager.getUsedSlots(level, player.getUUID()));
+                    buf.writeInt(AeroClaimManager.getMigratedForceloads(level, player.getUUID()));
+                    buf.writeInt(AeroClaimManager.getUsedForceloads(level, player.getUUID()));
                 });
         return 1;
     }
@@ -93,12 +96,19 @@ public class PlayerCommands {
         int migratedSlots = AeroClaimManager.getMigratedSlots(source.getLevel(), targetUuid);
         int usedSlots     = AeroClaimManager.getUsedSlots(source.getLevel(), targetUuid);
         int freeSlots     = AeroClaimManager.getFreeSlots(source.getLevel(), targetUuid);
+        int migratedFl    = AeroClaimManager.getMigratedForceloads(source.getLevel(), targetUuid);
+        int freeFl        = AeroClaimManager.getFreeForceloads(source.getLevel(), targetUuid);
+        int usedFl        = migratedFl - freeFl;
 
         final UUID   finalUuid = targetUuid;
         final String finalName = targetName;
 
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.header", finalName), false);
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots", usedSlots, migratedSlots), false);
+        if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get()) {
+            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.forceload_slots", usedFl, migratedFl), false);
+            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.forceload_free", freeFl), false);
+        }
 
         if (source.getEntity() instanceof ServerPlayer caller && caller.getUUID().equals(finalUuid)) {
             int freeOpac = AeroClaimManager.getFreeProviderClaims(caller);
@@ -137,6 +147,11 @@ public class PlayerCommands {
             hover = hover.append(Component.literal("\n"))
                     .append(Component.translatable("commands.aeroclaims.info.entry.hover.claims",
                             info.getClaimsForBlock()));
+            if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get()) {
+                hover = hover.append(Component.literal("\n"))
+                        .append(Component.translatable("commands.aeroclaims.info.entry.hover.forceloads",
+                                info.getForceloadsForBlock()));
+            }
             if (info.isBlockCountKnown()) {
                 hover = hover.append(Component.literal("\n"))
                         .append(Component.translatable("commands.aeroclaims.info.entry.hover.blocks",
