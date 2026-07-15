@@ -56,6 +56,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private static final int ACCESS_PARTY      = 0;
     private static final int ACCESS_PARTY_ALLY = 1;
     private static final int ACCESS_ALL        = 2;
+    private static final int ACCESS_NONE       = 3;
 
     private Button accessButton;
     private Button refreshButton;
@@ -374,21 +375,23 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private int currentAccessLevel() {
         if (menu.isAllowOthers()) return ACCESS_ALL;
         if (menu.isAllowAllies()) return ACCESS_PARTY_ALLY;
-        return ACCESS_PARTY;
+        if (menu.isAllowParty()) return ACCESS_PARTY;
+        return ACCESS_NONE;
     }
 
     private void cycleAccess() {
-        int next = (currentAccessLevel() + 1) % 3;
-        menu.setAllowParty(true);
-        menu.setAllowAllies(next >= ACCESS_PARTY_ALLY);
+        int next = (currentAccessLevel() + 1) % 4;
+        menu.setAllowParty(next != ACCESS_NONE);
+        menu.setAllowAllies(next == ACCESS_PARTY_ALLY || next == ACCESS_ALL);
         menu.setAllowOthers(next == ACCESS_ALL);
     }
 
     private Component accessText() {
         String levelKey = switch (currentAccessLevel()) {
+            case ACCESS_PARTY      -> "screen.aeroclaims.claim_settings.access.party";
             case ACCESS_PARTY_ALLY -> "screen.aeroclaims.claim_settings.access.party_ally";
             case ACCESS_ALL        -> "screen.aeroclaims.claim_settings.access.all";
-            default                -> "screen.aeroclaims.claim_settings.access.party";
+            default                -> "screen.aeroclaims.claim_settings.access.nobody";
         };
         return Component.translatable("screen.aeroclaims.claim_settings.access_label",
                 Component.translatable(levelKey).getString());
