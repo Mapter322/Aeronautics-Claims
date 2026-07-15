@@ -2,6 +2,7 @@ package com.mapter.aeroclaims.network;
 
 import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.claim.AeroClaimManager.TransferResult;
 import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
@@ -75,16 +76,51 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             int currentClaims = AeroClaimSavedData.get(level).getClaimsForBlock(msg.center);
             int delta = neededClaims - currentClaims;
             if (delta > 0) {
-                int free = AeroClaimSavedData.get(level).getFreeSlots(player.getUUID());
-                int applied = Math.min(delta, free);
+                boolean useProvider = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+                AeroClaimSavedData data = AeroClaimSavedData.get(level);
+
+                int freeSlots = data.getFreeSlots(player.getUUID());
+                int claimNeed = Math.max(0, delta - freeSlots);
+                if (claimNeed > 0) {
+                    TransferResult r = AeroClaimManager.transferFromProvider(player, claimNeed);
+                    if (r == TransferResult.SUCCESS) freeSlots += claimNeed;
+                }
+                int applied = Math.min(delta, freeSlots);
                 if (applied > 0) {
                     AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, applied);
-                    AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center,
-                            Math.min(applied, AeroClaimSavedData.get(level).getFreeForceloads(player.getUUID())));
+
+                    if (useProvider) {
+                        int freeFl = data.getFreeForceloads(player.getUUID());
+                        int flNeed = Math.max(0, applied - freeFl);
+                        if (flNeed > 0) {
+                            TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flNeed);
+                            if (r == TransferResult.SUCCESS) freeFl += flNeed;
+                        }
+                        AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center,
+                                Math.min(applied, freeFl));
+                    }
                 }
             } else if (delta < 0) {
                 AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
                 AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
+            }
+
+            if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get() && delta <= 0) {
+                AeroClaimSavedData data = AeroClaimSavedData.get(level);
+                int currentFl = data.getForceloadsForBlock(msg.center);
+                int flDelta = neededClaims - currentFl;
+                if (flDelta > 0) {
+                    int freeFl = data.getFreeForceloads(player.getUUID());
+                    int flNeed = Math.max(0, flDelta - freeFl);
+                    if (flNeed > 0) {
+                        TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flNeed);
+                        if (r == TransferResult.SUCCESS) {
+                            AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta);
+                        }
+                    } else {
+                        AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta);
+                    }
+                }
             }
 
             maxSize = AeroClaimManager.getBlockLimit(level, msg.center);

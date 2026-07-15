@@ -65,16 +65,55 @@ public class FtbChunksClaimProvider implements IClaimProvider {
 
     @Override
     public AeroClaimManager.TransferResult transferForceloadsToAero(ServerPlayer player, int amount) {
-        return AeroClaimManager.TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+        if (amount <= 0) return AeroClaimManager.TransferResult.API_ERROR;
+        try {
+            ClaimedChunkManager mgr = getManager();
+            if (mgr == null) return AeroClaimManager.TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+
+            ChunkTeamData team = mgr.getOrCreateData(player);
+            if (team == null) return AeroClaimManager.TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+
+            int free = Math.max(0, team.getMaxForceLoadChunks() - team.getForceLoadedChunks().size());
+            if (free < amount) return AeroClaimManager.TransferResult.NOT_ENOUGH_FREE;
+
+            AeroClaimSavedData.get(player.serverLevel()).addMigratedForceloads(player.getUUID(), amount);
+            return AeroClaimManager.TransferResult.SUCCESS;
+        } catch (Exception e) {
+            LOGGER.error("[AeroClaims] transferForceloadsToAero failed", e);
+            return AeroClaimManager.TransferResult.API_ERROR;
+        }
     }
 
     @Override
     public AeroClaimManager.TransferResult transferForceloadsFromAero(ServerPlayer player, int amount) {
-        return AeroClaimManager.TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
+        if (amount <= 0) return AeroClaimManager.TransferResult.API_ERROR;
+        try {
+            AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
+            var id = player.getUUID();
+            if (data.getFreeForceloads(id) < amount)
+                return AeroClaimManager.TransferResult.NOT_ENOUGH_FREE;
+
+            data.setMigratedForceloads(id, data.getMigratedForceloads(id) - amount);
+            return AeroClaimManager.TransferResult.SUCCESS;
+        } catch (Exception e) {
+            LOGGER.error("[AeroClaims] transferForceloadsFromAero failed", e);
+            return AeroClaimManager.TransferResult.API_ERROR;
+        }
     }
 
     @Override
-    public int getFreeForceloads(ServerPlayer player) { return -1; }
+    public int getFreeForceloads(ServerPlayer player) {
+        try {
+            ClaimedChunkManager mgr = getManager();
+            if (mgr == null) return -1;
+            ChunkTeamData team = mgr.getOrCreateData(player);
+            if (team == null) return -1;
+            return Math.max(0, team.getMaxForceLoadChunks() - team.getForceLoadedChunks().size());
+        } catch (Exception e) {
+            LOGGER.error("[AeroClaims] getFreeForceloads failed", e);
+            return -1;
+        }
+    }
 
     private static ClaimedChunkManager getManager() {
         if (!FTBChunksAPI.api().isManagerLoaded()) return null;

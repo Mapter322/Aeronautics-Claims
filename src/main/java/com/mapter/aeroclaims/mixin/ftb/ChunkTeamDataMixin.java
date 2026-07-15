@@ -1,9 +1,11 @@
-package com.mapter.aeroclaims.mixin;
+package com.mapter.aeroclaims.mixin.ftb;
 
 import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import dev.ftb.mods.ftbteams.api.Team;
 import net.minecraft.server.MinecraftServer;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -14,6 +16,8 @@ import java.util.UUID;
 
 @Mixin(targets = "dev.ftb.mods.ftbchunks.data.ChunkTeamDataImpl", remap = false)
 public abstract class ChunkTeamDataMixin {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ChunkTeamDataMixin.class);
 
     @Inject(method = "getMaxClaimChunks", at = @At("RETURN"), cancellable = true)
     private void aeroclaims$reduceByMigrated(CallbackInfoReturnable<Integer> cir) {
@@ -35,7 +39,8 @@ public abstract class ChunkTeamDataMixin {
                 total += AeroClaimSavedData.get(server.overworld()).getMigratedSlots(id);
             }
             return total;
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            LOGGER.error("[AeroClaims] Failed to get total migrated claim slots", e);
             return 0;
         }
     }

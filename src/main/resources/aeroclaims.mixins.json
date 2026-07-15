@@ -20,7 +20,8 @@
     "MixinBlockBreakingKineticBlockEntity",
     "MixinBlockBreakingMovementBehaviour",
     "MixinThrottleLeverSignalPacket",
-    "ChunkTeamDataMixin"
+    "ftb.ChunkTeamDataMixin",
+    "ftb.ChunkTeamDataForceLoadMixin"
   ],
   "client": [],
   "server": [],

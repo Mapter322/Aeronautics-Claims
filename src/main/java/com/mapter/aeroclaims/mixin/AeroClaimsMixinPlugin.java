@@ -1,7 +1,6 @@
 package com.mapter.aeroclaims.mixin;
 
-import net.neoforged.fml.ModList;
-import org.objectweb.asm.tree.ClassNode;
+import  org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
@@ -12,20 +11,7 @@ public class AeroClaimsMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (mixinClassName.contains("ChunkTeamDataMixin")) {
-            return isModLoaded("ftbchunks");
-        }
         return true;
-    }
-
-
-    private static boolean isModLoaded(String modId) {
-        try {
-            ModList modList = ModList.get();
-            return modList != null && modList.isLoaded(modId);
-        } catch (Exception ignored) {
-            return false;
-        }
     }
 
     @Override public void onLoad(String mixinPackage) {}
