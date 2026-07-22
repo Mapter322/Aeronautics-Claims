@@ -73,8 +73,6 @@ public class OpacClaimProvider implements IClaimProvider {
         }
     }
 
-    // forceloads
-
     @Override
     public AeroClaimManager.TransferResult transferForceloadsToAero(ServerPlayer player, int amount) {
         if (amount <= 0) return AeroClaimManager.TransferResult.API_ERROR;

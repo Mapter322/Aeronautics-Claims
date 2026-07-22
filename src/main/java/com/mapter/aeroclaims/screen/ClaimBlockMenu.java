@@ -35,6 +35,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
     private int blocksPerClaim;
     private int shipBlockCount;
     private int forceloadsForBlock;
+    private boolean forceloadEnabled;
     private boolean navigatingAway = false;
 
     public ClaimBlockMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
@@ -52,7 +53,8 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
                 buf.readInt(),
                 buf.readInt(),
                 buf.readInt(),
-                buf.readInt()
+                buf.readInt(),
+                buf.readBoolean()
         );
     }
 
@@ -61,7 +63,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
                           boolean onShip, boolean claimActive,
                           boolean allowParty, boolean allowAllies, boolean allowOthers,
                           int claimsForBlock, int freeSlots, int blocksPerClaim, int shipBlockCount,
-                          int forceloadsForBlock) {
+                          int forceloadsForBlock, boolean forceloadEnabled) {
         super(ModMenus.CLAIM_SETTINGS_MENU.get(), containerId);
         this.center = center;
         this.owner = owner;
@@ -76,6 +78,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
         this.blocksPerClaim = blocksPerClaim;
         this.shipBlockCount = shipBlockCount;
         this.forceloadsForBlock = forceloadsForBlock;
+        this.forceloadEnabled = forceloadEnabled;
     }
 
     public BlockPos getCenter()     { return center; }
@@ -109,6 +112,9 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
     public void setShipBlockCount(int v)        { shipBlockCount = v; }
     public int getForceloadsForBlock()          { return forceloadsForBlock; }
     public void setForceloadsForBlock(int v)    { forceloadsForBlock = v; }
+
+    public boolean isForceloadEnabled()         { return forceloadEnabled; }
+    public void setForceloadEnabled(boolean v)  { forceloadEnabled = v; }
     public void setNavigatingAway(boolean v)     { navigatingAway = v; }
 
     public int getBlockLimit()                  { return claimsForBlock * blocksPerClaim; }

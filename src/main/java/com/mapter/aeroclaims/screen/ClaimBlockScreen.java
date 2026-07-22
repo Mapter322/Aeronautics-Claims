@@ -7,6 +7,7 @@ import com.mapter.aeroclaims.network.DeactivateClaimPacket;
 import com.mapter.aeroclaims.network.RefreshClaimPacket;
 import com.mapter.aeroclaims.network.NavigateMenuPacket;
 import com.mapter.aeroclaims.network.RenameShipPacket;
+import com.mapter.aeroclaims.network.SetForceloadEnabledPacket;
 import com.mapter.aeroclaims.network.SyncClaimStatePacket;
 import com.mapter.aeroclaims.network.UpdateClaimSettingsPacket;
 import net.minecraft.client.Minecraft;
@@ -42,6 +43,11 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private static final int CLOSE_Y = 7;
     private static final int CLOSE_SIZE = 10;
 
+    private static final int CHECKBOX_SIZE   = 8;
+    private static final int COLOR_CB_BG     = 0xFF000000;
+    private static final int COLOR_CB_BORDER = 0xFFAAAAAA;
+    private static final int COLOR_CB_CHECK  = 0xFF55FF55;
+
     private static final long REFRESH_COOLDOWN_MS = 10_000L;
     private static final Map<BlockPos, Long>    refreshCooldowns       = new HashMap<>();
     private static final Map<BlockPos, Boolean> activateUsedInCooldown = new HashMap<>();
@@ -68,6 +74,9 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private int shipNameY, shipNameH;
 
     private boolean inActivateMode = false;
+
+    private boolean forceloadCheckboxVisible = false;
+    private int forceloadCheckboxX0, forceloadCheckboxY0, forceloadCheckboxX1, forceloadCheckboxY1;
 
     public ClaimBlockScreen(ClaimBlockMenu menu, Inventory inv, Component title) {
         super(menu, inv, title);
@@ -226,7 +235,14 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             String forceloadsValues = usedForceloads + " / " + neededClaims;
             g.drawString(font, forceloadsLabel, textX, y, COLOR_WHITE, false);
             g.drawString(font, forceloadsValues, textX + font.width(forceloadsLabel), y, forceloadsColor, false);
+
+            int cbX0 = textX + font.width(forceloadsLabel) + font.width(forceloadsValues) + 6;
+            int cbY0 = y + (font.lineHeight - CHECKBOX_SIZE) / 2;
+            drawForceloadCheckbox(g, cbX0, cbY0);
+
             y += font.lineHeight + 2;
+        } else {
+            forceloadCheckboxVisible = false;
         }
 
         // Block count
@@ -238,6 +254,36 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         int rowY = INFO_Y + infoPanelHeight() + GAP;
         separator(g, INFO_Y + infoPanelHeight() + GAP / 2);
         separator(g, rowY + BTN_H + GAP / 2);
+    }
+
+    private void drawForceloadCheckbox(GuiGraphics g, int x0, int y0) {
+        forceloadCheckboxVisible = true;
+        forceloadCheckboxX0 = x0;
+        forceloadCheckboxY0 = y0;
+        forceloadCheckboxX1 = x0 + CHECKBOX_SIZE;
+        forceloadCheckboxY1 = y0 + CHECKBOX_SIZE;
+
+        // gray border
+        g.fill(forceloadCheckboxX0, forceloadCheckboxY0, forceloadCheckboxX1, forceloadCheckboxY1, COLOR_CB_BORDER);
+        // black background inset by 1px
+        g.fill(forceloadCheckboxX0 + 1, forceloadCheckboxY0 + 1, forceloadCheckboxX1 - 1, forceloadCheckboxY1 - 1, COLOR_CB_BG);
+
+        if (menu.isForceloadEnabled()) {
+            g.fill(forceloadCheckboxX0 + 2, forceloadCheckboxY0 + 2, forceloadCheckboxX1 - 2, forceloadCheckboxY1 - 2, COLOR_CB_CHECK);
+        }
+    }
+
+    private boolean isOverForceloadCheckbox(double mx, double my) {
+        if (!forceloadCheckboxVisible) return false;
+        int x0 = leftPos + forceloadCheckboxX0, y0 = topPos + forceloadCheckboxY0;
+        int x1 = leftPos + forceloadCheckboxX1, y1 = topPos + forceloadCheckboxY1;
+        return mx >= x0 && mx <= x1 && my >= y0 && my <= y1;
+    }
+
+    private void toggleForceloadEnabled() {
+        boolean newValue = !menu.isForceloadEnabled();
+        menu.setForceloadEnabled(newValue);
+        PacketDistributor.sendToServer(new SetForceloadEnabledPacket(menu.getCenter(), newValue));
     }
 
     private int infoPanelHeight() {
@@ -269,6 +315,10 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         if (menu.isOnShip()) {
             updateActionButton();
         }
+
+        if (isOverForceloadCheckbox(mx, my)) {
+            g.renderTooltip(font, Component.translatable("screen.aeroclaims.claim_settings.forceload_toggle.tooltip"), mx, my);
+        }
     }
 
     @Override
@@ -285,6 +335,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             return renameBox.mouseClicked(mx, my, button);
         }
         if (isOverShipName(mx, my)) { startEditing(); return true; }
+        if (isOverForceloadCheckbox(mx, my)) { toggleForceloadEnabled(); return true; }
         return super.mouseClicked(mx, my, button);
     }
 

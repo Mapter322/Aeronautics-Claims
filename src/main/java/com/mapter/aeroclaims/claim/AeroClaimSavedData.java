@@ -21,17 +21,14 @@ public class AeroClaimSavedData extends SavedData {
             null
     );
 
-    // --- claims ---
     private final Map<UUID, Integer> migratedSlots = new HashMap<>();
     private final Map<UUID, Integer> usedSlots = new HashMap<>();
     private final Map<Long, Integer> claimsPerBlock = new HashMap<>();
 
-    // --- forceloads ---
     private final Map<UUID, Integer> migratedForceloads = new HashMap<>();
     private final Map<UUID, Integer> usedForceloads = new HashMap<>();
     private final Map<Long, Integer> forceloadsPerBlock = new HashMap<>();
 
-    // --- cache ---
     private final Map<Long, Integer> shipBlockCountCache = new HashMap<>();
     private final Map<Long, String> shipIdCache = new HashMap<>();
 
@@ -213,7 +210,6 @@ public class AeroClaimSavedData extends SavedData {
         setDirty();
     }
 
-    // --- forceloads ---
 
     public int getMigratedForceloads(UUID playerId) {
         return migratedForceloads.getOrDefault(playerId, 0);

@@ -25,7 +25,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
-import java.util.UUID;
 
 public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayload {
 
@@ -74,7 +73,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                     : 0;
             int delta = neededClaims - currentClaims;
 
-            boolean useProvider = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+            boolean useProvider = claim.isForceloadEnabled() && AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
 
             if (delta > 0) {
                 int freeSlots = data.getFreeSlots(player.getUUID());
@@ -166,7 +165,8 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 blockCount, maxSize);
         UnregisteredSublevelManager.removeShip(shipId);
         claim.setShipId(shipId);
-        SubLevelTicketManager.add(level, UUID.fromString(shipId));
+
+        SubLevelTicketManager.sync(level, claim, shipId, claim.isForceloadEnabled());
         ClaimSavedData.get(level).setDirty();
     }
 
@@ -195,7 +195,8 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 data.getFreeSlots(player.getUUID()),
                 AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
                 shipBlockCount,
-                data.getForceloadsForBlock(center)
+                data.getForceloadsForBlock(center),
+                claim.isForceloadEnabled()
         ));
     }
 }

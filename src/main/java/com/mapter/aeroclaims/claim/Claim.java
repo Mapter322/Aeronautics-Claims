@@ -15,6 +15,9 @@ public class Claim {
     private boolean allowAllies;
     private boolean allowOthers;
     private String shipId;
+    private boolean forceloadEnabled = true;
+    private boolean forceloadTicketHeld = false;
+    private String forceloadTicketShipId;
 
     public Claim(BlockPos center, UUID owner, Set<BlockPos> claimedBlocks, boolean active, boolean allowParty, boolean allowAllies, boolean allowOthers) {
         this.center = center;
@@ -76,5 +79,29 @@ public class Claim {
 
     public void setAllowOthers(boolean allowOthers) {
         this.allowOthers = allowOthers;
+    }
+
+    public boolean isForceloadEnabled() {
+        return forceloadEnabled;
+    }
+
+    public void setForceloadEnabled(boolean forceloadEnabled) {
+        this.forceloadEnabled = forceloadEnabled;
+    }
+
+    public boolean isForceloadTicketHeld() {
+        return forceloadTicketHeld;
+    }
+
+    public void setForceloadTicketHeld(boolean forceloadTicketHeld) {
+        this.forceloadTicketHeld = forceloadTicketHeld;
+    }
+
+    public String getForceloadTicketShipId() {
+        return forceloadTicketShipId;
+    }
+
+    public void setForceloadTicketShipId(String forceloadTicketShipId) {
+        this.forceloadTicketShipId = forceloadTicketShipId;
     }
 }

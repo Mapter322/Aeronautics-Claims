@@ -30,8 +30,6 @@ public class ProtectionEvents {
     private static final long MESSAGE_COOLDOWN_MS = 15_000;
     private static final Map<UUID, Long> lastMessageTime = new ConcurrentHashMap<>();
 
-    // Claim lookup with margin
-
     private static Claim getClaimAtWithMargin(ServerLevel level, BlockPos pos) {
         Claim exact = ClaimManager.getClaimAt(level, pos);
         if (exact != null) return exact;
@@ -49,8 +47,6 @@ public class ProtectionEvents {
         return null;
     }
 
-    // Anti-spam
-
     private static boolean shouldSendMessage(ServerPlayer player) {
         if (player instanceof FakePlayer) return false;
         long now = System.currentTimeMillis();
@@ -59,8 +55,6 @@ public class ProtectionEvents {
         lastMessageTime.put(player.getUUID(), now);
         return true;
     }
-
-    // Permission check helpers
 
     private static boolean isClaimProtected(ServerPlayer player, BlockPos pos, String messageKey) {
         Claim claim = getClaimAtWithMargin(player.serverLevel(), pos);
@@ -74,8 +68,6 @@ public class ProtectionEvents {
         }
         return false;
     }
-
-    // Event listeners
 
     @SubscribeEvent
     public static void onBlockBreak(BlockEvent.BreakEvent event) {

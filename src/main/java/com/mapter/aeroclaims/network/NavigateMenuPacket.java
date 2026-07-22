@@ -156,7 +156,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                                 onShip, claim.isActive(),
                                 claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
                                 claimsForBlock, freeSlots, AeroClaimsConfig.BLOCKS_PER_CLAIM.get(), initialBlockCount,
-                                forceloadsForBlock),
+                                forceloadsForBlock, claim.isForceloadEnabled()),
                         Component.translatable("screen.aeroclaims.claim_settings.title")),
                 buf -> {
                     buf.writeBlockPos(pos);
@@ -172,6 +172,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                     buf.writeInt(AeroClaimsConfig.BLOCKS_PER_CLAIM.get());
                     buf.writeInt(initialBlockCount);
                     buf.writeInt(forceloadsForBlock);
+                    buf.writeBoolean(claim.isForceloadEnabled());
                 });
     }
 }

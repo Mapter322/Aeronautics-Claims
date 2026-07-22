@@ -9,12 +9,13 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 @EventBusSubscriber(modid = Aeroclaims.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class AeroClaimsNetwork {
 
-    private static final String PROTOCOL_VERSION = "7";
+    private static final String PROTOCOL_VERSION = "8";
 
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
         PayloadRegistrar registrar = event.registrar(PROTOCOL_VERSION);
         registrar.playToServer(UpdateClaimSettingsPacket.TYPE, UpdateClaimSettingsPacket.STREAM_CODEC, UpdateClaimSettingsPacket::handle);
+        registrar.playToServer(SetForceloadEnabledPacket.TYPE, SetForceloadEnabledPacket.STREAM_CODEC, SetForceloadEnabledPacket::handle);
         registrar.playToServer(RefreshClaimPacket.TYPE, RefreshClaimPacket.STREAM_CODEC, RefreshClaimPacket::handle);
         registrar.playToServer(ActivateClaimPacket.TYPE, ActivateClaimPacket.STREAM_CODEC, ActivateClaimPacket::handle);
         registrar.playToServer(DeactivateClaimPacket.TYPE, DeactivateClaimPacket.STREAM_CODEC, DeactivateClaimPacket::handle);

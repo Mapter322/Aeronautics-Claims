@@ -80,8 +80,6 @@ public class AeroClaimManager {
         };
     }
 
-    // Slot transfer
-
     public static TransferResult transferFromProvider(ServerPlayer player, int amount) {
         IClaimProvider provider = getClaimProvider();
         if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
@@ -93,8 +91,6 @@ public class AeroClaimManager {
         if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
         return provider.transferFromAero(player, amount);
     }
-
-    // Slots per claim block
 
     public static int getBlockLimit(ServerLevel level, BlockPos pos) {
         return AeroClaimSavedData.get(level).getClaimsForBlock(pos)
@@ -168,8 +164,6 @@ public class AeroClaimManager {
         if (provider == null) return -1;
         return provider.getFreeClaims(player);
     }
-
-    // Forceloads
 
     public static TransferResult transferForceloadsFromProvider(ServerPlayer player, int amount) {
         IClaimProvider provider = getClaimProvider();

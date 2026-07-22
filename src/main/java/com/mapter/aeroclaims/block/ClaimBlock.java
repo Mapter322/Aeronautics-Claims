@@ -178,6 +178,7 @@ public class ClaimBlock extends BaseEntityBlock {
             buf.writeInt(AeroClaimsConfig.BLOCKS_PER_CLAIM.get());
             buf.writeInt(initialBlockCount);
             buf.writeInt(data.getForceloadsForBlock(pos));
+            buf.writeBoolean(finalClaim.isForceloadEnabled());
         });
 
         return InteractionResult.CONSUME;
@@ -193,7 +194,8 @@ public class ClaimBlock extends BaseEntityBlock {
                         containerId, inv, pos, claim.getOwner(), "",
                         false, claim.isActive(),
                         claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
-                        0, 0, 0, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN, 0),
+                        0, 0, 0, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN, 0,
+                        claim.isForceloadEnabled()),
                 Component.translatable("screen.aeroclaims.claim_settings.title")
         );
     }

@@ -76,6 +76,12 @@ public class ClaimSavedData extends SavedData {
             if (c.contains("shipId")) {
                 data.claims.get(data.claims.size() - 1).setShipId(c.getString("shipId"));
             }
+            boolean forceloadEnabled = !c.contains("forceloadEnabled") || c.getBoolean("forceloadEnabled");
+            data.claims.get(data.claims.size() - 1).setForceloadEnabled(forceloadEnabled);
+            data.claims.get(data.claims.size() - 1).setForceloadTicketHeld(c.getBoolean("forceloadTicketHeld"));
+            if (c.contains("forceloadTicketShipId")) {
+                data.claims.get(data.claims.size() - 1).setForceloadTicketShipId(c.getString("forceloadTicketShipId"));
+            }
         }
         return data;
     }
@@ -106,6 +112,11 @@ public class ClaimSavedData extends SavedData {
             c.putBoolean("allowParty", claim.isAllowParty());
             c.putBoolean("allowAllies", claim.isAllowAllies());
             c.putBoolean("allowOthers", claim.isAllowOthers());
+            c.putBoolean("forceloadEnabled", claim.isForceloadEnabled());
+            c.putBoolean("forceloadTicketHeld", claim.isForceloadTicketHeld());
+            if (claim.getForceloadTicketShipId() != null) {
+                c.putString("forceloadTicketShipId", claim.getForceloadTicketShipId());
+            }
             list.add(c);
         }
 
