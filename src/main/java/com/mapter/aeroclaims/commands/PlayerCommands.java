@@ -104,9 +104,9 @@ public class PlayerCommands {
         final String finalName = targetName;
 
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.header", finalName), false);
-        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.ship_slots", usedSlots, migratedSlots), false);
+        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.sublevel_slots", usedSlots), false);
         if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get()) {
-            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.forceload_slots", usedFl, migratedFl), false);
+            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.forceload_slots", usedFl), false);
             source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.forceload_free", freeFl), false);
         }
 

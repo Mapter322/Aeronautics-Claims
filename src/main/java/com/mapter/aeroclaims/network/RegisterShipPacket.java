@@ -42,7 +42,7 @@ public record RegisterShipPacket(BlockPos pos) implements CustomPacketPayload {
             var ship = SableShipUtils.getShipAt(level, msg.pos);
 
             if (ship == null) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_not_found_at_pos"));
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.sublevel_not_found_at_pos"));
                 return;
             }
 
@@ -50,7 +50,7 @@ public record RegisterShipPacket(BlockPos pos) implements CustomPacketPayload {
             String shipName = SableShipUtils.getShipName(ship);
 
             if (shipId == null) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_id_not_found"));
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.sublevel_id_not_found"));
                 return;
             }
 
@@ -58,7 +58,7 @@ public record RegisterShipPacket(BlockPos pos) implements CustomPacketPayload {
 
             RegisteredSublevelManager.registerShip(shipId, shipName, player.getUUID(), player.getName().getString());
             UnregisteredSublevelManager.removeShip(shipId);
-            player.sendSystemMessage(Component.translatable("message.aeroclaims.ship_registered", shipName));
+            player.sendSystemMessage(Component.translatable("message.aeroclaims.sublevel_registered", shipName));
         });
     }
 }

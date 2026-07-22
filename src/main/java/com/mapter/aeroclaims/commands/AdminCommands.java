@@ -113,7 +113,7 @@ public class AdminCommands {
             UUID.fromString(shipUuidStr);
         } catch (IllegalArgumentException e) {
             source.sendFailure(Component.translatable(
-                    "commands.aeroclaims.admin.refresh.invalid_ship_uuid", shipUuidStr));
+                    "commands.aeroclaims.admin.refresh.invalid_sublevel_uuid", shipUuidStr));
             return 0;
         }
 
@@ -124,7 +124,7 @@ public class AdminCommands {
 
         if (claim == null) {
             source.sendFailure(Component.translatable(
-                    "commands.aeroclaims.admin.refresh.ship_not_found", shipUuidStr));
+                    "commands.aeroclaims.admin.refresh.sublevel_not_found", shipUuidStr));
             return 0;
         }
 
@@ -135,12 +135,12 @@ public class AdminCommands {
             String displayName = shipName != null ? shipName : shipUuidStr;
             source.sendSuccess(
                     () -> Component.translatable(
-                            "commands.aeroclaims.admin.refresh.ship.done", displayName),
+                            "commands.aeroclaims.admin.refresh.sublevel.done", displayName),
                     true);
             return 1;
         } else {
             source.sendFailure(Component.translatable(
-                    "commands.aeroclaims.admin.refresh.ship_failed", shipUuidStr));
+                    "commands.aeroclaims.admin.refresh.sublevel_failed", shipUuidStr));
             return 0;
         }
     }
@@ -196,7 +196,7 @@ public class AdminCommands {
 
         int fd = deleted, ff = failed;
         source.sendSuccess(() -> Component.translatable(
-                "commands.aeroclaims.ships.delete.done", fd, ff, total), true);
+                "commands.aeroclaims.sublevels.delete.done", fd, ff, total), true);
         return 1;
     }
 

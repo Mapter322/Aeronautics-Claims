@@ -194,21 +194,21 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         // Ship name
         if (!menu.isOnShip()) {
             g.drawString(font,
-                    Component.translatable("screen.aeroclaims.claim_settings.not_on_subclaim").getString(),
+                    Component.translatable("screen.aeroclaims.claim_settings.not_on_sublevel").getString(),
                     textX, y, COLOR_ERR, false);
             y += font.lineHeight + 2;
         } else if (menu.getShipName() != null && !menu.getShipName().isEmpty()) {
             shipNameY = y;
             if (!editing) {
                 for (FormattedCharSequence line : font.split(
-                        Component.translatable("screen.aeroclaims.claim_settings.ship", menu.getShipName()),
+                        Component.translatable("screen.aeroclaims.claim_settings.sublevel", menu.getShipName()),
                         textW)) {
                     g.drawString(font, line, textX, y, COLOR_WHITE, false);
                     y += font.lineHeight;
                 }
                 shipNameH = y - shipNameY;
             } else {
-                String namePrefix = Component.translatable("screen.aeroclaims.claim_settings.ship", "").getString();
+                String namePrefix = Component.translatable("screen.aeroclaims.claim_settings.sublevel", "").getString();
                 g.drawString(font, namePrefix, textX, y, COLOR_WHITE, false);
                 y += font.lineHeight;
                 shipNameH = font.lineHeight;
@@ -364,7 +364,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private void startEditing() {
         editing = true;
         editOriginal = menu.getShipName();
-        int prefixW = font.width(Component.translatable("screen.aeroclaims.claim_settings.ship", "").getString());
+        int prefixW = font.width(Component.translatable("screen.aeroclaims.claim_settings.sublevel", "").getString());
         renameBox.setValue(editOriginal);
         renameBox.setX(leftPos + BTN_X + INFO_PAD + prefixW);
         renameBox.setY(topPos + shipNameY);
@@ -393,7 +393,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private void updateRefreshButton() {
         if (!menu.isOnShip()) {
             refreshButton.active = false;
-            refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.not_on_subclaim"));
+            refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.not_on_sublevel"));
         } else if (onCooldown()) {
             refreshButton.active = false;
             refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));

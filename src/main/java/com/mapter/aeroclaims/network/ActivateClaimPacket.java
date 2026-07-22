@@ -49,7 +49,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 
             if (!SableShipUtils.isOnShip(level, msg.center)) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.not_on_subclaim"));
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.not_on_sublevel"));
                 return;
             }
 
@@ -175,7 +175,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
         int exact = cachedCount != null ? cachedCount
                 : ClaimManager.countShipBlocksExact(level, center);
         player.sendSystemMessage(Component.translatable(
-                "message.aeroclaims.ship_too_large", exact,
+                "message.aeroclaims.sublevel_too_large", exact,
                 currentClaims * blocksPerClaim));
     }
 

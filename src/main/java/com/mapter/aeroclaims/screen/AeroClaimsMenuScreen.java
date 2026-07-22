@@ -95,7 +95,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         g.drawString(font, title, (imageWidth - font.width(title)) / 2, 7, COLOR_TITLE, false);
         separator(g, 18);
 
-        String listLabel = Component.translatable("screen.aeroclaims.menu.label.ships").getString();
+        String listLabel = Component.translatable("screen.aeroclaims.menu.label.sublevels").getString();
         g.drawString(font, listLabel, BTN_X + PAD, LIST_LABEL_Y + 2, COLOR_TITLE, false);
 
         String infoLabel = Component.translatable("screen.aeroclaims.menu.label.info").getString();
@@ -137,7 +137,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         int textW = bw - PAD * 2 - 4;
 
         if (ships.isEmpty()) {
-            String empty = Component.translatable("screen.aeroclaims.menu.no_ships").getString();
+            String empty = Component.translatable("screen.aeroclaims.menu.no_sublevels").getString();
             g.drawString(font, empty,
                     leftPos + (imageWidth - font.width(empty)) / 2,
                     listY + LIST_H / 2 - font.lineHeight / 2,

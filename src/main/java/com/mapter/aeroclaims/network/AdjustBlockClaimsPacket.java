@@ -52,14 +52,14 @@ public record AdjustBlockClaimsPacket(BlockPos center, int delta) implements Cus
                 int newLimit = (data.getClaimsForBlock(msg.center) + msg.delta)
                         * AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
                 if (newLimit >= 0 && ClaimManager.countShipBlocks(level, msg.center, newLimit + 1) > newLimit) {
-                    player.sendSystemMessage(Component.translatable("message.aeroclaims.cannot_reduce_claims_ship_too_large"));
+                    player.sendSystemMessage(Component.translatable("message.aeroclaims.cannot_reduce_claims_sublevel_too_large"));
                     sync(player, msg.center, claim, data);
                     return;
                 }
             }
 
             if (!AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, msg.delta)) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_ship_slots"));
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.no_sublevel_slots"));
             } else if (msg.delta <= 0 || claim.isForceloadEnabled()) {
                 AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, msg.delta);
             }

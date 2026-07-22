@@ -44,7 +44,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 
             if (!SableShipUtils.isOnShip(level, msg.center)) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.not_on_subclaim"));
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.not_on_sublevel"));
                 return;
             }
 
@@ -127,8 +127,8 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
 
             if (hasClaims && blockCount > maxSize) {
                 String msgKey = deactivateOnOverflow
-                        ? "message.aeroclaims.ship_too_large_deactivated"
-                        : "message.aeroclaims.ship_too_large";
+                        ? "message.aeroclaims.sublevel_too_large_deactivated"
+                        : "message.aeroclaims.sublevel_too_large";
                 player.sendSystemMessage(Component.translatable(msgKey, blockCount, maxSize));
             } else if (hasClaims) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
