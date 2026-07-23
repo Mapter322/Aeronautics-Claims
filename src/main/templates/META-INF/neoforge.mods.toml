@@ -4,7 +4,7 @@ license = "MIT"
 
 [[mods]]
 modId="aeroclaims"
-version="0.9.2"
+version="0.9.3"
 displayName="Aeronautics Claims"
 authors="Mapter"
 description='''
