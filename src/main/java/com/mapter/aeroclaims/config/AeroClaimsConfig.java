@@ -62,9 +62,9 @@ public class AeroClaimsConfig {
                 .comment(
                     "If true, sublevel forceloading consumes OPAC/FTB forceload slots.",
                     "If false, all activated claims get a free sub-level forceload.",
-                    "Default: true"
+                    "Default: false"
                 )
-                .define("providerSlotsForceload", true);
+                .define("providerSlotsForceload", false);
         builder.pop();
 
         SPEC = builder.build();

@@ -73,6 +73,7 @@ public class PlayerCommands {
                         buf.writeInt(hasCoords ? reg.worldX.intValue() : 0);
                         buf.writeInt(hasCoords ? reg.worldY.intValue() : 0);
                         buf.writeInt(hasCoords ? reg.worldZ.intValue() : 0);
+                        buf.writeBoolean(info != null && info.isForceloadEnabled());
                     }
                     buf.writeInt(AeroClaimManager.getFreeProviderClaims(player));
                     buf.writeInt(AeroClaimManager.getMigratedSlots(level, player.getUUID()));

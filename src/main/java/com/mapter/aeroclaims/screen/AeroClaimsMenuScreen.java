@@ -201,6 +201,11 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
                 .withStyle(ship.active() ? ChatFormatting.GREEN : ChatFormatting.RED));
         lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.claims", ship.claims())
                 .withStyle(ChatFormatting.GRAY));
+        lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.forceload_status",
+                Component.translatable(ship.forceloadEnabled()
+                        ? "screen.aeroclaims.claim_settings.status.active"
+                        : "screen.aeroclaims.claim_settings.status.disabled"))
+                .withStyle(ChatFormatting.GRAY));
         if (ship.blockCount() >= 0) {
             lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.blocks",
                     ship.blockCount(), ship.blockLimit())

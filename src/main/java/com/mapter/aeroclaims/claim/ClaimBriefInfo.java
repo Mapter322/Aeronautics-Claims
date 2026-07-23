@@ -9,13 +9,15 @@ public class ClaimBriefInfo {
     private final int blockLimit;
     private final boolean active;
     private final int forceloadsForBlock;
+    private final boolean forceloadEnabled;
 
-    private ClaimBriefInfo(int claimsForBlock, Integer blockCount, int blockLimit, boolean active, int forceloadsForBlock) {
+    private ClaimBriefInfo(int claimsForBlock, Integer blockCount, int blockLimit, boolean active, int forceloadsForBlock, boolean forceloadEnabled) {
         this.claimsForBlock = claimsForBlock;
         this.blockCount = blockCount;
         this.blockLimit = blockLimit;
         this.active = active;
         this.forceloadsForBlock = forceloadsForBlock;
+        this.forceloadEnabled = forceloadEnabled;
     }
 
 
@@ -26,7 +28,7 @@ public class ClaimBriefInfo {
         Integer blockCount = data.getCachedShipBlockCount(claim.getCenter());
         int blockLimit = AeroClaimManager.getBlockLimit(level, claim.getCenter());
         int forceloadsForBlock = data.getForceloadsForBlock(claim.getCenter());
-        return new ClaimBriefInfo(claimsForBlock, blockCount, blockLimit, claim.isActive(), forceloadsForBlock);
+        return new ClaimBriefInfo(claimsForBlock, blockCount, blockLimit, claim.isActive(), forceloadsForBlock, claim.isForceloadEnabled());
     }
 
 
@@ -39,5 +41,6 @@ public class ClaimBriefInfo {
     public Integer getBlockCount() { return blockCount; }
     public int getBlockLimit() { return blockLimit; }
     public boolean isActive() { return active; }
+    public boolean isForceloadEnabled() { return forceloadEnabled; }
     public boolean isBlockCountKnown() { return blockCount != null; }
 }

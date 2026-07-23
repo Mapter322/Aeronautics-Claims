@@ -14,7 +14,7 @@ import java.util.List;
 public class AeroClaimsMenu extends AbstractContainerMenu {
 
     public record ShipEntry(String shipName, String shipId, boolean active, int claims, int blockCount, int blockLimit,
-                            boolean hasCoords, int worldX, int worldY, int worldZ) {}
+                            boolean hasCoords, int worldX, int worldY, int worldZ, boolean forceloadEnabled) {}
 
     private final List<ShipEntry> ships = new ArrayList<>();
 
@@ -31,7 +31,8 @@ public class AeroClaimsMenu extends AbstractContainerMenu {
             ships.add(new ShipEntry(
                     buf.readUtf(), buf.readUtf(), buf.readBoolean(),
                     buf.readInt(), buf.readInt(), buf.readInt(),
-                    buf.readBoolean(), buf.readInt(), buf.readInt(), buf.readInt()
+                    buf.readBoolean(), buf.readInt(), buf.readInt(), buf.readInt(),
+                    buf.readBoolean()
             ));
         }
         buf.readInt();

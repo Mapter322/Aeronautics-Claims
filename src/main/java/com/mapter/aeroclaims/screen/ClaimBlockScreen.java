@@ -34,9 +34,10 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private static final int TEXTURE_H = 180;
     private static final int COLOR_TITLE   = 0x222222;
     private static final int COLOR_TEXT    = 0x555555;
-    private static final int COLOR_OK      = 0x22AA22;
+    private static final int COLOR_OK      = 0x55FF55;
     private static final int COLOR_ERR     = 0xCC3333;
     private static final int COLOR_WHITE   = 0xFFFFFF;
+
     private static final int COLOR_DIV     = 0x66888888;
     private static final int COLOR_INFO_BG = 0xCC333333;
     private static final int CLOSE_X = 8;
@@ -185,9 +186,9 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             String ownerName = Minecraft.getInstance()
                     .getConnection().getPlayerInfo(menu.getOwner())
                     .getProfile().getName();
-            g.drawString(font,
-                    Component.translatable("screen.aeroclaims.claim_settings.owner", ownerName).getString(),
-                    textX, y, COLOR_WHITE, false);
+            String ownerPrefix = Component.translatable("screen.aeroclaims.claim_settings.owner", "").getString();
+            g.drawString(font, ownerPrefix, textX, y, COLOR_WHITE, false);
+            g.drawString(font, ownerName, textX + font.width(ownerPrefix), y, COLOR_WHITE, false);
             y += font.lineHeight + 2;
         } catch (Exception ignored) {}
 
@@ -199,16 +200,18 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             y += font.lineHeight + 2;
         } else if (menu.getShipName() != null && !menu.getShipName().isEmpty()) {
             shipNameY = y;
+            String namePrefix = Component.translatable("screen.aeroclaims.claim_settings.sublevel", "").getString();
             if (!editing) {
-                for (FormattedCharSequence line : font.split(
-                        Component.translatable("screen.aeroclaims.claim_settings.sublevel", menu.getShipName()),
-                        textW)) {
-                    g.drawString(font, line, textX, y, COLOR_WHITE, false);
+                g.drawString(font, namePrefix, textX, y, COLOR_WHITE, false);
+                int valueX = textX + font.width(namePrefix);
+                int valueW = textW - font.width(namePrefix);
+                for (FormattedCharSequence line : font.split(Component.literal(menu.getShipName()), valueW)) {
+                    g.drawString(font, line, valueX, y, COLOR_WHITE, false);
                     y += font.lineHeight;
+                    valueX = textX;
                 }
                 shipNameH = y - shipNameY;
             } else {
-                String namePrefix = Component.translatable("screen.aeroclaims.claim_settings.sublevel", "").getString();
                 g.drawString(font, namePrefix, textX, y, COLOR_WHITE, false);
                 y += font.lineHeight;
                 shipNameH = font.lineHeight;
@@ -246,9 +249,20 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         }
 
         // Block count
-        String blocksLine = blocksText();
-        int blocksColor = blocksOverLimit() ? COLOR_ERR : COLOR_WHITE;
-        g.drawString(font, blocksLine, textX, y, blocksColor, false);
+        int count = menu.getShipBlockCount();
+        if (!menu.isOnShip()) {
+            g.drawString(font, "\u2014", textX, y, COLOR_ERR, false);
+        } else if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) {
+            g.drawString(font,
+                    Component.translatable("screen.aeroclaims.claim_settings.blocks_unknown").getString(),
+                    textX, y, COLOR_ERR, false);
+        } else {
+            String blocksLabel = Component.translatable("screen.aeroclaims.claim_settings.blocks_label").getString();
+            int limit = menu.getBlockLimit();
+            String value = limit > 0 ? count + " / " + limit : String.valueOf(count);
+            g.drawString(font, blocksLabel, textX, y, COLOR_WHITE, false);
+            g.drawString(font, value, textX + font.width(blocksLabel), y, blocksOverLimit() ? COLOR_ERR : COLOR_OK, false);
+        }
 
         // separator above buttons
         int rowY = INFO_Y + infoPanelHeight() + GAP;
