@@ -35,6 +35,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private static final int COLOR_TITLE   = 0x222222;
     private static final int COLOR_TEXT    = 0x555555;
     private static final int COLOR_OK      = 0x55FF55;
+    private static final int COLOR_WARN    = 0xFFFF55;
     private static final int COLOR_ERR     = 0xCC3333;
     private static final int COLOR_WHITE   = 0xFFFFFF;
 
@@ -53,7 +54,6 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private static final Map<BlockPos, Long>    refreshCooldowns       = new HashMap<>();
     private static final Map<BlockPos, Boolean> activateUsedInCooldown = new HashMap<>();
 
-    // layout
     private static final int BTN_X    = 10;
     private static final int BTN_H    = 18;
     private static final int GAP      = 10;
@@ -113,10 +113,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         int aeroMenuBtnY = rowY + BTN_H + GAP + (showForceloads ? -2 : 3);
         Button aeroMenuButton = Button.builder(
                 Component.translatable("screen.aeroclaims.menu.title"),
-                b -> {
-                    CursorHelper.saveCursor();
-                    PacketDistributor.sendToServer(NavigateMenuPacket.toAeroMenu());
-                })
+                b -> navigateToAeroMenu())
                 .bounds(leftPos + BTN_X, topPos + aeroMenuBtnY, bw, BTN_H).build();
 
         addRenderableWidget(accessButton);
@@ -166,12 +163,10 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
 
         separator(g, 18);
 
-        // info block
         int textX = BTN_X + INFO_PAD;
         int textW = bw - INFO_PAD * 2;
         int y = INFO_Y + INFO_PAD;
 
-        // Status
         boolean active = menu.isClaimActive();
         String prefix = Component.translatable("screen.aeroclaims.claim_settings.privacy_prefix").getString();
         String status  = Component.translatable(active
@@ -192,7 +187,6 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             y += font.lineHeight + 2;
         } catch (Exception ignored) {}
 
-        // Ship name
         if (!menu.isOnShip()) {
             g.drawString(font,
                     Component.translatable("screen.aeroclaims.claim_settings.not_on_sublevel").getString(),
@@ -219,7 +213,6 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             y += 2;
         }
 
-        // Claims used / needed
         int usedClaims   = menu.getClaimsForBlock();
         int neededClaims = neededClaimsCount();
         int claimsColor  = (neededClaims > usedClaims) ? COLOR_ERR : COLOR_OK;
@@ -229,7 +222,6 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         g.drawString(font, claimsValues, textX + font.width(claimsLabel), y, claimsColor, false);
         y += font.lineHeight + 2;
 
-        // Forceloads used / needed (PROVIDER mode only)
         boolean showForceloads = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
         if (showForceloads) {
             int usedForceloads   = menu.getForceloadsForBlock();
@@ -248,14 +240,13 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             forceloadCheckboxVisible = false;
         }
 
-        // Block count
         int count = menu.getShipBlockCount();
         if (!menu.isOnShip()) {
             g.drawString(font, "\u2014", textX, y, COLOR_ERR, false);
         } else if (count == SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN) {
             g.drawString(font,
                     Component.translatable("screen.aeroclaims.claim_settings.blocks_unknown").getString(),
-                    textX, y, COLOR_ERR, false);
+                    textX, y, COLOR_WARN, false);
         } else {
             String blocksLabel = Component.translatable("screen.aeroclaims.claim_settings.blocks_label").getString();
             int limit = menu.getBlockLimit();
@@ -264,7 +255,6 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             g.drawString(font, value, textX + font.width(blocksLabel), y, blocksOverLimit() ? COLOR_ERR : COLOR_OK, false);
         }
 
-        // separator above buttons
         int rowY = INFO_Y + infoPanelHeight() + GAP;
         separator(g, INFO_Y + infoPanelHeight() + GAP / 2);
         separator(g, rowY + BTN_H + GAP / 2);
@@ -277,9 +267,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         forceloadCheckboxX1 = x0 + CHECKBOX_SIZE;
         forceloadCheckboxY1 = y0 + CHECKBOX_SIZE;
 
-        // gray border
         g.fill(forceloadCheckboxX0, forceloadCheckboxY0, forceloadCheckboxX1, forceloadCheckboxY1, COLOR_CB_BORDER);
-        // black background inset by 1px
         g.fill(forceloadCheckboxX0 + 1, forceloadCheckboxY0 + 1, forceloadCheckboxX1 - 1, forceloadCheckboxY1 - 1, COLOR_CB_BG);
 
         if (menu.isForceloadEnabled()) {
@@ -301,14 +289,14 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     }
 
     private int infoPanelHeight() {
-        int lines = 2; // status + owner
+        int lines = 2;
         if (!menu.isOnShip()) {
-            lines += 1; // not on ship
+            lines += 1;
         } else if (menu.getShipName() != null && !menu.getShipName().isEmpty()) {
             int textW = imageWidth - BTN_X * 2 - INFO_PAD * 2;
             lines += Math.max(1, (menu.getShipName().length() * 6) / textW + 1);
         }
-        lines += 2; // claims used/needed + block count
+        lines += 2;
         if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get()) lines += 1;
         return INFO_PAD * 2 + lines * (font.lineHeight + 2);
     }
@@ -333,6 +321,20 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         if (isOverForceloadCheckbox(mx, my)) {
             g.renderTooltip(font, Component.translatable("screen.aeroclaims.claim_settings.forceload_toggle.tooltip"), mx, my);
         }
+    }
+
+    @Override
+    public void onClose() {
+        if (menu.isReturnToShipList()) {
+            navigateToAeroMenu();
+            return;
+        }
+        super.onClose();
+    }
+
+    private void navigateToAeroMenu() {
+        CursorHelper.saveCursor();
+        PacketDistributor.sendToServer(NavigateMenuPacket.toAeroMenu());
     }
 
     @Override

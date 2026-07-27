@@ -14,12 +14,14 @@ public class ContextMenu {
     private static final int BG_COLOR      = 0xF0111111;
     private static final int BORDER_COLOR  = 0xFF555555;
     private static final int HOVER_COLOR   = 0x55FFFFFF;
-    private static final int TEXT_COLOR    = 0xFFDDDDDD;
-    private static final int PAD_X         = 6;
-    private static final int PAD_Y         = 3;
-    private static final int ITEM_H        = 12;
+    private static final int TEXT_COLOR           = 0xFFDDDDDD;
+    private static final int TEXT_COLOR_DISABLED  = 0xFF777777;
+    private static final int TEXT_COLOR_HIGHLIGHT = 0xFF55FF55;
+    private static final int PAD_X                = 6;
+    private static final int PAD_Y                = 3;
+    private static final int ITEM_H               = 12;
 
-    public record MenuItem(String labelKey, Runnable action) {}
+    public record MenuItem(String labelKey, Runnable action, boolean enabled, boolean highlight) {}
 
     private final List<MenuItem> items = new ArrayList<>();
     private boolean visible = false;
@@ -30,7 +32,15 @@ public class ContextMenu {
     private int menuH;
 
     public void addItem(String translationKey, Runnable action) {
-        items.add(new MenuItem(translationKey, action));
+        addItem(translationKey, action, true, false);
+    }
+
+    public void addItem(String translationKey, Runnable action, boolean enabled) {
+        addItem(translationKey, action, enabled, false);
+    }
+
+    public void addItem(String translationKey, Runnable action, boolean enabled, boolean highlight) {
+        items.add(new MenuItem(translationKey, action, enabled, highlight));
     }
 
     public void clearItems() {
@@ -42,7 +52,7 @@ public class ContextMenu {
         Font font = Minecraft.getInstance().font;
         int maxW = 0;
         for (MenuItem item : items) {
-            maxW = Math.max(maxW, font.width(Component.translatable(item.labelKey()).getString()));
+            maxW = Math.max(maxW, font.width(Component.translatable(item.labelKey())));
         }
         menuW = maxW + PAD_X * 2;
         menuH = PAD_Y * 2 + items.size() * ITEM_H;
@@ -70,13 +80,15 @@ public class ContextMenu {
 
         for (int i = 0; i < items.size(); i++) {
             int itemY = menuY + PAD_Y + i * ITEM_H;
-            boolean hovered = mouseX >= menuX && mouseX < menuX + menuW
+            MenuItem item = items.get(i);
+            boolean hovered = item.enabled() && mouseX >= menuX && mouseX < menuX + menuW
                     && mouseY >= itemY && mouseY < itemY + ITEM_H;
             if (hovered) {
                 g.fill(menuX, itemY, menuX + menuW, itemY + ITEM_H, HOVER_COLOR);
             }
-            String label = Component.translatable(items.get(i).labelKey()).getString();
-            g.drawString(font, label, menuX + PAD_X, itemY + 2, TEXT_COLOR, false);
+            int color = item.highlight() && item.enabled() ? TEXT_COLOR_HIGHLIGHT
+                    : item.enabled() ? TEXT_COLOR : TEXT_COLOR_DISABLED;
+            g.drawString(font, Component.translatable(item.labelKey()), menuX + PAD_X, itemY + 2, color, false);
         }
     }
 
@@ -92,7 +104,7 @@ public class ContextMenu {
         if (button == 0) {
             int relY = (int) my - menuY - PAD_Y;
             int index = relY / ITEM_H;
-            if (index >= 0 && index < items.size()) {
+            if (index >= 0 && index < items.size() && items.get(index).enabled()) {
                 items.get(index).action().run();
             }
             dismiss();

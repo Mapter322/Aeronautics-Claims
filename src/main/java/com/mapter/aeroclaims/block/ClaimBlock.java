@@ -131,7 +131,6 @@ public class ClaimBlock extends BaseEntityBlock {
         ServerLevel serverLevel = serverPlayer.serverLevel();
         Claim claim = ClaimManager.getClaimByCenter(serverLevel, pos);
 
-        // Claim missing for this position, recover using owner stored in the BlockEntity
         if (claim == null) {
             UUID storedOwner = level.getBlockEntity(pos) instanceof ClaimBlockEntity be ? be.getOwner() : null;
             if (storedOwner == null) return InteractionResult.PASS;
@@ -179,6 +178,7 @@ public class ClaimBlock extends BaseEntityBlock {
             buf.writeInt(initialBlockCount);
             buf.writeInt(data.getForceloadsForBlock(pos));
             buf.writeBoolean(finalClaim.isForceloadEnabled());
+            buf.writeBoolean(false);
         });
 
         return InteractionResult.CONSUME;
@@ -195,7 +195,7 @@ public class ClaimBlock extends BaseEntityBlock {
                         false, claim.isActive(),
                         claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
                         0, 0, 0, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN, 0,
-                        claim.isForceloadEnabled()),
+                        claim.isForceloadEnabled(), false),
                 Component.translatable("screen.aeroclaims.claim_settings.title")
         );
     }

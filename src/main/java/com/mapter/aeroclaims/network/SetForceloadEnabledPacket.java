@@ -43,11 +43,9 @@ public record SetForceloadEnabledPacket(BlockPos center, boolean enabled) implem
             ClaimSavedData.get(level).setDirty();
 
             if (!msg.enabled) {
-                // Refund any provider forceload slots already consumed by this claim block.
                 AeroClaimManager.releaseAllForceloadsForBlock(level, player, msg.center);
             }
 
-            // Keep the Sable forceload ticket in sync immediately, don't wait for the next activation.
             if (claim.isActive()) {
                 SubLevelTicketManager.sync(level, claim, claim.getShipId(), msg.enabled);
             }

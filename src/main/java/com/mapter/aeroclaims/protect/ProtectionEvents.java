@@ -38,7 +38,7 @@ public class ProtectionEvents {
         for (int r = 1; r <= margin; r++) {
             for (int dx = -r; dx <= r; dx++) {
                 for (int dz = -r; dz <= r; dz++) {
-                    if (Math.abs(dx) != r && Math.abs(dz) != r) continue; // ring perimeter only
+                    if (Math.abs(dx) != r && Math.abs(dz) != r) continue;
                     Claim c = ClaimManager.getClaimAt(level, pos.offset(dx, 0, dz));
                     if (c != null) return c;
                 }

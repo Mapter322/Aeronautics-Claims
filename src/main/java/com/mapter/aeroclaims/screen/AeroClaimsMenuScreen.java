@@ -202,10 +202,10 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.claims", ship.claims())
                 .withStyle(ChatFormatting.GRAY));
         lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.forceload_status",
-                Component.translatable(ship.forceloadEnabled()
+                Component.translatable(ship.loaded()
                         ? "screen.aeroclaims.claim_settings.status.active"
                         : "screen.aeroclaims.claim_settings.status.disabled"))
-                .withStyle(ChatFormatting.GRAY));
+                .withStyle(ship.loaded() ? ChatFormatting.GRAY : ChatFormatting.RED));
         if (ship.blockCount() >= 0) {
             lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.blocks",
                     ship.blockCount(), ship.blockLimit())
@@ -267,6 +267,10 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
 
     private void buildContextMenu(AeroClaimsMenu.ShipEntry ship) {
         contextMenu.clearItems();
+        contextMenu.addItem("screen.aeroclaims.menu.context.open_menu", () -> {
+            CursorHelper.saveCursor();
+            PacketDistributor.sendToServer(NavigateMenuPacket.openClaimForShip(ship.shipId()));
+        }, ship.loaded(), true);
         contextMenu.addItem("screen.aeroclaims.menu.context.copy_name", () -> {
             Minecraft.getInstance().keyboardHandler.setClipboard(ship.shipName());
         });

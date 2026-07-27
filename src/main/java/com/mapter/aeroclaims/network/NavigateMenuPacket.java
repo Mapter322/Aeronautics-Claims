@@ -30,12 +30,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 import java.util.Optional;
 
-public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPos)
+public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPos, Optional<String> shipId)
         implements CustomPacketPayload {
 
     public enum Direction {
         TO_AERO_MENU,
-        BACK_TO_CLAIM_SETTINGS;
+        BACK_TO_CLAIM_SETTINGS,
+        OPEN_CLAIM_FOR_SHIP;
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Direction> STREAM_CODEC =
                 ByteBufCodecs.<Direction>idMapper(id -> Direction.values()[id], Direction::ordinal)
@@ -49,6 +50,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
             StreamCodec.composite(
                     Direction.STREAM_CODEC, NavigateMenuPacket::direction,
                     BlockPos.STREAM_CODEC.apply(ByteBufCodecs::optional), NavigateMenuPacket::claimPos,
+                    ByteBufCodecs.STRING_UTF8.apply(ByteBufCodecs::optional), NavigateMenuPacket::shipId,
                     NavigateMenuPacket::new
             );
 
@@ -56,11 +58,15 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
     public Type<NavigateMenuPacket> type() { return TYPE; }
 
     public static NavigateMenuPacket toAeroMenu() {
-        return new NavigateMenuPacket(Direction.TO_AERO_MENU, Optional.empty());
+        return new NavigateMenuPacket(Direction.TO_AERO_MENU, Optional.empty(), Optional.empty());
     }
 
     public static NavigateMenuPacket backToClaim(BlockPos pos) {
-        return new NavigateMenuPacket(Direction.BACK_TO_CLAIM_SETTINGS, Optional.of(pos));
+        return new NavigateMenuPacket(Direction.BACK_TO_CLAIM_SETTINGS, Optional.of(pos), Optional.empty());
+    }
+
+    public static NavigateMenuPacket openClaimForShip(String shipId) {
+        return new NavigateMenuPacket(Direction.OPEN_CLAIM_FOR_SHIP, Optional.empty(), Optional.of(shipId));
     }
 
     public static void handle(NavigateMenuPacket msg, IPayloadContext context) {
@@ -69,6 +75,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
             switch (msg.direction()) {
                 case TO_AERO_MENU             -> handleOpenAeroMenu(player);
                 case BACK_TO_CLAIM_SETTINGS   -> msg.claimPos().ifPresent(pos -> handleReturnToClaim(player, pos));
+                case OPEN_CLAIM_FOR_SHIP      -> msg.shipId().ifPresent(id -> handleOpenClaimForShip(player, id));
             }
         });
     }
@@ -96,6 +103,8 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                         String shipName = entry.getValue();
                         ClaimBriefInfo info = ClaimBriefInfo.ofShip(level, shipId);
                         RegisteredSublevelManager.ShipRegistration reg = RegisteredSublevelManager.getRegistration(shipId);
+                        Claim claim = ClaimManager.getClaimByShipId(level, shipId);
+                        boolean loaded = claim != null && SableShipUtils.isOnShip(level, claim.getCenter());
                         buf.writeUtf(shipName);
                         buf.writeUtf(shipId);
                         buf.writeBoolean(info != null && info.isActive());
@@ -108,6 +117,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                         buf.writeInt(hasCoords ? reg.worldY.intValue() : 0);
                         buf.writeInt(hasCoords ? reg.worldZ.intValue() : 0);
                         buf.writeBoolean(info != null && info.isForceloadEnabled());
+                        buf.writeBoolean(loaded);
                     }
                     buf.writeInt(AeroClaimManager.getFreeProviderClaims(player));
                     buf.writeInt(AeroClaimManager.getMigratedSlots(level, player.getUUID()));
@@ -128,7 +138,29 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
             return;
         }
 
+        openClaimBlockMenu(player, level, pos, claim, false);
+    }
 
+    private static void handleOpenClaimForShip(ServerPlayer player, String shipId) {
+        ServerLevel level = player.serverLevel();
+        Claim claim = ClaimManager.getClaimByShipId(level, shipId);
+
+        if (claim == null || !player.getUUID().equals(claim.getOwner())) {
+            player.closeContainer();
+            return;
+        }
+
+        BlockPos pos = claim.getCenter();
+        if (!SableShipUtils.isOnShip(level, pos)) {
+            player.sendSystemMessage(Component.translatable("message.aeroclaims.sublevel_not_loaded"));
+            return;
+        }
+
+        openClaimBlockMenu(player, level, pos, claim, true);
+    }
+
+    private static void openClaimBlockMenu(ServerPlayer player, ServerLevel level, BlockPos pos, Claim claim,
+                                            boolean returnToShipList) {
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof ClaimBlock
                 && state.hasProperty(ClaimBlock.OPEN)
@@ -157,7 +189,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                                 onShip, claim.isActive(),
                                 claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
                                 claimsForBlock, freeSlots, AeroClaimsConfig.BLOCKS_PER_CLAIM.get(), initialBlockCount,
-                                forceloadsForBlock, claim.isForceloadEnabled()),
+                                forceloadsForBlock, claim.isForceloadEnabled(), returnToShipList),
                         Component.translatable("screen.aeroclaims.claim_settings.title")),
                 buf -> {
                     buf.writeBlockPos(pos);
@@ -174,6 +206,7 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                     buf.writeInt(initialBlockCount);
                     buf.writeInt(forceloadsForBlock);
                     buf.writeBoolean(claim.isForceloadEnabled());
+                    buf.writeBoolean(returnToShipList);
                 });
     }
 }
