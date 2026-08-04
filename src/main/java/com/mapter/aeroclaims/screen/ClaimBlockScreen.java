@@ -109,7 +109,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         updateRefreshButton();
         updateActionButton();
 
-        boolean showForceloads = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+        boolean showForceloads = AeroClaimsConfig.isProviderSlotsForceload();
         int aeroMenuBtnY = rowY + BTN_H + GAP + (showForceloads ? -2 : 3);
         Button aeroMenuButton = Button.builder(
                 Component.translatable("screen.aeroclaims.menu.title"),
@@ -222,7 +222,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         g.drawString(font, claimsValues, textX + font.width(claimsLabel), y, claimsColor, false);
         y += font.lineHeight + 2;
 
-        boolean showForceloads = AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+        boolean showForceloads = AeroClaimsConfig.isProviderSlotsForceload();
         if (showForceloads) {
             int usedForceloads   = menu.getForceloadsForBlock();
             int forceloadsColor  = (neededClaims > usedForceloads) ? COLOR_ERR : COLOR_OK;

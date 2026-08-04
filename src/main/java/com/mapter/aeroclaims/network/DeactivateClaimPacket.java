@@ -42,7 +42,7 @@ public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayl
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 
             AeroClaimManager.releaseAllClaimsForBlock(level, player, msg.center);
-            if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get())
+            if (AeroClaimsConfig.isProviderSlotsForceload())
                 AeroClaimManager.releaseAllForceloadsForBlock(level, player, msg.center);
 
             String shipId = claim.getShipId();
@@ -70,7 +70,7 @@ public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayl
                     AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
                     shipBlockCount,
                     data.getForceloadsForBlock(msg.center),
-                    claim.isForceloadEnabled()
+                    ClaimManager.isForceloadActive(claim)
             ));
         });
     }

@@ -14,6 +14,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.BooleanValue EXPLOSION_PROTECTION;
     public static final ModConfigSpec.BooleanValue KINETIC_BLOCK_PROTECTION;
     public static final ModConfigSpec.BooleanValue ENABLE_DELETE_COMMAND;
+    public static final ModConfigSpec.BooleanValue FORCELOAD_ENABLE;
     public static final ModConfigSpec.BooleanValue PROVIDER_SLOTS_FORCELOAD;
 
     public enum PartyProvider { FTB_TEAMS, OPAC }
@@ -58,16 +59,32 @@ public class AeroClaimsConfig {
                     "Default: false"
                 )
                 .define("enableDeleteCommand", false);
+        FORCELOAD_ENABLE = builder
+                .comment(
+                    "Master switch for sublevel forceloading. If false, no claim will ever forceload its sublevel,",
+                    "regardless of the per-claim forceload toggle, and providerSlotsForceload is ignored entirely.",
+                    "Default: true"
+                )
+                .define("forceloadEnable", true);
         PROVIDER_SLOTS_FORCELOAD = builder
                 .comment(
                     "If true, sublevel forceloading consumes OPAC/FTB forceload slots.",
                     "If false, all activated claims get a free sub-level forceload.",
+                    "Has no effect if forceloadEnable is false.",
                     "Default: false"
                 )
                 .define("providerSlotsForceload", false);
         builder.pop();
 
         SPEC = builder.build();
+    }
+
+    /**
+     * Whether providerSlotsForceload should actually be honored. Always false when the
+     * master forceloadEnable switch is off, ignoring the raw providerSlotsForceload value.
+     */
+    public static boolean isProviderSlotsForceload() {
+        return FORCELOAD_ENABLE.get() && PROVIDER_SLOTS_FORCELOAD.get();
     }
 
     private AeroClaimsConfig() {

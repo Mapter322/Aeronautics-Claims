@@ -75,7 +75,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
             int neededClaims = (blockCount + blocksPerClaim - 1) / blocksPerClaim;
             int currentClaims = AeroClaimSavedData.get(level).getClaimsForBlock(msg.center);
             int delta = neededClaims - currentClaims;
-            boolean useProvider = claim.isForceloadEnabled() && AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+            boolean useProvider = ClaimManager.isForceloadActive(claim) && AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
             if (delta > 0) {
                 AeroClaimSavedData data = AeroClaimSavedData.get(level);
 
@@ -179,7 +179,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
                 shipBlockCount,
                 data.getForceloadsForBlock(center),
-                claim.isForceloadEnabled()
+                ClaimManager.isForceloadActive(claim)
         ));
     }
 }

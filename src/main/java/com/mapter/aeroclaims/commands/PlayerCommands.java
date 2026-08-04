@@ -106,7 +106,7 @@ public class PlayerCommands {
 
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.header", finalName), false);
         source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.sublevel_slots", usedSlots), false);
-        if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get()) {
+        if (AeroClaimsConfig.isProviderSlotsForceload()) {
             source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.forceload_slots", usedFl), false);
             source.sendSuccess(() -> Component.translatable("commands.aeroclaims.info.forceload_free", freeFl), false);
         }
@@ -148,7 +148,7 @@ public class PlayerCommands {
             hover = hover.append(Component.literal("\n"))
                     .append(Component.translatable("commands.aeroclaims.info.entry.hover.claims",
                             info.getClaimsForBlock()));
-            if (AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get()) {
+            if (AeroClaimsConfig.isProviderSlotsForceload()) {
                 hover = hover.append(Component.literal("\n"))
                         .append(Component.translatable("commands.aeroclaims.info.entry.hover.forceloads",
                                 info.getForceloadsForBlock()));

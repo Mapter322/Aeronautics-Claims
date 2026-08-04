@@ -47,7 +47,7 @@ public record SetForceloadEnabledPacket(BlockPos center, boolean enabled) implem
             }
 
             if (claim.isActive()) {
-                SubLevelTicketManager.sync(level, claim, claim.getShipId(), msg.enabled);
+                SubLevelTicketManager.sync(level, claim, claim.getShipId(), ClaimManager.isForceloadActive(claim));
             }
         });
     }

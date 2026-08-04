@@ -73,7 +73,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                     : 0;
             int delta = neededClaims - currentClaims;
 
-            boolean useProvider = claim.isForceloadEnabled() && AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+            boolean useProvider = ClaimManager.isForceloadActive(claim) && AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
 
             if (delta > 0) {
                 int freeSlots = data.getFreeSlots(player.getUUID());
@@ -166,7 +166,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
         UnregisteredSublevelManager.removeShip(shipId);
         claim.setShipId(shipId);
 
-        SubLevelTicketManager.sync(level, claim, shipId, claim.isForceloadEnabled());
+        SubLevelTicketManager.sync(level, claim, shipId, ClaimManager.isForceloadActive(claim));
         ClaimSavedData.get(level).setDirty();
     }
 
@@ -196,7 +196,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
                 shipBlockCount,
                 data.getForceloadsForBlock(center),
-                claim.isForceloadEnabled()
+                ClaimManager.isForceloadActive(claim)
         ));
     }
 }

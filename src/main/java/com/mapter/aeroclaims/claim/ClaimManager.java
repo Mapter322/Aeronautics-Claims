@@ -23,6 +23,10 @@ public class ClaimManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClaimManager.class);
 
     private static ClaimPermissionResolver PERMISSION_RESOLVER = null;
+
+    public static boolean isForceloadActive(Claim claim) {
+        return AeroClaimsConfig.FORCELOAD_ENABLE.get() && claim.isForceloadEnabled();
+    }
     private static boolean ftbLoaded  = false;
     private static boolean opacLoaded = false;
 

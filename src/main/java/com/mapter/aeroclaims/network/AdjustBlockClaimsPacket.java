@@ -60,7 +60,7 @@ public record AdjustBlockClaimsPacket(BlockPos center, int delta) implements Cus
 
             if (!AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, msg.delta)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.no_sublevel_slots"));
-            } else if (msg.delta <= 0 || claim.isForceloadEnabled()) {
+            } else if (msg.delta <= 0 || ClaimManager.isForceloadActive(claim)) {
                 AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, msg.delta);
             }
 
@@ -80,7 +80,7 @@ public record AdjustBlockClaimsPacket(BlockPos center, int delta) implements Cus
                 AeroClaimsConfig.BLOCKS_PER_CLAIM.get(),
                 SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN,
                 data.getForceloadsForBlock(center),
-                claim.isForceloadEnabled()
+                ClaimManager.isForceloadActive(claim)
         ));
     }
 }

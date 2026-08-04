@@ -28,7 +28,7 @@ public class ClaimBriefInfo {
         Integer blockCount = data.getCachedShipBlockCount(claim.getCenter());
         int blockLimit = AeroClaimManager.getBlockLimit(level, claim.getCenter());
         int forceloadsForBlock = data.getForceloadsForBlock(claim.getCenter());
-        return new ClaimBriefInfo(claimsForBlock, blockCount, blockLimit, claim.isActive(), forceloadsForBlock, claim.isForceloadEnabled());
+        return new ClaimBriefInfo(claimsForBlock, blockCount, blockLimit, claim.isActive(), forceloadsForBlock, ClaimManager.isForceloadActive(claim));
     }
 
 
