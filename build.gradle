@@ -28,6 +28,13 @@ repositories {
     }
     maven { url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/" }
     maven { url = "https://maven.createmod.net" }
+    maven {
+        name = "Modrinth"
+        url = "https://api.modrinth.com/maven"
+        content {
+            includeGroup "maven.modrinth"
+        }
+    }
 }
 
 base {
@@ -124,6 +131,8 @@ dependencies {
     compileOnly("dev.simulated_team.simulated:simulated-neoforge-1.21.1:1.2.1") { transitive = false }
     compileOnly("foundry.veil:veil-neoforge-1.21.1:1.0.0.82") { transitive = false }
 
+    // Optional CBC compatibility.
+    compileOnly("maven.modrinth:create-big-cannons:5.11.7") { transitive = false }
 
 }
 

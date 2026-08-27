@@ -147,6 +147,24 @@ public class ClaimManager {
         return ClaimSavedData.get(level).getBlockIndex().get(pos);
     }
 
+    /** Finds a claim at a position, including the configured horizontal margin. */
+    public static Claim getClaimAtWithMargin(ServerLevel level, BlockPos pos) {
+        Claim exact = getClaimAt(level, pos);
+        if (exact != null) return exact;
+
+        int margin = AeroClaimsConfig.CLAIM_MARGIN_BLOCKS.get();
+        for (int r = 1; r <= margin; r++) {
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (Math.abs(dx) != r && Math.abs(dz) != r) continue;
+                    Claim c = getClaimAt(level, pos.offset(dx, 0, dz));
+                    if (c != null) return c;
+                }
+            }
+        }
+        return null;
+    }
+
     public static Claim getClaimByCenter(ServerLevel level, BlockPos center) {
         return findClaim(level, claim -> claim.getCenter().equals(center));
     }

@@ -41,3 +41,10 @@ type = "optional"
 versionRange = "[0,)"
 ordering = "NONE"
 side = "BOTH"
+
+[[dependencies.aeroclaims]]
+modId = "createbigcannons"
+type = "optional"
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"

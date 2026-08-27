@@ -13,6 +13,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.IntValue CLAIM_MARGIN_BLOCKS;
     public static final ModConfigSpec.BooleanValue EXPLOSION_PROTECTION;
     public static final ModConfigSpec.BooleanValue KINETIC_BLOCK_PROTECTION;
+    public static final ModConfigSpec.BooleanValue CBC_PROTECTION;
     public static final ModConfigSpec.BooleanValue ENABLE_DELETE_COMMAND;
     public static final ModConfigSpec.BooleanValue FORCELOAD_ENABLE;
     public static final ModConfigSpec.BooleanValue PROVIDER_SLOTS_FORCELOAD;
@@ -52,6 +53,13 @@ public class AeroClaimsConfig {
         KINETIC_BLOCK_PROTECTION = builder
                 .comment("If true, Create drills and saws can only break claimed blocks if placed by a player with permission. Default: true.")
                 .define("kineticBlockProtection", true);
+        CBC_PROTECTION = builder
+                .comment(
+                    "If true, Create: Big Cannons projectiles (big cannon shells, autocannon rounds, shrapnel) cannot",
+                    "destroy blocks inside active claims. Has no effect if Create: Big Cannons is not installed.",
+                    "Default: true"
+                )
+                .define("cbcProtection", true);
         ENABLE_DELETE_COMMAND = builder
                 .comment(
                     "WARNING: This command deletes ALL unclaimed sublevels from the world.",

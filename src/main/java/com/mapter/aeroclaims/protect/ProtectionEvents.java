@@ -30,23 +30,6 @@ public class ProtectionEvents {
     private static final long MESSAGE_COOLDOWN_MS = 15_000;
     private static final Map<UUID, Long> lastMessageTime = new ConcurrentHashMap<>();
 
-    private static Claim getClaimAtWithMargin(ServerLevel level, BlockPos pos) {
-        Claim exact = ClaimManager.getClaimAt(level, pos);
-        if (exact != null) return exact;
-
-        int margin = AeroClaimsConfig.CLAIM_MARGIN_BLOCKS.get();
-        for (int r = 1; r <= margin; r++) {
-            for (int dx = -r; dx <= r; dx++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    if (Math.abs(dx) != r && Math.abs(dz) != r) continue;
-                    Claim c = ClaimManager.getClaimAt(level, pos.offset(dx, 0, dz));
-                    if (c != null) return c;
-                }
-            }
-        }
-        return null;
-    }
-
     private static boolean shouldSendMessage(ServerPlayer player) {
         if (player instanceof FakePlayer) return false;
         long now = System.currentTimeMillis();
@@ -57,7 +40,7 @@ public class ProtectionEvents {
     }
 
     private static boolean isClaimProtected(ServerPlayer player, BlockPos pos, String messageKey) {
-        Claim claim = getClaimAtWithMargin(player.serverLevel(), pos);
+        Claim claim = ClaimManager.getClaimAtWithMargin(player.serverLevel(), pos);
         if (claim == null) return false;
 
         if (!ClaimManager.getPermissionResolver().canAccess(player, claim)) {
@@ -98,8 +81,8 @@ public class ProtectionEvents {
         BlockPos clickedPos = event.getPos();
         BlockPos targetPos  = clickedPos.relative(event.getFace());
         Claim claim = firstNonNull(
-                getClaimAtWithMargin(level, targetPos),
-                getClaimAtWithMargin(level, clickedPos)
+                ClaimManager.getClaimAtWithMargin(level, targetPos),
+                ClaimManager.getClaimAtWithMargin(level, clickedPos)
         );
         if (claim == null) return;
 
@@ -126,8 +109,8 @@ public class ProtectionEvents {
         BlockPos clickedPos = bhr.getBlockPos();
         BlockPos targetPos  = clickedPos.relative(bhr.getDirection());
         Claim claim = firstNonNull(
-                getClaimAtWithMargin(level, targetPos),
-                getClaimAtWithMargin(level, clickedPos)
+                ClaimManager.getClaimAtWithMargin(level, targetPos),
+                ClaimManager.getClaimAtWithMargin(level, clickedPos)
         );
         if (claim == null) return;
 
@@ -157,7 +140,7 @@ public class ProtectionEvents {
         if (!(event.getLevel() instanceof ServerLevel level)) return;
 
         event.getAffectedBlocks().removeIf(pos -> {
-            Claim claim = getClaimAtWithMargin(level, pos);
+            Claim claim = ClaimManager.getClaimAtWithMargin(level, pos);
             return claim != null && claim.isActive();
         });
     }

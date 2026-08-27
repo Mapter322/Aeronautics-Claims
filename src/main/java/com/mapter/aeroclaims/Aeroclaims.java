@@ -2,6 +2,7 @@ package com.mapter.aeroclaims;
 
 import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.compat.cbc.CBCProtectionEvents;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.registry.ModBlocks;
 import com.mapter.aeroclaims.registry.ModMenus;
@@ -36,9 +37,14 @@ public class Aeroclaims {
         boolean ftbLoaded  = ModList.get().isLoaded("ftbteams");
         boolean opacLoaded = ModList.get().isLoaded("openpartiesandclaims");
         boolean ftbChunksLoaded = ModList.get().isLoaded("ftbchunks");
+        boolean cbcLoaded = ModList.get().isLoaded("createbigcannons");
 
         ClaimManager.init(ftbLoaded, opacLoaded);
         AeroClaimManager.init(opacLoaded, ftbChunksLoaded);
+
+        if (cbcLoaded) {
+            CBCProtectionEvents.register();
+        }
     }
 
     private static void addCreative(BuildCreativeModeTabContentsEvent event) {

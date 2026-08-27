@@ -20,6 +20,7 @@
     "MixinBlockBreakingKineticBlockEntity",
     "MixinBlockBreakingMovementBehaviour",
     "MixinThrottleLeverSignalPacket",
+    "cbc.MixinAbstractBigCannonProjectile",
     "ftb.ChunkTeamDataMixin",
     "ftb.ChunkTeamDataForceLoadMixin"
   ],
