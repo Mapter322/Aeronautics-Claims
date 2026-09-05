@@ -9,8 +9,10 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.mapter.aeroclaims.network.SyncProviderUsagePacket;
 
 import java.util.UUID;
 
@@ -83,13 +85,17 @@ public class AeroClaimManager {
     public static TransferResult transferFromProvider(ServerPlayer player, int amount) {
         IClaimProvider provider = getClaimProvider();
         if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
-        return provider.transferToAero(player, amount);
+        TransferResult result = provider.transferToAero(player, amount);
+        syncProviderUsage(player);
+        return result;
     }
 
     public static TransferResult transferToProvider(ServerPlayer player, int amount) {
         IClaimProvider provider = getClaimProvider();
         if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
-        return provider.transferFromAero(player, amount);
+        TransferResult result = provider.transferFromAero(player, amount);
+        syncProviderUsage(player);
+        return result;
     }
 
     public static int getBlockLimit(ServerLevel level, BlockPos pos) {
@@ -165,16 +171,37 @@ public class AeroClaimManager {
         return provider.getFreeClaims(player);
     }
 
+    public static void syncProviderUsage(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        UUID playerId = player.getUUID();
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+
+        int ftbClaims = ftbChunksLoaded ? FtbChunksClaimProvider.getTeamMigratedClaims(player) : 0;
+        int ftbForceloads = ftbChunksLoaded ? FtbChunksClaimProvider.getTeamMigratedForceloads(player) : 0;
+
+        PacketDistributor.sendToPlayer(player, new SyncProviderUsagePacket(
+                data.getMigratedSlots(playerId),
+                data.getMigratedForceloads(playerId),
+                ftbClaims,
+                ftbForceloads,
+                AeroClaimsConfig.isProviderSlotsForceload()
+        ));
+    }
+
     public static TransferResult transferForceloadsFromProvider(ServerPlayer player, int amount) {
         IClaimProvider provider = getClaimProvider();
         if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
-        return provider.transferForceloadsToAero(player, amount);
+        TransferResult result = provider.transferForceloadsToAero(player, amount);
+        syncProviderUsage(player);
+        return result;
     }
 
     public static TransferResult transferForceloadsToProvider(ServerPlayer player, int amount) {
         IClaimProvider provider = getClaimProvider();
         if (provider == null) return TransferResult.CLAIM_PROVIDER_UNAVAILABLE;
-        return provider.transferForceloadsFromAero(player, amount);
+        TransferResult result = provider.transferForceloadsFromAero(player, amount);
+        syncProviderUsage(player);
+        return result;
     }
 
     public static boolean adjustForceloadsForBlock(ServerLevel level, UUID owner, BlockPos pos, int delta) {
@@ -237,5 +264,6 @@ public class AeroClaimManager {
 
         if (freeSlots > 0) transferToProvider(player, freeSlots);
         if (freeForceloads > 0) transferForceloadsToProvider(player, freeForceloads);
+        syncProviderUsage(player);
     }
 }

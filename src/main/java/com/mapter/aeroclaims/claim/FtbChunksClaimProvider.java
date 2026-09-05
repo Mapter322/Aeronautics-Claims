@@ -115,6 +115,42 @@ public class FtbChunksClaimProvider implements IClaimProvider {
         }
     }
 
+    public static int getTeamMigratedClaims(ServerPlayer player) {
+        try {
+            ClaimedChunkManager mgr = getManager();
+            if (mgr == null) return 0;
+
+            ChunkTeamData data = mgr.getOrCreateData(player);
+            if (data == null || data.getTeam() == null) return 0;
+
+            AeroClaimSavedData savedData = AeroClaimSavedData.get(player.serverLevel());
+            return data.getTeam().getMembers().stream()
+                    .mapToInt(savedData::getMigratedSlots)
+                    .sum();
+        } catch (Exception e) {
+            LOGGER.error("[AeroClaims] Failed to get team migrated claim slots", e);
+            return 0;
+        }
+    }
+
+    public static int getTeamMigratedForceloads(ServerPlayer player) {
+        try {
+            ClaimedChunkManager mgr = getManager();
+            if (mgr == null) return 0;
+
+            ChunkTeamData data = mgr.getOrCreateData(player);
+            if (data == null || data.getTeam() == null) return 0;
+
+            AeroClaimSavedData savedData = AeroClaimSavedData.get(player.serverLevel());
+            return data.getTeam().getMembers().stream()
+                    .mapToInt(savedData::getMigratedForceloads)
+                    .sum();
+        } catch (Exception e) {
+            LOGGER.error("[AeroClaims] Failed to get team migrated forceload slots", e);
+            return 0;
+        }
+    }
+
     private static ClaimedChunkManager getManager() {
         if (!FTBChunksAPI.api().isManagerLoaded()) return null;
         return FTBChunksAPI.api().getManager();

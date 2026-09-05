@@ -11,7 +11,9 @@ public class AeroClaimsMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if (mixinClassName.contains(".mixin.cbc.")) {
+        if (mixinClassName.contains(".mixin.cbc.")
+                || mixinClassName.contains(".mixin.opac.")
+                || mixinClassName.contains(".mixin.ftb.")) {
             return isClassAvailable(targetClassName);
         }
         return true;

@@ -24,7 +24,10 @@
     "ftb.ChunkTeamDataMixin",
     "ftb.ChunkTeamDataForceLoadMixin"
   ],
-  "client": [],
+  "client": [
+    "opac.MainMenuMixin",
+    "ftb.CustomBottomPanelMixin"
+  ],
   "server": [],
   "injectors": { "defaultRequire": 1 }
 }
