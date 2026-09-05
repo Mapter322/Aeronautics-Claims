@@ -19,7 +19,7 @@ public class MixinAbstractBigCannonProjectile {
     )
     private boolean aeroclaims$guardDirectBlockRemoval(
         Level level, BlockPos pos, BlockState state, int flags, Operation<Boolean> original) {
-        if (AeroClaimsConfig.CBC_PROTECTION.get()
+        if (AeroClaimsConfig.EXPLOSION_PROTECTION.get()
                 && (level.isClientSide || CBCProtectionEvents.isProtectedPosition(level, pos))) {
             return false;
         }

@@ -27,7 +27,7 @@ public final class CBCProtectionEvents {
 
     @SubscribeEvent
     public static void onCBCProjectileDamage(ProjectileDamageEvent event) {
-        if (!AeroClaimsConfig.CBC_PROTECTION.get()) return;
+        if (!AeroClaimsConfig.EXPLOSION_PROTECTION.get()) return;
         if (!(event.getLevel() instanceof ServerLevel level)) return;
 
         if (isProtectedPosition(level, event.getPos())) event.setCanceled(true);
