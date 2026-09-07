@@ -4,6 +4,7 @@ import com.mapter.aeroclaims.Aeroclaims;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import net.minecraft.client.Minecraft;
 import com.mapter.aeroclaims.network.NavigateMenuPacket;
+import com.mapter.aeroclaims.network.TeleportToSublevelPacket;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -271,6 +272,9 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
             CursorHelper.saveCursor();
             PacketDistributor.sendToServer(NavigateMenuPacket.openClaimForShip(ship.shipId()));
         }, ship.loaded(), true);
+        contextMenu.addItem("screen.aeroclaims.menu.context.teleport", () ->
+                PacketDistributor.sendToServer(new TeleportToSublevelPacket(ship.shipId())),
+                AeroClaimsConfig.TELEPORT_ENABLE.get());
         contextMenu.addItem("screen.aeroclaims.menu.context.copy_name", () -> {
             Minecraft.getInstance().keyboardHandler.setClipboard(ship.shipName());
         });

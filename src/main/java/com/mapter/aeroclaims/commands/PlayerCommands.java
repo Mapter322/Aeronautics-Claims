@@ -5,7 +5,9 @@ import com.mapter.aeroclaims.claim.ClaimBriefInfo;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.screen.AeroClaimsMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
+import com.mapter.aeroclaims.sublevel.SublevelTeleportService;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.server.level.ServerLevel;
@@ -24,8 +26,7 @@ import java.util.UUID;
 public class PlayerCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
-        dispatcher.register(
-            Commands.literal("aeroclaims")
+        var root = Commands.literal("aeroclaims")
                 .then(Commands.literal("info")
                     .executes(ctx -> executeInfo(ctx.getSource(), null, null))
                     .then(Commands.argument("player", EntityArgument.player())
@@ -40,8 +41,23 @@ public class PlayerCommands {
                         })))
 
                 .then(Commands.literal("menu")
-                    .executes(ctx -> executeOpenMenu(ctx.getSource())))
-        );
+                    .executes(ctx -> executeOpenMenu(ctx.getSource())));
+
+        root.then(Commands.literal("tp")
+                .requires(source -> isTeleportCommandEnabled())
+                .then(Commands.argument("shipUuid", StringArgumentType.word())
+                    .executes(ctx -> executeTeleport(
+                            ctx.getSource(), StringArgumentType.getString(ctx, "shipUuid")))));
+
+        dispatcher.register(root);
+    }
+
+    private static boolean isTeleportCommandEnabled() {
+        try {
+            return AeroClaimsConfig.TELEPORT_ENABLE.get();
+        } catch (IllegalStateException ignored) {
+            return false;
+        }
     }
 
 
@@ -82,6 +98,21 @@ public class PlayerCommands {
                     buf.writeInt(AeroClaimManager.getUsedForceloads(level, player.getUUID()));
                 });
         return 1;
+    }
+
+    private static int executeTeleport(CommandSourceStack source, String shipId) {
+        ServerPlayer player = CommandUtils.requirePlayer(source);
+        if (player == null) return 0;
+
+        SublevelTeleportService.Result result = SublevelTeleportService.teleport(player, shipId);
+        int cooldownSeconds = SublevelTeleportService.getRemainingCooldownSeconds(player);
+        if (result == SublevelTeleportService.Result.SUCCESS) {
+            source.sendSuccess(() -> SublevelTeleportService.resultMessage(result, shipId, cooldownSeconds), false);
+            return 1;
+        }
+
+        source.sendFailure(SublevelTeleportService.resultMessage(result, shipId, cooldownSeconds));
+        return 0;
     }
 
     static int executeInfo(CommandSourceStack source, UUID targetUuid, String targetName) {

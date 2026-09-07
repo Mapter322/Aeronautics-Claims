@@ -51,8 +51,9 @@ public class AdminCommands {
                                 .executes(ctx -> adminRefreshByShipUuid(
                                         ctx.getSource(),
                                         StringArgumentType.getString(ctx, "shipUuid"))))))))
-        ;
-    }
+         ;
+
+     }
 
 
     private static int adminRefreshAll(CommandSourceStack source) {

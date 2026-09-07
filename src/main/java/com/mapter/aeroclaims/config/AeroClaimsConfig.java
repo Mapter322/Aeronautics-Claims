@@ -16,6 +16,8 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.BooleanValue ENABLE_DELETE_COMMAND;
     public static final ModConfigSpec.BooleanValue FORCELOAD_ENABLE;
     public static final ModConfigSpec.BooleanValue PROVIDER_SLOTS_FORCELOAD;
+    public static final ModConfigSpec.BooleanValue TELEPORT_ENABLE;
+    public static final ModConfigSpec.IntValue TELEPORT_COOLDOWN_SECONDS;
 
     public enum PartyProvider { FTB_TEAMS, OPAC }
     public enum ClaimProvider { OPAC, FTB_CHUNKS }
@@ -77,6 +79,15 @@ public class AeroClaimsConfig {
                     "Default: false"
                 )
                 .define("providerSlotsForceload", false);
+        TELEPORT_ENABLE = builder
+                .comment(
+                    "If true, claim owners can teleport to their claimed sublevels using the command or GUI.",
+                    "Default: false"
+                )
+                .define("teleportEnable", false);
+        TELEPORT_COOLDOWN_SECONDS = builder
+                .comment("Cooldown between sublevel teleports in seconds. Default: 120 (2 minutes).")
+                .defineInRange("teleportCooldownSeconds", 120, 0, Integer.MAX_VALUE);
         builder.pop();
 
         SPEC = builder.build();

@@ -85,7 +85,15 @@
   "screen.aeroclaims.menu.tooltip.blocks_unknown": "Blocks: (unknown)",
   "screen.aeroclaims.menu.tooltip.coords": "Pos: %s, %s, %s",
   "screen.aeroclaims.menu.context.open_menu": "Open Menu",
+  "screen.aeroclaims.menu.context.teleport": "Teleport",
   "screen.aeroclaims.menu.context.copy_name": "Copy Name",
   "screen.aeroclaims.menu.context.copy_uuid": "Copy UUID",
-  "screen.aeroclaims.menu.context.copy_pos": "Copy Position"
+  "screen.aeroclaims.menu.context.copy_pos": "Copy Position",
+  "commands.aeroclaims.teleport.success": "Teleported to sublevel %s",
+  "commands.aeroclaims.teleport.invalid_uuid": "Invalid sublevel UUID: %s",
+  "commands.aeroclaims.teleport.not_found": "Claimed sublevel not found: %s",
+  "commands.aeroclaims.teleport.not_owner": "You do not own this sublevel",
+  "commands.aeroclaims.teleport.disabled": "Sublevel teleportation is disabled",
+  "commands.aeroclaims.teleport.cooldown": "You can teleport again in %s seconds",
+  "commands.aeroclaims.teleport.position_unknown": "The sublevel position is unknown."
 }
