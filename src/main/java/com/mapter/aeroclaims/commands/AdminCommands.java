@@ -8,6 +8,7 @@ import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.SublevelTeleportService;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -34,6 +35,11 @@ public class AdminCommands {
                     .requires(source -> source.hasPermission(2))
                     .then(Commands.literal("dump")
                         .executes(ctx -> dumpAll(ctx.getSource())))
+                    .then(Commands.literal("teleport")
+                        .then(Commands.argument("shipUuid", StringArgumentType.word())
+                            .executes(ctx -> adminTeleport(
+                                    ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "shipUuid")))))
                     .then(Commands.literal("delete")
                         .then(Commands.literal("unclaimed")
                             .then(Commands.literal("confirm")
@@ -199,6 +205,22 @@ public class AdminCommands {
         source.sendSuccess(() -> Component.translatable(
                 "commands.aeroclaims.sublevels.delete.done", fd, ff, total), true);
         return 1;
+    }
+
+    private static int adminTeleport(CommandSourceStack source, String shipId) {
+        ServerPlayer player = CommandUtils.requirePlayer(source);
+        if (player == null) return 0;
+
+        SublevelTeleportService.Result result =
+                SublevelTeleportService.teleportAsAdmin(player, shipId);
+        if (result == SublevelTeleportService.Result.SUCCESS) {
+            source.sendSuccess(
+                    () -> SublevelTeleportService.resultMessage(result, shipId, 0), true);
+            return 1;
+        }
+
+        source.sendFailure(SublevelTeleportService.resultMessage(result, shipId, 0));
+        return 0;
     }
 
 

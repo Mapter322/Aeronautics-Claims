@@ -62,6 +62,24 @@ public final class SublevelTeleportService {
         return Result.CLAIM_NOT_FOUND;
     }
 
+    public static Result teleportAsAdmin(ServerPlayer player, String shipId) {
+        final UUID uuid;
+        try {
+            uuid = UUID.fromString(shipId);
+        } catch (IllegalArgumentException e) {
+            return Result.INVALID_ID;
+        }
+
+        for (ServerLevel level : player.server.getAllLevels()) {
+            Claim claim = ClaimManager.getClaimByShipId(level, shipId);
+            if (claim == null) continue;
+
+            return teleportToClaim(player, level, claim, uuid);
+        }
+
+        return Result.CLAIM_NOT_FOUND;
+    }
+
     public static int getRemainingCooldownSeconds(ServerPlayer player) {
         long cooldownMillis = AeroClaimsConfig.TELEPORT_COOLDOWN_SECONDS.get().longValue() * 1000L;
         if (cooldownMillis <= 0) return 0;
