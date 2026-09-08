@@ -95,5 +95,6 @@
   "commands.aeroclaims.teleport.not_owner": "You do not own this sublevel",
   "commands.aeroclaims.teleport.disabled": "Sublevel teleportation is disabled",
   "commands.aeroclaims.teleport.cooldown": "You can teleport again in %s seconds",
-  "commands.aeroclaims.teleport.position_unknown": "The sublevel position is unknown."
+  "commands.aeroclaims.teleport.position_unknown": "The sublevel position is unknown.",
+  "commands.aeroclaims.sublevels.repair.done": "Checked %s loaded sublevels, repaired %s claim blocks."
 }

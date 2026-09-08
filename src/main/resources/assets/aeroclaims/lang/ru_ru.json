@@ -95,5 +95,6 @@
   "commands.aeroclaims.teleport.not_owner": "Вы не владеете этим сублевелом",
   "commands.aeroclaims.teleport.disabled": "Телепортация к сублевелам отключена",
   "commands.aeroclaims.teleport.cooldown": "Следующая телепортация будет доступна через %s сек.",
-  "commands.aeroclaims.teleport.position_unknown": "Позиция сублевела неизвестна."
+  "commands.aeroclaims.teleport.position_unknown": "Позиция сублевела неизвестна.",
+  "commands.aeroclaims.sublevels.repair.done": "Проверено загруженных сублевелов: %s, восстановлено блоков привата: %s."
 }

@@ -5,13 +5,18 @@ import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
+import com.mapter.aeroclaims.block.ClaimBlockEntity;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
+import com.mapter.aeroclaims.registry.ModBlocks;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.sublevel.SublevelTeleportService;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
@@ -40,6 +45,8 @@ public class AdminCommands {
                             .executes(ctx -> adminTeleport(
                                     ctx.getSource(),
                                     StringArgumentType.getString(ctx, "shipUuid")))))
+                    .then(Commands.literal("repair")
+                        .executes(ctx -> repairLoadedSublevels(ctx.getSource())))
                     .then(Commands.literal("delete")
                         .then(Commands.literal("unclaimed")
                             .then(Commands.literal("confirm")
@@ -221,6 +228,49 @@ public class AdminCommands {
 
         source.sendFailure(SublevelTeleportService.resultMessage(result, shipId, 0));
         return 0;
+    }
+
+    private static int repairLoadedSublevels(CommandSourceStack source) {
+        int checked = 0;
+        int repaired = 0;
+
+        for (ServerLevel level : source.getServer().getAllLevels()) {
+            SubLevelContainer container = SubLevelContainer.getContainer(level);
+            if (!(container instanceof ServerSubLevelContainer serverContainer)) continue;
+
+            List<ServerSubLevel> sublevels = serverContainer.getAllSubLevels();
+            if (sublevels == null) continue;
+
+            for (ServerSubLevel sublevel : sublevels) {
+                Claim claim = ClaimManager.getClaimByShipId(
+                        level, sublevel.getUniqueId().toString());
+                if (claim == null) continue;
+
+                checked++;
+                BlockPos center = claim.getCenter();
+                var state = level.getBlockState(center);
+                boolean repairedThisClaim = false;
+
+                if (!state.is(ModBlocks.CLAIM_BLOCK.get())) {
+                    level.setBlock(center, ModBlocks.CLAIM_BLOCK.get().defaultBlockState(), 3);
+                    repairedThisClaim = true;
+                }
+
+                if (level.getBlockEntity(center) instanceof ClaimBlockEntity blockEntity
+                        && !claim.getOwner().equals(blockEntity.getOwner())) {
+                    blockEntity.setOwner(claim.getOwner());
+                    repairedThisClaim = true;
+                }
+
+                if (repairedThisClaim) repaired++;
+            }
+        }
+
+        int checkedCount = checked;
+        int repairedCount = repaired;
+        source.sendSuccess(() -> Component.translatable(
+                "commands.aeroclaims.sublevels.repair.done", checkedCount, repairedCount), true);
+        return 1;
     }
 
 
