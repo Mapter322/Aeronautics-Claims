@@ -86,7 +86,7 @@
   "screen.aeroclaims.menu.tooltip.blocks_unknown": "Блоков: (неизвестно)",
   "screen.aeroclaims.menu.tooltip.coords": "Позиция: %s, %s, %s",
   "screen.aeroclaims.menu.context.open_menu": "Открыть меню",
-  "screen.aeroclaims.menu.context.teleport": "Телепортироваться",
+  "screen.aeroclaims.menu.context.teleport": "Телепорт",
   "screen.aeroclaims.menu.context.copy_name": "Скоп. имя",
   "screen.aeroclaims.menu.context.copy_uuid": "Скоп. UUID",
   "screen.aeroclaims.menu.context.copy_pos": "Скоп. коорды",
