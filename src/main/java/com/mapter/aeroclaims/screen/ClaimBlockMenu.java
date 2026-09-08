@@ -125,7 +125,10 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
     public int getBlockLimit()                  { return claimsForBlock * blocksPerClaim; }
 
     @Override
-    public boolean stillValid(Player player) { return true; }
+    public boolean stillValid(Player player) {
+        if (!player.isAlive() || !player.getUUID().equals(owner)) return false;
+        return player.level().getBlockState(center).getBlock() instanceof ClaimBlock;
+    }
 
     @Override
     public ItemStack quickMoveStack(Player player, int index) { return ItemStack.EMPTY; }
