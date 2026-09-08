@@ -11,6 +11,10 @@ group = mod_group_id
 repositories {
     mavenLocal()
     maven {
+        name = "ParchmentMC"
+        url = "https://maven.parchmentmc.org"
+    }
+    maven {
         name = "RyanHCode Maven"
         url = "https://maven.ryanhcode.dev/releases"
     }
@@ -122,7 +126,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 dependencies {
 
-    api "dev.ryanhcode.sable:sable-common-1.21.1:2.0.0"
+    api "dev.ryanhcode.sable:sable-common-1.21.1:2.0.5"
     compileOnly "curse.maven:open-parties-and-claims-636608:8091499"
     compileOnly "curse.maven:ftb-teams-forge-404468:7878281"
     compileOnly "curse.maven:ftb-chunks-forge-314906:8265333"

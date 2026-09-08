@@ -29,6 +29,13 @@ ordering = "NONE"
 side = "BOTH"
 
 [[dependencies.aeroclaims]]
+modId = "sable"
+type = "required"
+versionRange = "[2.0.5,)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies.aeroclaims]]
 modId = "ftbteams"
 type = "optional"
 versionRange = "[0,)"
@@ -37,6 +44,13 @@ side = "BOTH"
 
 [[dependencies.aeroclaims]]
 modId = "openpartiesandclaims"
+type = "optional"
+versionRange = "[0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.aeroclaims]]
+modId = "ftbchunks"
 type = "optional"
 versionRange = "[0,)"
 ordering = "NONE"
