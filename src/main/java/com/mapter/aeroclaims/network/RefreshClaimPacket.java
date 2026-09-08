@@ -41,7 +41,7 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
     public static void handle(RefreshClaimPacket msg, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
-
+            if (!ClaimActionCooldown.tryAcquire(player)) return;
             ServerLevel level = player.serverLevel();
             Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;

@@ -44,7 +44,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
     public static void handle(ActivateClaimPacket msg, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
-
+            if (!ClaimActionCooldown.tryAcquire(player)) return;
             ServerLevel level = player.serverLevel();
             Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;

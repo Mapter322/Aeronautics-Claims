@@ -56,6 +56,8 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private static final int ACCESS_PARTY_ALLY = 1;
     private static final int ACCESS_ALL        = 2;
     private static final int ACCESS_NONE       = 3;
+    private static final long CLAIM_ACTION_COOLDOWN_MILLIS = 5_000L;
+    private static long claimActionCooldownEndMillis;
 
     private Button accessButton;
     private Button refreshButton;
@@ -124,6 +126,18 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         accessButton.setMessage(accessText());
         updateRefreshButton();
         updateActionButton();
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        if (claimActionCooldownEndMillis != 0
+                && System.currentTimeMillis() >= claimActionCooldownEndMillis) {
+            claimActionCooldownEndMillis = 0;
+            refreshSubmitted = false;
+            updateRefreshButton();
+            updateActionButton();
+        }
     }
 
     @Override
@@ -403,10 +417,10 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             refreshButton.active = false;
             refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.not_on_sublevel"));
         } else if (!menu.isClaimActive()) {
-            refreshButton.active = blocksKnownAndOk();
+            refreshButton.active = !isClaimActionOnCooldown() && blocksKnownAndOk();
             refreshButton.setMessage(activateText());
         } else {
-            refreshButton.active = true;
+            refreshButton.active = !isClaimActionOnCooldown();
             refreshButton.setMessage(refreshText());
         }
     }
@@ -418,7 +432,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
         actionButton.setWidth(bw / 2 - 2);
 
         actionButton.setMessage(deactivateText());
-        actionButton.active = activeClaim;
+        actionButton.active = activeClaim && !isClaimActionOnCooldown();
         actionButton.setFGColor(COLOR_WHITE);
     }
 
@@ -463,8 +477,8 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private void sendRefresh() {
         if (!menu.isClaimActive() || !menu.isOnShip()) return;
         PacketDistributor.sendToServer(new RefreshClaimPacket(menu.getCenter()));
+        disableClaimActions();
         refreshSubmitted = true;
-        refreshButton.active = false;
         refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.updated"));
     }
 
@@ -475,14 +489,23 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private void sendActivate() {
         if (menu.isClaimActive() || !menu.isOnShip()) return;
         PacketDistributor.sendToServer(new ActivateClaimPacket(menu.getCenter()));
-        refreshButton.active = false;
-        actionButton.active = false;
+        disableClaimActions();
     }
 
     private void sendDeactivate() {
         if (!menu.isClaimActive()) return;
         PacketDistributor.sendToServer(new DeactivateClaimPacket(menu.getCenter()));
+        disableClaimActions();
+    }
+
+    private void disableClaimActions() {
+        claimActionCooldownEndMillis = System.currentTimeMillis() + CLAIM_ACTION_COOLDOWN_MILLIS;
+        refreshButton.active = false;
         actionButton.active = false;
+    }
+
+    private boolean isClaimActionOnCooldown() {
+        return System.currentTimeMillis() < claimActionCooldownEndMillis;
     }
 
     private boolean blocksKnownAndOk() {
