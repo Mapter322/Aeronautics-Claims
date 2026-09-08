@@ -6,9 +6,12 @@ import com.mapter.aeroclaims.claim.AeroClaimManager.TransferResult;
 import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.claim.ClaimPreviewManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
+import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.util.TeamColorHelper;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -53,92 +56,103 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 return;
             }
 
-            int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
-            boolean hasClaims = maxSize > 0;
-
             boolean deactivateOnOverflow = AeroClaimsConfig.DEACTIVATE_ON_OVERFLOW.get();
-            int blockCount;
-
-            if (hasClaims) {
-                blockCount = ClaimManager.recountShipBlocks(level, msg.center, deactivateOnOverflow);
-            } else {
-                blockCount = ClaimManager.countShipBlocksExact(level, msg.center);
-            }
-
-            if (blockCount < 0) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_failed"));
-                sync(player, msg.center, claim, level, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN);
-                return;
-            }
+            int blockCount = ClaimManager.countShipBlocksExact(level, msg.center);
+            ClaimPreviewManager.invalidate(level, msg.center);
 
             int blocksPerClaim = AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
             int neededClaims = (blockCount + blocksPerClaim - 1) / blocksPerClaim;
-            int currentClaims = AeroClaimSavedData.get(level).getClaimsForBlock(msg.center);
+            AeroClaimSavedData data = AeroClaimSavedData.get(level);
+            int currentClaims = data.getClaimsForBlock(msg.center);
             int delta = neededClaims - currentClaims;
             boolean useProvider = ClaimManager.isForceloadActive(claim) && AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
-            if (delta > 0) {
-                AeroClaimSavedData data = AeroClaimSavedData.get(level);
 
+            if (delta > 0) {
                 int freeSlots = data.getFreeSlots(player.getUUID());
                 int claimNeed = Math.max(0, delta - freeSlots);
                 if (claimNeed > 0) {
                     TransferResult r = AeroClaimManager.transferFromProvider(player, claimNeed);
-                    if (r == TransferResult.SUCCESS) freeSlots += claimNeed;
-                }
-                int applied = Math.min(delta, freeSlots);
-                if (applied > 0) {
-                    AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, applied);
-
-                    if (useProvider) {
-                        int freeFl = data.getFreeForceloads(player.getUUID());
-                        int flNeed = Math.max(0, applied - freeFl);
-                        if (flNeed > 0) {
-                            TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flNeed);
-                            if (r == TransferResult.SUCCESS) freeFl += flNeed;
-                        }
-                        AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center,
-                                Math.min(applied, freeFl));
+                    if (r != TransferResult.SUCCESS) {
+                        handleInsufficientClaims(player, level, msg.center, claim, blockCount,
+                                currentClaims, deactivateOnOverflow);
+                        return;
                     }
+                    freeSlots += claimNeed;
+                }
+
+                if (freeSlots < delta) {
+                    if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
+                    handleInsufficientClaims(player, level, msg.center, claim, blockCount,
+                            currentClaims, deactivateOnOverflow);
+                    return;
+                }
+
+                if (useProvider) {
+                    int freeForceloads = data.getFreeForceloads(player.getUUID());
+                    int forceloadNeed = Math.max(0, delta - freeForceloads);
+                    if (forceloadNeed > 0) {
+                        TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, forceloadNeed);
+                        if (r != TransferResult.SUCCESS) {
+                            if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
+                            handleInsufficientClaims(player, level, msg.center, claim, blockCount,
+                                    currentClaims, deactivateOnOverflow);
+                            return;
+                        }
+                    }
+                }
+
+                if (!AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta)) {
+                    if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
+                    handleInsufficientClaims(player, level, msg.center, claim, blockCount,
+                            currentClaims, deactivateOnOverflow);
+                    return;
+                }
+                if (useProvider) {
+                    AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
                 }
             } else if (delta < 0) {
                 AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
-                AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
+                if (useProvider) AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
             }
 
-            if (useProvider && delta <= 0) {
-                AeroClaimSavedData data = AeroClaimSavedData.get(level);
-                int currentFl = data.getForceloadsForBlock(msg.center);
-                int flDelta = neededClaims - currentFl;
-                if (flDelta > 0) {
-                    int freeFl = data.getFreeForceloads(player.getUUID());
-                    int flNeed = Math.max(0, flDelta - freeFl);
-                    if (flNeed > 0) {
-                        TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flNeed);
-                        if (r == TransferResult.SUCCESS) {
-                            AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta);
-                        }
-                    } else {
-                        AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta);
-                    }
-                }
-            }
-
-            maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
-
-            if (hasClaims && blockCount > maxSize) {
-                String msgKey = deactivateOnOverflow
-                        ? "message.aeroclaims.sublevel_too_large_deactivated"
-                        : "message.aeroclaims.sublevel_too_large";
-                player.sendSystemMessage(Component.translatable(msgKey, blockCount, maxSize));
-            } else if (hasClaims) {
-                player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
+            if (!ClaimManager.refreshClaim(level, msg.center)) {
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_failed"));
+                sync(player, msg.center, claim, level, blockCount);
+                return;
             }
 
             cacheShipStructure(level, msg.center, blockCount);
 
             Claim updated = ClaimManager.getClaimByCenter(level, msg.center);
+            player.sendSystemMessage(Component.translatable("message.aeroclaims.claim_recounted"));
+            if (updated != null) {
+                int teamColor = TeamColorHelper.getTeamColor(player, updated.getOwner());
+                PacketDistributor.sendToPlayer(player,
+                        new ClaimRefreshParticlesPacket(new java.util.ArrayList<>(updated.getClaimedBlocks()), teamColor));
+            }
             sync(player, msg.center, updated != null ? updated : claim, level, blockCount);
         });
+    }
+
+    private static void handleInsufficientClaims(ServerPlayer player, ServerLevel level, BlockPos center,
+                                                 Claim claim, int blockCount, int currentClaims,
+                                                 boolean deactivateOnOverflow) {
+        int currentLimit = currentClaims * AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
+        if (deactivateOnOverflow && blockCount > currentLimit) {
+            AeroClaimManager.releaseAllClaimsForBlock(level, player, center);
+            if (AeroClaimsConfig.isProviderSlotsForceload()) {
+                AeroClaimManager.releaseAllForceloadsForBlock(level, player, center);
+            }
+            SubLevelTicketManager.sync(level, claim, claim.getShipId(), false);
+            ClaimManager.deactivateClaim(level, center);
+            player.sendSystemMessage(Component.translatable(
+                    "message.aeroclaims.sublevel_too_large_deactivated", blockCount, currentLimit));
+        } else {
+            player.sendSystemMessage(Component.translatable(
+                    "message.aeroclaims.sublevel_too_large", blockCount, currentLimit));
+        }
+
+        sync(player, center, claim, level, blockCount);
     }
 
     private static boolean hasDuplicateClaimBlock(ServerLevel level, BlockPos center) {

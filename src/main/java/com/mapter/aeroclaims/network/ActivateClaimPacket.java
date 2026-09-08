@@ -6,6 +6,7 @@ import com.mapter.aeroclaims.claim.AeroClaimManager.TransferResult;
 import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.claim.ClaimPreviewManager;
 import com.mapter.aeroclaims.claim.ClaimSavedData;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
@@ -56,17 +57,8 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
             AeroClaimSavedData data = AeroClaimSavedData.get(level);
             int blocksPerClaim = AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
             int currentClaims = data.getClaimsForBlock(msg.center);
-            Integer cachedCount = data.getCachedShipBlockCount(msg.center);
-
-            int blockCount;
-            if (cachedCount != null) {
-                blockCount = cachedCount;
-            } else if (currentClaims > 0) {
-                int currentLimit = currentClaims * blocksPerClaim;
-                blockCount = ClaimManager.countShipBlocks(level, msg.center, currentLimit + 1);
-            } else {
-                blockCount = ClaimManager.countShipBlocksExact(level, msg.center);
-            }
+            int blockCount = ClaimManager.countShipBlocksExact(level, msg.center);
+            ClaimPreviewManager.invalidate(level, msg.center);
 
             int neededClaims = blockCount > 0
                     ? Math.max(1, (blockCount + blocksPerClaim - 1) / blocksPerClaim)
@@ -81,7 +73,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 if (claimNeed > 0) {
                     TransferResult r = AeroClaimManager.transferFromProvider(player, claimNeed);
                     if (r != TransferResult.SUCCESS) {
-                        sendTooLargeMsg(player, msg.center, level, cachedCount, currentClaims, blocksPerClaim);
+                        sendTooLargeMsg(player, msg.center, level, blockCount, currentClaims, blocksPerClaim);
                         sync(player, msg.center, claim, level, blockCount);
                         return;
                     }
@@ -94,7 +86,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                         TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flNeed);
                         if (r != TransferResult.SUCCESS) {
                             if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
-                            sendTooLargeMsg(player, msg.center, level, cachedCount, currentClaims, blocksPerClaim);
+                            sendTooLargeMsg(player, msg.center, level, blockCount, currentClaims, blocksPerClaim);
                             sync(player, msg.center, claim, level, blockCount);
                             return;
                         }
@@ -171,9 +163,7 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
     }
 
     private static void sendTooLargeMsg(ServerPlayer player, BlockPos center, ServerLevel level,
-                                         Integer cachedCount, int currentClaims, int blocksPerClaim) {
-        int exact = cachedCount != null ? cachedCount
-                : ClaimManager.countShipBlocksExact(level, center);
+                                         int exact, int currentClaims, int blocksPerClaim) {
         player.sendSystemMessage(Component.translatable(
                 "message.aeroclaims.sublevel_too_large", exact,
                 currentClaims * blocksPerClaim));

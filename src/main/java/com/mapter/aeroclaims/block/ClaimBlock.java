@@ -5,6 +5,7 @@ import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.claim.ClaimPreviewManager;
 import com.mapter.aeroclaims.network.SyncClaimStatePacket;
 import com.mapter.aeroclaims.screen.ClaimBlockMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
@@ -159,8 +160,9 @@ public class ClaimBlock extends BaseEntityBlock {
         int claimsForBlock = data.getClaimsForBlock(pos);
         int freeSlots = data.getFreeSlots(serverPlayer.getUUID());
 
-        Integer cachedCount = data.getCachedShipBlockCount(pos);
-        int initialBlockCount = (cachedCount != null) ? cachedCount : SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
+        int initialBlockCount = onShip
+                ? ClaimPreviewManager.getShipBlockCount(serverLevel, pos)
+                : SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
 
         final Claim finalClaim = claim;
         serverPlayer.openMenu(getMenuProvider(state, level, pos), buf -> {

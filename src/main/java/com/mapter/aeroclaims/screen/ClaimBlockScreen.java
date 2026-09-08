@@ -15,15 +15,11 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
 
@@ -50,10 +46,6 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private static final int COLOR_CB_BORDER = 0xFFAAAAAA;
     private static final int COLOR_CB_CHECK  = 0xFF55FF55;
 
-    private static final long REFRESH_COOLDOWN_MS = 10_000L;
-    private static final Map<BlockPos, Long>    refreshCooldowns       = new HashMap<>();
-    private static final Map<BlockPos, Boolean> activateUsedInCooldown = new HashMap<>();
-
     private static final int BTN_X    = 10;
     private static final int BTN_H    = 18;
     private static final int GAP      = 10;
@@ -73,8 +65,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     private boolean editing;
     private String editOriginal;
     private int shipNameY, shipNameH;
-
-    private boolean inActivateMode = false;
+    private boolean refreshSubmitted;
 
     private boolean forceloadCheckboxVisible = false;
     private int forceloadCheckboxX0, forceloadCheckboxY0, forceloadCheckboxX1, forceloadCheckboxY1;
@@ -101,7 +92,7 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
 
         int rowY = INFO_Y + infoPanelHeight() + GAP;
 
-        refreshButton = Button.builder(refreshText(), b -> sendRefresh())
+        refreshButton = Button.builder(refreshText(), b -> sendPrimaryAction())
                 .bounds(leftPos + BTN_X, topPos + rowY, halfW, BTN_H).build();
         actionButton  = Button.builder(activateText(), b -> sendActionButtonClick())
                 .bounds(leftPos + BTN_X + halfW + 4, topPos + rowY, halfW, BTN_H).build();
@@ -311,9 +302,6 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
             renameBox.renderWidget(g, mx, my, partialTick);
         }
 
-        if (!refreshButton.active && menu.isOnShip() && !onCooldown()) {
-            updateRefreshButton();
-        }
         if (menu.isOnShip()) {
             updateActionButton();
         }
@@ -407,12 +395,16 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     }
 
     private void updateRefreshButton() {
-        if (!menu.isOnShip()) {
+        refreshButton.setFGColor(COLOR_WHITE);
+        if (refreshSubmitted) {
+            refreshButton.active = false;
+            refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.updated"));
+        } else if (!menu.isOnShip()) {
             refreshButton.active = false;
             refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.not_on_sublevel"));
-        } else if (onCooldown()) {
-            refreshButton.active = false;
-            refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
+        } else if (!menu.isClaimActive()) {
+            refreshButton.active = blocksKnownAndOk();
+            refreshButton.setMessage(activateText());
         } else {
             refreshButton.active = true;
             refreshButton.setMessage(refreshText());
@@ -420,23 +412,14 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
     }
 
     private void updateActionButton() {
-        if (!menu.isOnShip()) {
-            inActivateMode = false;
-            actionButton.active = false;
-            actionButton.setMessage(activateText());
-            return;
-        }
+        int bw = imageWidth - BTN_X * 2;
+        boolean activeClaim = menu.isClaimActive();
+        actionButton.setX(leftPos + BTN_X + bw / 2 + 2);
+        actionButton.setWidth(bw / 2 - 2);
 
-        if (onCooldown()) {
-            inActivateMode = true;
-            actionButton.setMessage(activateText());
-            boolean alreadyUsed = Boolean.TRUE.equals(activateUsedInCooldown.get(menu.getCenter()));
-            actionButton.active = !alreadyUsed && blocksKnownAndOk();
-        } else {
-            inActivateMode = false;
-            actionButton.setMessage(deactivateText());
-            actionButton.active = menu.isClaimActive();
-        }
+        actionButton.setMessage(deactivateText());
+        actionButton.active = activeClaim;
+        actionButton.setFGColor(COLOR_WHITE);
     }
 
     private int currentAccessLevel() {
@@ -469,39 +452,37 @@ public class ClaimBlockScreen extends AbstractContainerScreen<ClaimBlockMenu> {
                 menu.getCenter(), menu.isAllowParty(), menu.isAllowAllies(), menu.isAllowOthers()));
     }
 
+    private void sendPrimaryAction() {
+        if (menu.isClaimActive()) {
+            sendRefresh();
+        } else {
+            sendActivate();
+        }
+    }
+
     private void sendRefresh() {
-        if (onCooldown()) return;
+        if (!menu.isClaimActive() || !menu.isOnShip()) return;
         PacketDistributor.sendToServer(new RefreshClaimPacket(menu.getCenter()));
-        refreshCooldowns.put(menu.getCenter(), System.currentTimeMillis());
-        activateUsedInCooldown.put(menu.getCenter(), false);
+        refreshSubmitted = true;
         refreshButton.active = false;
-        refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.refresh_wait"));
-        inActivateMode = true;
-        actionButton.setMessage(activateText());
-        actionButton.active = blocksKnownAndOk();
+        refreshButton.setMessage(Component.translatable("screen.aeroclaims.claim_settings.updated"));
     }
 
     private void sendActionButtonClick() {
-        if (inActivateMode) sendActivate();
-        else                sendDeactivate();
+        sendDeactivate();
     }
 
     private void sendActivate() {
-        if (!onCooldown()) return;
+        if (menu.isClaimActive() || !menu.isOnShip()) return;
         PacketDistributor.sendToServer(new ActivateClaimPacket(menu.getCenter()));
-        activateUsedInCooldown.put(menu.getCenter(), true);
+        refreshButton.active = false;
         actionButton.active = false;
     }
 
     private void sendDeactivate() {
-        if (onCooldown()) return;
+        if (!menu.isClaimActive()) return;
         PacketDistributor.sendToServer(new DeactivateClaimPacket(menu.getCenter()));
         actionButton.active = false;
-    }
-
-    private boolean onCooldown() {
-        Long last = refreshCooldowns.get(menu.getCenter());
-        return last != null && System.currentTimeMillis() - last < REFRESH_COOLDOWN_MS;
     }
 
     private boolean blocksKnownAndOk() {

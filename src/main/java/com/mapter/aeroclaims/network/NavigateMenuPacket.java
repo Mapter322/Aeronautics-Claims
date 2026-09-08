@@ -7,6 +7,7 @@ import com.mapter.aeroclaims.claim.AeroClaimSavedData;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimBriefInfo;
 import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.claim.ClaimPreviewManager;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.screen.AeroClaimsMenu;
 import com.mapter.aeroclaims.screen.ClaimBlockMenu;
@@ -178,8 +179,9 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
         int claimsForBlock      = data.getClaimsForBlock(pos);
         int freeSlots           = data.getFreeSlots(player.getUUID());
         int forceloadsForBlock  = data.getForceloadsForBlock(pos);
-        Integer cachedCount   = data.getCachedShipBlockCount(pos);
-        int initialBlockCount = (cachedCount != null) ? cachedCount : SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
+        int initialBlockCount = onShip
+                ? ClaimPreviewManager.getShipBlockCount(level, pos)
+                : SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN;
         String finalShipName  = shipName != null ? shipName : "";
 
         player.openMenu(
