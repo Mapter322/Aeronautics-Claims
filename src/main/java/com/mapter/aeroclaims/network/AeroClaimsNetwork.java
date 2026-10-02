@@ -9,7 +9,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 @EventBusSubscriber(modid = Aeroclaims.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class AeroClaimsNetwork {
 
-    private static final String PROTOCOL_VERSION = "12";
+    private static final String PROTOCOL_VERSION = "13";
 
     @SubscribeEvent
     public static void register(final RegisterPayloadHandlersEvent event) {
@@ -19,11 +19,10 @@ public class AeroClaimsNetwork {
         registrar.playToServer(RefreshClaimPacket.TYPE, RefreshClaimPacket.STREAM_CODEC, RefreshClaimPacket::handle);
         registrar.playToServer(ActivateClaimPacket.TYPE, ActivateClaimPacket.STREAM_CODEC, ActivateClaimPacket::handle);
         registrar.playToServer(DeactivateClaimPacket.TYPE, DeactivateClaimPacket.STREAM_CODEC, DeactivateClaimPacket::handle);
-        registrar.playToServer(RegisterShipPacket.TYPE, RegisterShipPacket.STREAM_CODEC, RegisterShipPacket::handle);
         registrar.playToServer(AdjustBlockClaimsPacket.TYPE, AdjustBlockClaimsPacket.STREAM_CODEC, AdjustBlockClaimsPacket::handle);
         registrar.playToServer(RenameShipPacket.TYPE, RenameShipPacket.STREAM_CODEC, RenameShipPacket::handle);
         registrar.playToServer(TeleportToSublevelPacket.TYPE, TeleportToSublevelPacket.STREAM_CODEC, TeleportToSublevelPacket::handle);
-        registrar.playBidirectional(SyncClaimStatePacket.TYPE, SyncClaimStatePacket.STREAM_CODEC, SyncClaimStatePacket::handle);
+        registrar.playToClient(SyncClaimStatePacket.TYPE, SyncClaimStatePacket.STREAM_CODEC, SyncClaimStatePacket::handle);
         registrar.playToClient(ClaimRefreshParticlesPacket.TYPE, ClaimRefreshParticlesPacket.STREAM_CODEC, ClaimRefreshParticlesPacket::handle);
         registrar.playToServer(NavigateMenuPacket.TYPE, NavigateMenuPacket.STREAM_CODEC, NavigateMenuPacket::handle);
         registrar.playToClient(SyncMenuStatsPacket.TYPE, SyncMenuStatsPacket.STREAM_CODEC, SyncMenuStatsPacket::handle);
