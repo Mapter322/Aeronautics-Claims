@@ -57,12 +57,14 @@
   "screen.aeroclaims.claim_settings.access.party_ally": "§bParty + Ally",
   "screen.aeroclaims.claim_settings.access.all": "§eAll",
   "screen.aeroclaims.claim_settings.access.nobody": "§fNobody",
-  "commands.aeroclaims.admin.refresh.all.done": "§eRefresh complete. §arefreshed: %s, §cfailed: %s, §etotal: %s",
-  "commands.aeroclaims.admin.refresh.player.done": "§aRefreshed claims for %s. Refreshed: %s, failed: %s, total: %s",
+  "commands.aeroclaims.admin.refresh.all.done": "§eRefresh complete. §arefreshed: %s §7(loaded: %s)§a, §cfailed: %s, §etotal: %s",
+  "commands.aeroclaims.admin.refresh.player.done": "§aRefreshed claims for %s. Refreshed: %s §7(loaded: %s)§a, failed: %s, total: %s",
   "commands.aeroclaims.admin.refresh.no_claims": "§eNo claims found for %s",
   "commands.aeroclaims.admin.refresh.invalid_sublevel_uuid": "§cInvalid sub-level UUID: %s",
   "commands.aeroclaims.admin.refresh.sublevel_not_found": "§cNo claim found for sub-level %s",
   "commands.aeroclaims.admin.refresh.sublevel.done": "§aBlocks recounted for sub-level: %s",
+  "commands.aeroclaims.admin.refresh.sublevel.done_temp_loaded": "§aBlocks recounted for sub-level: %s §e(loaded on demand)§a.",
+  "commands.aeroclaims.admin.refresh.sublevel.done_already_loaded": "§aBlocks recounted for sub-level: %s §b(already in memory / forceloaded)§a.",
   "commands.aeroclaims.admin.refresh.sublevel_failed": "§cFailed to refresh sub-level %s.",
   "commands.aeroclaims.sublevels.delete.disabled": "§cThis command is disabled in config. Enable 'enableClearCommand' to use it.",
   "commands.aeroclaims.sublevels.delete.none": "There are no unclaimed sublevels",
@@ -94,5 +96,5 @@
   "commands.aeroclaims.teleport.disabled": "Sublevel teleportation is disabled",
   "commands.aeroclaims.teleport.cooldown": "You can teleport again in %s seconds",
   "commands.aeroclaims.teleport.position_unknown": "The sublevel position is unknown.",
-  "commands.aeroclaims.sublevels.repair.done": "Checked %s loaded sublevels, repaired %s claim blocks."
+  "commands.aeroclaims.sublevels.repair.done": "Checked %s sublevels (%s loaded on demand), repaired %s claim blocks."
 }

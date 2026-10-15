@@ -56,12 +56,14 @@
   "screen.aeroclaims.claim_settings.access.party_ally": "§bГруппа + Союзники",
   "screen.aeroclaims.claim_settings.access.all": "§eВсе",
   "screen.aeroclaims.claim_settings.access.nobody": "§fНикто",
-  "commands.aeroclaims.admin.refresh.all.done": "§eОбновление приватов завершено. §aобновлено: %s, §cошибок: %s, §eвсего: %s",
-  "commands.aeroclaims.admin.refresh.player.done": "§aОбновлены приваты игрока %s. Обновлено: %s, ошибок: %s, всего: %s",
+  "commands.aeroclaims.admin.refresh.all.done": "§eОбновление приватов завершено. §aобновлено: %s §7(подгружено: %s)§a, §cошибок: %s, §eвсего: %s",
+  "commands.aeroclaims.admin.refresh.player.done": "§aОбновлены приваты игрока %s. Обновлено: %s §7(подгружено: %s)§a, ошибок: %s, всего: %s",
   "commands.aeroclaims.admin.refresh.no_claims": "§eПриваты для %s не найдены",
   "commands.aeroclaims.admin.refresh.invalid_sublevel_uuid": "§cНеверный UUID сублевела: %s",
-  "commands.aeroclaims.admin.refresh.sublevel_not_found": "§Приват для сублевела %s не найден",
+  "commands.aeroclaims.admin.refresh.sublevel_not_found": "§cПриват для сублевела %s не найден",
   "commands.aeroclaims.admin.refresh.sublevel.done": "§aБлоки пересчитаны для сублевела: %s",
+  "commands.aeroclaims.admin.refresh.sublevel.done_temp_loaded": "§aБлоки пересчитаны для сублевела: %s §e(был временно подгружен)§a.",
+  "commands.aeroclaims.admin.refresh.sublevel.done_already_loaded": "§aБлоки пересчитаны для сублевела: %s §b(уже был в памяти / форслоаднут)§a.",
   "commands.aeroclaims.admin.refresh.sublevel_failed": "§cНе удалось обновить сублевел %s.",
   "commands.aeroclaims.sublevels.delete.disabled": "§cЭта команда отключена в конфиге. Включите 'enableClearCommand' чтобы использовать её.",
   "commands.aeroclaims.sublevels.delete.none": "Незаприваченых сублевелов нет",
@@ -94,5 +96,5 @@
   "commands.aeroclaims.teleport.disabled": "Телепортация к сублевелам отключена",
   "commands.aeroclaims.teleport.cooldown": "Следующая телепортация будет доступна через %s сек.",
   "commands.aeroclaims.teleport.position_unknown": "Позиция сублевела неизвестна.",
-  "commands.aeroclaims.sublevels.repair.done": "Проверено загруженных сублевелов: %s, восстановлено блоков привата: %s."
+  "commands.aeroclaims.sublevels.repair.done": "Проверено сублевелов: %s (подгружено: %s), восстановлено блоков привата: %s."
 }

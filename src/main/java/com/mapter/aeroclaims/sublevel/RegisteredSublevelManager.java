@@ -202,15 +202,49 @@ public class RegisteredSublevelManager {
     public static int getCount() { return registeredShips.size(); }
 
     public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName) {
-        registeredShips.put(shipId, new ShipRegistration(name, ownerUuid, ownerName));
+        ShipRegistration existing = registeredShips.get(shipId);
+        ShipRegistration reg = new ShipRegistration(name, ownerUuid, ownerName);
+        if (existing != null) {
+            reg.worldX = existing.worldX;
+            reg.worldY = existing.worldY;
+            reg.worldZ = existing.worldZ;
+            reg.blocksUsed = existing.blocksUsed;
+            reg.blocksMax = existing.blocksMax;
+        }
+        registeredShips.put(shipId, reg);
+        updatePositionForId(shipId);
     }
 
     public static void registerShip(String shipId, String name, UUID ownerUuid, String ownerName,
                                     int blocksUsed, int blocksMax) {
+        ShipRegistration existing = registeredShips.get(shipId);
         ShipRegistration reg = new ShipRegistration(name, ownerUuid, ownerName);
         reg.blocksUsed = blocksUsed;
         reg.blocksMax = blocksMax;
+        if (existing != null) {
+            reg.worldX = existing.worldX;
+            reg.worldY = existing.worldY;
+            reg.worldZ = existing.worldZ;
+        }
         registeredShips.put(shipId, reg);
+        updatePositionForId(shipId);
+    }
+
+    private static void updatePositionForId(String shipId) {
+        if (server == null) return;
+        try {
+            UUID uuid = UUID.fromString(shipId);
+            for (ServerLevel level : server.getAllLevels()) {
+                SubLevelContainer container = SubLevelContainer.getContainer(level);
+                if (container instanceof ServerSubLevelContainer serverContainer) {
+                    ServerSubLevel subLevel = (ServerSubLevel) serverContainer.getSubLevel(uuid);
+                    if (subLevel != null) {
+                        updatePositionFor(subLevel);
+                        break;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
     }
 
     public static void unregisterShip(String shipId) { registeredShips.remove(shipId); }
