@@ -37,7 +37,7 @@ public record DeactivateClaimPacket(BlockPos center) implements CustomPacketPayl
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
             if (!ClaimActionCooldown.tryAcquire(player)) return;
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = ClaimManager.getClaimLevel(player, msg.center);
             Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null || !player.getUUID().equals(claim.getOwner())) return;
 

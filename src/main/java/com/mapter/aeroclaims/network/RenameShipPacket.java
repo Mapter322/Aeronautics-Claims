@@ -14,6 +14,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -41,16 +42,17 @@ public record RenameShipPacket(BlockPos center, String newName) implements Custo
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
-            Claim claim = ClaimManager.getClaimByCenter(player.serverLevel(), msg.center);
+            ServerLevel level = ClaimManager.getClaimLevel(player, msg.center);
+            Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null) return;
 
             if (!player.getUUID().equals(claim.getOwner())) return;
 
-            AeroClaimSavedData data = AeroClaimSavedData.get(player.serverLevel());
+            AeroClaimSavedData data = AeroClaimSavedData.get(level);
             String shipId = data.getCachedShipId(msg.center);
             if (shipId == null) shipId = claim.getShipId();
             if (shipId == null) {
-                var ship = SableShipUtils.getShipAt(player.serverLevel(), msg.center);
+                var ship = SableShipUtils.getShipAt(level, msg.center);
                 shipId = SableShipUtils.getShipId(ship);
             }
             if (shipId == null) return;
@@ -65,7 +67,7 @@ public record RenameShipPacket(BlockPos center, String newName) implements Custo
             reg.name = name;
             RegisteredSublevelManager.saveNow();
 
-            var container = SubLevelContainer.getContainer(player.serverLevel());
+            var container = SubLevelContainer.getContainer(level);
             if (container == null) return;
             var subLevel = container.getSubLevel(UUID.fromString(shipId));
             if (subLevel instanceof ServerSubLevel serverSubLevel) {

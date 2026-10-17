@@ -4,12 +4,15 @@ import com.mapter.aeroclaims.block.ClaimBlock;
 import com.mapter.aeroclaims.claim.AeroClaimManager;
 import com.mapter.aeroclaims.claim.Claim;
 import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.registry.ModMenus;
 import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -17,10 +20,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class ClaimBlockMenu extends AbstractContainerMenu {
 
+    private final Inventory playerInventory;
     private final BlockPos center;
     private final UUID owner;
     private String shipName;
@@ -38,6 +43,12 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
     private boolean forceloadEnabled;
     private boolean navigatingAway = false;
     private final boolean returnToShipList;
+    @Nullable
+    private final ResourceKey<Level> targetDimension;
+
+    @Nullable
+    private AutoCloseable tempLoadSession;
+    private int tempSessionTicks = 0;
 
     public ClaimBlockMenu(int containerId, Inventory playerInventory, FriendlyByteBuf buf) {
         this(
@@ -66,7 +77,20 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
                           boolean allowParty, boolean allowAllies, boolean allowOthers,
                           int claimsForBlock, int freeSlots, int blocksPerClaim, int shipBlockCount,
                           int forceloadsForBlock, boolean forceloadEnabled, boolean returnToShipList) {
+        this(containerId, playerInventory, center, owner, shipName, onShip, claimActive,
+                allowParty, allowAllies, allowOthers, claimsForBlock, freeSlots, blocksPerClaim,
+                shipBlockCount, forceloadsForBlock, forceloadEnabled, returnToShipList, null);
+    }
+
+    public ClaimBlockMenu(int containerId, Inventory playerInventory,
+                          BlockPos center, UUID owner, String shipName,
+                          boolean onShip, boolean claimActive,
+                          boolean allowParty, boolean allowAllies, boolean allowOthers,
+                          int claimsForBlock, int freeSlots, int blocksPerClaim, int shipBlockCount,
+                          int forceloadsForBlock, boolean forceloadEnabled, boolean returnToShipList,
+                          @Nullable ResourceKey<Level> targetDimension) {
         super(ModMenus.CLAIM_SETTINGS_MENU.get(), containerId);
+        this.playerInventory = playerInventory;
         this.center = center;
         this.owner = owner;
         this.shipName = shipName;
@@ -82,6 +106,7 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
         this.forceloadsForBlock = forceloadsForBlock;
         this.forceloadEnabled = forceloadEnabled;
         this.returnToShipList = returnToShipList;
+        this.targetDimension = targetDimension;
     }
 
     public BlockPos getCenter()     { return center; }
@@ -124,9 +149,56 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
 
     public int getBlockLimit()                  { return claimsForBlock * blocksPerClaim; }
 
+    public void setTempLoadSession(@Nullable AutoCloseable session) {
+        this.tempLoadSession = session;
+    }
+
+    public boolean hasTempLoadSession() {
+        return this.tempLoadSession != null;
+    }
+
+    @Nullable
+    public ResourceKey<Level> getTargetDimension() {
+        return targetDimension;
+    }
+
+    public void closeTempLoadSession() {
+        if (tempLoadSession != null) {
+            try {
+                tempLoadSession.close();
+            } catch (Exception ignored) {}
+            tempLoadSession = null;
+        }
+    }
+
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+        if (tempLoadSession != null) {
+            tempSessionTicks++;
+            int maxTicks = AeroClaimsConfig.TEMP_LOAD_TIMEOUT_SECONDS.get() * 20;
+            if (maxTicks > 0 && tempSessionTicks >= maxTicks) {
+                closeTempLoadSession();
+                if (playerInventory != null && playerInventory.player instanceof ServerPlayer sp) {
+                    sp.sendSystemMessage(Component.translatable("message.aeroclaims.temp_load_timeout"));
+                    sp.closeContainer();
+                }
+            }
+        }
+    }
+
     @Override
     public boolean stillValid(Player player) {
         if (!player.isAlive() || !player.getUUID().equals(owner)) return false;
+        if (returnToShipList) {
+            if (player.level().isClientSide) return true;
+            ServerLevel targetLevel = (ServerLevel) player.level();
+            if (targetDimension != null && player.getServer() != null) {
+                ServerLevel dimLevel = player.getServer().getLevel(targetDimension);
+                if (dimLevel != null) targetLevel = dimLevel;
+            }
+            return targetLevel.getBlockState(center).getBlock() instanceof ClaimBlock;
+        }
         return player.level().getBlockState(center).getBlock() instanceof ClaimBlock;
     }
 
@@ -138,6 +210,10 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
         Level level = player.level();
         if (!level.isClientSide && !navigatingAway) {
             ServerLevel serverLevel = (ServerLevel) level;
+            if (targetDimension != null && player.getServer() != null) {
+                ServerLevel dimLevel = player.getServer().getLevel(targetDimension);
+                if (dimLevel != null) serverLevel = dimLevel;
+            }
 
             Claim claim = ClaimManager.getClaimByCenter(serverLevel, center);
             if (claim != null && !claim.isActive() && player.getUUID().equals(claim.getOwner())) {
@@ -147,13 +223,14 @@ public class ClaimBlockMenu extends AbstractContainerMenu {
                 if (sid != null) SubLevelTicketManager.remove(serverLevel, UUID.fromString(sid));
             }
 
-            BlockState state = level.getBlockState(center);
+            BlockState state = serverLevel.getBlockState(center);
             if (state.getBlock() instanceof ClaimBlock
                     && state.hasProperty(ClaimBlock.OPEN)
                     && state.getValue(ClaimBlock.OPEN)) {
-                level.setBlock(center, state.setValue(ClaimBlock.OPEN, false), 3);
+                serverLevel.setBlock(center, state.setValue(ClaimBlock.OPEN, false), 3);
             }
         }
+        closeTempLoadSession();
         super.removed(player);
     }
 }

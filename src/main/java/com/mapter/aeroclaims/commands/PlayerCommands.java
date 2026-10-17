@@ -79,10 +79,18 @@ public class PlayerCommands {
                     for (Map.Entry<String, String> entry : ships.entrySet()) {
                         String shipId = entry.getKey();
                         String shipName = entry.getValue();
-                        ClaimBriefInfo info = ClaimBriefInfo.ofShip(level, shipId);
+                        Claim claim = null;
+                        ServerLevel shipLevel = null;
+                        for (ServerLevel lvl : player.server.getAllLevels()) {
+                            claim = ClaimManager.getClaimByShipId(lvl, shipId);
+                            if (claim != null) {
+                                shipLevel = lvl;
+                                break;
+                            }
+                        }
+                        ClaimBriefInfo info = ClaimBriefInfo.ofShip(shipLevel != null ? shipLevel : level, shipId);
                         RegisteredSublevelManager.ShipRegistration reg = RegisteredSublevelManager.getRegistration(shipId);
-                        Claim claim = ClaimManager.getClaimByShipId(level, shipId);
-                        boolean loaded = claim != null && SableShipUtils.isOnShip(level, claim.getCenter());
+                        boolean loaded = claim != null && shipLevel != null && SableShipUtils.isOnShip(shipLevel, claim.getCenter());
                         buf.writeUtf(shipName);
                         buf.writeUtf(shipId);
                         buf.writeBoolean(info != null && info.isActive());

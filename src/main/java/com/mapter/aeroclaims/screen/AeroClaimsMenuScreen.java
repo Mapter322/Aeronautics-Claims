@@ -203,10 +203,10 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.claims", ship.claims())
                 .withStyle(ChatFormatting.GRAY));
         lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.forceload_status",
-                Component.translatable(ship.loaded()
+                Component.translatable(ship.forceloadEnabled()
                         ? "screen.aeroclaims.claim_settings.status.active"
                         : "screen.aeroclaims.claim_settings.status.disabled"))
-                .withStyle(ship.loaded() ? ChatFormatting.GRAY : ChatFormatting.RED));
+                .withStyle(ship.forceloadEnabled() ? ChatFormatting.GREEN : ChatFormatting.GRAY));
         if (ship.blockCount() >= 0) {
             lines.add(Component.translatable("screen.aeroclaims.menu.tooltip.blocks",
                     ship.blockCount(), ship.blockLimit())
@@ -233,26 +233,25 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         double relMx = mx - leftPos;
         double relMy = my - topPos;
 
-
         if (relMx >= CLOSE_X && relMx < CLOSE_X + CLOSE_SIZE
                 && relMy >= CLOSE_Y && relMy < CLOSE_Y + CLOSE_SIZE) {
             onClose();
             return true;
         }
 
-        if (button == 0 || button == 1) {
-            int listX = leftPos + BTN_X;
-            int listY = topPos + LIST_Y;
-            int bw = imageWidth - BTN_X * 2;
-            if (mx >= listX && mx < listX + bw && my >= listY && my < listY + LIST_H) {
-                int relY = (int) my - listY - PAD + scrollOffset;
-                int index = relY / ENTRY_H;
-                List<AeroClaimsMenu.ShipEntry> ships = menu.getShips();
-                if (index >= 0 && index < ships.size()) {
-                    AeroClaimsMenu.ShipEntry ship = ships.get(index);
-                    openContextMenuForShip(ship, (int) mx, (int) my);
-                    return true;
-                }
+        int listX = leftPos + BTN_X;
+        int listY = topPos + LIST_Y;
+        int bw = imageWidth - BTN_X * 2;
+
+        List<AeroClaimsMenu.ShipEntry> ships = menu.getShips();
+        for (int i = 0; i < ships.size(); i++) {
+            int entryY = listY + PAD + i * ENTRY_H - scrollOffset;
+            if (entryY + ENTRY_H < listY || entryY > listY + LIST_H) continue;
+
+            if (mx >= listX && mx < listX + bw
+                    && my >= Math.max(entryY, listY) && my < Math.min(entryY + ENTRY_H, listY + LIST_H)) {
+                openContextMenuForShip(ships.get(i), (int) mx, (int) my);
+                return true;
             }
         }
 
@@ -271,7 +270,7 @@ public class AeroClaimsMenuScreen extends AbstractContainerScreen<AeroClaimsMenu
         contextMenu.addItem("screen.aeroclaims.menu.context.open_menu", () -> {
             CursorHelper.saveCursor();
             PacketDistributor.sendToServer(NavigateMenuPacket.openClaimForShip(ship.shipId()));
-        }, ship.loaded(), true);
+        }, true, true);
         contextMenu.addItem("screen.aeroclaims.menu.context.teleport", () ->
                 PacketDistributor.sendToServer(new TeleportToSublevelPacket(ship.shipId())),
                 AeroClaimsConfig.TELEPORT_ENABLE.get());

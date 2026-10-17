@@ -13,6 +13,7 @@ import com.mapter.aeroclaims.screen.AeroClaimsMenu;
 import com.mapter.aeroclaims.screen.ClaimBlockMenu;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.SublevelLoadService;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -102,10 +103,18 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                     for (Map.Entry<String, String> entry : ships.entrySet()) {
                         String shipId   = entry.getKey();
                         String shipName = entry.getValue();
-                        ClaimBriefInfo info = ClaimBriefInfo.ofShip(level, shipId);
+                        Claim claim = null;
+                        ServerLevel shipLevel = null;
+                        for (ServerLevel lvl : player.server.getAllLevels()) {
+                            claim = ClaimManager.getClaimByShipId(lvl, shipId);
+                            if (claim != null) {
+                                shipLevel = lvl;
+                                break;
+                            }
+                        }
+                        ClaimBriefInfo info = ClaimBriefInfo.ofShip(shipLevel != null ? shipLevel : level, shipId);
                         RegisteredSublevelManager.ShipRegistration reg = RegisteredSublevelManager.getRegistration(shipId);
-                        Claim claim = ClaimManager.getClaimByShipId(level, shipId);
-                        boolean loaded = claim != null && SableShipUtils.isOnShip(level, claim.getCenter());
+                        boolean loaded = claim != null && shipLevel != null && SableShipUtils.isOnShip(shipLevel, claim.getCenter());
                         buf.writeUtf(shipName);
                         buf.writeUtf(shipId);
                         buf.writeBoolean(info != null && info.isActive());
@@ -131,20 +140,34 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
     }
 
     private static void handleReturnToClaim(ServerPlayer player, BlockPos pos) {
-        ServerLevel level = player.serverLevel();
-        Claim claim = ClaimManager.getClaimByCenter(level, pos);
+        Claim claim = null;
+        ServerLevel targetLevel = null;
+        for (ServerLevel lvl : player.server.getAllLevels()) {
+            claim = ClaimManager.getClaimByCenter(lvl, pos);
+            if (claim != null) {
+                targetLevel = lvl;
+                break;
+            }
+        }
 
         if (claim == null || !player.getUUID().equals(claim.getOwner())) {
             player.closeContainer();
             return;
         }
 
-        openClaimBlockMenu(player, level, pos, claim, false);
+        openClaimBlockMenu(player, targetLevel, pos, claim, false, null);
     }
 
     private static void handleOpenClaimForShip(ServerPlayer player, String shipId) {
-        ServerLevel level = player.serverLevel();
-        Claim claim = ClaimManager.getClaimByShipId(level, shipId);
+        Claim claim = null;
+        ServerLevel targetLevel = null;
+        for (ServerLevel lvl : player.server.getAllLevels()) {
+            claim = ClaimManager.getClaimByShipId(lvl, shipId);
+            if (claim != null) {
+                targetLevel = lvl;
+                break;
+            }
+        }
 
         if (claim == null || !player.getUUID().equals(claim.getOwner())) {
             player.closeContainer();
@@ -152,16 +175,24 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
         }
 
         BlockPos pos = claim.getCenter();
-        if (!SableShipUtils.isOnShip(level, pos)) {
-            player.sendSystemMessage(Component.translatable("message.aeroclaims.sublevel_not_loaded"));
-            return;
+        boolean alreadyLoaded = SableShipUtils.isOnShip(targetLevel, pos);
+        SublevelLoadService.SublevelLoadSession tempSession = null;
+
+        if (!alreadyLoaded) {
+            tempSession = SublevelLoadService.loadTemporarily(targetLevel, shipId, pos);
+            if (!tempSession.isLoaded() || !SableShipUtils.isOnShip(targetLevel, pos)) {
+                if (tempSession != null) tempSession.close();
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.sublevel_not_loaded"));
+                return;
+            }
         }
 
-        openClaimBlockMenu(player, level, pos, claim, true);
+        openClaimBlockMenu(player, targetLevel, pos, claim, true, tempSession);
     }
 
     private static void openClaimBlockMenu(ServerPlayer player, ServerLevel level, BlockPos pos, Claim claim,
-                                            boolean returnToShipList) {
+                                            boolean returnToShipList,
+                                            @Nullable SublevelLoadService.SublevelLoadSession tempLoadSession) {
         BlockState state = level.getBlockState(pos);
         if (state.getBlock() instanceof ClaimBlock
                 && state.hasProperty(ClaimBlock.OPEN)
@@ -186,12 +217,19 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
 
         player.openMenu(
                 new SimpleMenuProvider(
-                        (id, inv, p) -> new ClaimBlockMenu(
-                                id, inv, pos, claim.getOwner(), finalShipName,
-                                onShip, claim.isActive(),
-                                claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
-                                claimsForBlock, freeSlots, AeroClaimsConfig.BLOCKS_PER_CLAIM.get(), initialBlockCount,
-                                forceloadsForBlock, ClaimManager.isForceloadActive(claim), returnToShipList),
+                        (id, inv, p) -> {
+                            ClaimBlockMenu menu = new ClaimBlockMenu(
+                                    id, inv, pos, claim.getOwner(), finalShipName,
+                                    onShip, claim.isActive(),
+                                    claim.isAllowParty(), claim.isAllowAllies(), claim.isAllowOthers(),
+                                    claimsForBlock, freeSlots, AeroClaimsConfig.BLOCKS_PER_CLAIM.get(), initialBlockCount,
+                                    forceloadsForBlock, ClaimManager.isForceloadActive(claim), returnToShipList,
+                                    level.dimension());
+                            if (tempLoadSession != null) {
+                                menu.setTempLoadSession(tempLoadSession);
+                            }
+                            return menu;
+                        },
                         Component.translatable("screen.aeroclaims.claim_settings.title")),
                 buf -> {
                     buf.writeBlockPos(pos);
@@ -210,5 +248,9 @@ public record NavigateMenuPacket(Direction direction, Optional<BlockPos> claimPo
                     buf.writeBoolean(ClaimManager.isForceloadActive(claim));
                     buf.writeBoolean(returnToShipList);
                 });
+
+        if (tempLoadSession != null && !(player.containerMenu instanceof ClaimBlockMenu cbm && cbm.hasTempLoadSession())) {
+            tempLoadSession.close();
+        }
     }
 }

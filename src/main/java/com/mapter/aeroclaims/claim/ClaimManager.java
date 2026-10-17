@@ -8,6 +8,7 @@ import com.mapter.aeroclaims.permission.OpacPermissionResolver;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Blocks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -172,6 +173,24 @@ public class ClaimManager {
     public static Claim getClaimByShipId(ServerLevel level, String shipId) {
         if (shipId == null) return null;
         return findClaim(level, claim -> shipId.equals(claim.getShipId()));
+    }
+
+    public static ServerLevel getClaimLevel(ServerPlayer player, BlockPos center) {
+        if (player.containerMenu instanceof com.mapter.aeroclaims.screen.ClaimBlockMenu menu && menu.getTargetDimension() != null) {
+            ServerLevel lvl = player.server.getLevel(menu.getTargetDimension());
+            if (lvl != null && getClaimByCenter(lvl, center) != null) {
+                return lvl;
+            }
+        }
+        if (getClaimByCenter(player.serverLevel(), center) != null) {
+            return player.serverLevel();
+        }
+        for (ServerLevel lvl : player.server.getAllLevels()) {
+            if (getClaimByCenter(lvl, center) != null) {
+                return lvl;
+            }
+        }
+        return player.serverLevel();
     }
 
     public static int countShipBlocks(ServerLevel level, BlockPos start, int hardLimit) {

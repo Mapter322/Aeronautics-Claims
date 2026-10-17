@@ -10,6 +10,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
@@ -34,7 +35,8 @@ public record UpdateClaimSettingsPacket(BlockPos center, boolean allowParty, boo
             if (!(context.player() instanceof ServerPlayer player))
                 return;
 
-            Claim claim = ClaimManager.getClaimByCenter(player.serverLevel(), msg.center);
+            ServerLevel level = ClaimManager.getClaimLevel(player, msg.center);
+            Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null)
                 return;
 
@@ -44,7 +46,7 @@ public record UpdateClaimSettingsPacket(BlockPos center, boolean allowParty, boo
             claim.setAllowParty(msg.allowParty);
             claim.setAllowAllies(msg.allowAllies);
             claim.setAllowOthers(msg.allowOthers);
-            ClaimSavedData.get(player.serverLevel()).setDirty();
+            ClaimSavedData.get(level).setDirty();
         });
     }
 }

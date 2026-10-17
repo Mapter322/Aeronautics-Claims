@@ -37,7 +37,7 @@ public record AdjustBlockClaimsPacket(BlockPos center, int delta) implements Cus
         context.enqueueWork(() -> {
             if (!(context.player() instanceof ServerPlayer player)) return;
 
-            ServerLevel level = player.serverLevel();
+            ServerLevel level = ClaimManager.getClaimLevel(player, msg.center);
             Claim claim = ClaimManager.getClaimByCenter(level, msg.center);
             if (claim == null) return;
 

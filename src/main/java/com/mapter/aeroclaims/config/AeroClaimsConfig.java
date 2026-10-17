@@ -18,6 +18,7 @@ public class AeroClaimsConfig {
     public static final ModConfigSpec.BooleanValue PROVIDER_SLOTS_FORCELOAD;
     public static final ModConfigSpec.BooleanValue TELEPORT_ENABLE;
     public static final ModConfigSpec.IntValue TELEPORT_COOLDOWN_SECONDS;
+    public static final ModConfigSpec.IntValue TEMP_LOAD_TIMEOUT_SECONDS;
 
     public enum PartyProvider { FTB_TEAMS, OPAC }
     public enum ClaimProvider { OPAC, FTB_CHUNKS }
@@ -88,6 +89,9 @@ public class AeroClaimsConfig {
         TELEPORT_COOLDOWN_SECONDS = builder
                 .comment("Cooldown between sublevel teleports in seconds. Default: 120 (2 minutes).")
                 .defineInRange("teleportCooldownSeconds", 120, 0, Integer.MAX_VALUE);
+        TEMP_LOAD_TIMEOUT_SECONDS = builder
+                .comment("Safety timeout in seconds: how long an unloaded sublevel can remain temporarily loaded while its claim GUI is open. Default: 120 (2 minutes).")
+                .defineInRange("tempLoadTimeoutSeconds", 120, 10, Integer.MAX_VALUE);
         builder.pop();
 
         SPEC = builder.build();
