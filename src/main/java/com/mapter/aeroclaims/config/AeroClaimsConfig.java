@@ -77,9 +77,9 @@ public class AeroClaimsConfig {
                     "If true, sublevel forceloading consumes OPAC/FTB forceload slots.",
                     "If false, all activated claims get a free sub-level forceload.",
                     "Has no effect if forceloadEnable is false.",
-                    "Default: false"
+                    "Default: true"
                 )
-                .define("providerSlotsForceload", false);
+                .define("providerSlotsForceload", true);
         TELEPORT_ENABLE = builder
                 .comment(
                     "If true, claim owners can teleport to their claimed sublevels using the command or GUI.",

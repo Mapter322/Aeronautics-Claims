@@ -76,7 +76,7 @@ public class ClaimSavedData extends SavedData {
             if (c.contains("shipId")) {
                 data.claims.get(data.claims.size() - 1).setShipId(c.getString("shipId"));
             }
-            boolean forceloadEnabled = !c.contains("forceloadEnabled") || c.getBoolean("forceloadEnabled");
+            boolean forceloadEnabled = c.contains("forceloadEnabled") && c.getBoolean("forceloadEnabled");
             data.claims.get(data.claims.size() - 1).setForceloadEnabled(forceloadEnabled);
             data.claims.get(data.claims.size() - 1).setForceloadTicketHeld(c.getBoolean("forceloadTicketHeld"));
             if (c.contains("forceloadTicketShipId")) {

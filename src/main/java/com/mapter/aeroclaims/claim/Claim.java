@@ -15,7 +15,7 @@ public class Claim {
     private boolean allowAllies;
     private boolean allowOthers;
     private String shipId;
-    private boolean forceloadEnabled = true;
+    private boolean forceloadEnabled = false;
     private boolean forceloadTicketHeld = false;
     private String forceloadTicketShipId;
 
