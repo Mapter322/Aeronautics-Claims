@@ -1,6 +1,9 @@
 package com.mapter.aeroclaims.commands;
 
 import com.mapter.aeroclaims.claim.AeroClaimManager;
+import com.mapter.aeroclaims.claim.Claim;
+import com.mapter.aeroclaims.claim.ClaimManager;
+import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import com.mapter.aeroclaims.claim.ClaimBriefInfo;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.screen.AeroClaimsMenu;
@@ -78,6 +81,8 @@ public class PlayerCommands {
                         String shipName = entry.getValue();
                         ClaimBriefInfo info = ClaimBriefInfo.ofShip(level, shipId);
                         RegisteredSublevelManager.ShipRegistration reg = RegisteredSublevelManager.getRegistration(shipId);
+                        Claim claim = ClaimManager.getClaimByShipId(level, shipId);
+                        boolean loaded = claim != null && SableShipUtils.isOnShip(level, claim.getCenter());
                         buf.writeUtf(shipName);
                         buf.writeUtf(shipId);
                         buf.writeBoolean(info != null && info.isActive());
@@ -90,12 +95,14 @@ public class PlayerCommands {
                         buf.writeInt(hasCoords ? reg.worldY.intValue() : 0);
                         buf.writeInt(hasCoords ? reg.worldZ.intValue() : 0);
                         buf.writeBoolean(info != null && info.isForceloadEnabled());
+                        buf.writeBoolean(loaded);
                     }
                     buf.writeInt(AeroClaimManager.getFreeProviderClaims(player));
                     buf.writeInt(AeroClaimManager.getMigratedSlots(level, player.getUUID()));
                     buf.writeInt(AeroClaimManager.getUsedSlots(level, player.getUUID()));
                     buf.writeInt(AeroClaimManager.getMigratedForceloads(level, player.getUUID()));
                     buf.writeInt(AeroClaimManager.getUsedForceloads(level, player.getUUID()));
+                    buf.writeBoolean(false);
                 });
         return 1;
     }
