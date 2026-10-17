@@ -55,6 +55,11 @@ public class AdminCommands {
                             .executes(ctx -> adminTeleport(
                                     ctx.getSource(),
                                     StringArgumentType.getString(ctx, "shipUuid")))))
+                    .then(Commands.literal("unclaim")
+                        .then(Commands.argument("shipUuid", StringArgumentType.word())
+                            .executes(ctx -> adminUnclaim(
+                                    ctx.getSource(),
+                                    StringArgumentType.getString(ctx, "shipUuid")))))
                     .then(Commands.literal("repair")
                         .executes(ctx -> repairLoadedSublevels(ctx.getSource()))
                         .then(Commands.literal("claim-blocks")
@@ -332,6 +337,82 @@ public class AdminCommands {
         return 0;
     }
 
+    private static int adminUnclaim(CommandSourceStack source, String shipUuidStr) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(shipUuidStr);
+        } catch (IllegalArgumentException e) {
+            source.sendFailure(Component.translatable(
+                    "commands.aeroclaims.admin.unclaim.invalid_uuid", shipUuidStr));
+            return 0;
+        }
+
+        Claim claim = null;
+        ServerLevel targetLevel = null;
+        for (ServerLevel lvl : source.getServer().getAllLevels()) {
+            claim = ClaimManager.getClaimByShipId(lvl, shipUuidStr);
+            if (claim != null) {
+                targetLevel = lvl;
+                break;
+            }
+        }
+
+        RegisteredSublevelManager.ShipRegistration reg =
+                RegisteredSublevelManager.getRegistration(shipUuidStr);
+
+        if (claim == null && reg == null) {
+            source.sendFailure(Component.translatable(
+                    "commands.aeroclaims.admin.unclaim.not_found", shipUuidStr));
+            return 0;
+        }
+
+        if (targetLevel == null) {
+            targetLevel = source.getLevel();
+        }
+
+        String shipName = reg != null && reg.name != null ? reg.name : RegisteredSublevelManager.getRegisteredName(shipUuidStr);
+        if (shipName == null) shipName = shipUuidStr;
+
+        if (claim != null) {
+            BlockPos center = claim.getCenter();
+            UUID ownerId = claim.getOwner();
+
+            try (SublevelLoadService.SublevelLoadSession session =
+                         SublevelLoadService.loadTemporarily(targetLevel, shipUuidStr, center)) {
+                if (session.isLoaded()) {
+                    if (targetLevel.getBlockState(center).is(ModBlocks.CLAIM_BLOCK.get())) {
+                        targetLevel.destroyBlock(center, true, source.getEntity());
+                    }
+                }
+            } catch (Throwable ignored) {}
+
+            if (ownerId != null) {
+                AeroClaimManager.releaseAllClaimsForBlock(targetLevel, ownerId, center);
+                AeroClaimManager.releaseAllForceloadsForBlock(targetLevel, ownerId, center);
+            }
+
+            ClaimManager.removeClaim(targetLevel, center);
+            AeroClaimSavedData data = AeroClaimSavedData.get(targetLevel);
+            data.clearCachedShipBlockCount(center);
+            data.clearCachedShipId(center);
+        }
+
+        try {
+            SubLevelTicketManager.remove(targetLevel, uuid);
+        } catch (Throwable ignored) {}
+
+        RegisteredSublevelManager.unregisterShip(shipUuidStr);
+        UnregisteredSublevelManager.addShip(shipUuidStr, shipName);
+
+        RegisteredSublevelManager.saveNow();
+        UnregisteredSublevelManager.saveNow();
+
+        final String finalDisplayName = shipName;
+        source.sendSuccess(() -> Component.translatable(
+                "commands.aeroclaims.admin.unclaim.success", finalDisplayName, shipUuidStr), true);
+        return 1;
+    }
+
     private static int repairLoadedSublevels(CommandSourceStack source) {
         long now = System.currentTimeMillis();
         long diff = now - lastRepairTime;
@@ -477,10 +558,6 @@ public class AdminCommands {
     }
 
     private static Component formatPhantomEntry(PhantomClaimEntry p) {
-        String dimPath = p.level().dimension().location().getPath();
-        String fullDim = p.level().dimension().location().toString();
-        BlockPos pos = p.claim().getCenter();
-
         MutableComponent root = Component.literal(" §7- ")
                 .append(Component.literal(p.displayName()).withStyle(ChatFormatting.YELLOW));
 
@@ -499,16 +576,6 @@ public class AdminCommands {
         root.append(Component.literal(" §7| "))
                 .append(Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.owner_prefix"))
                 .append(Component.literal(p.ownerName()).withStyle(ChatFormatting.WHITE));
-
-        String tpCoordsCmd = "/execute in " + fullDim + " run tp @s " + pos.getX() + " " + pos.getY() + " " + pos.getZ();
-        MutableComponent coordsComp = Component.literal("[" + dimPath + ": " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + "]")
-                .withStyle(style -> style
-                        .withColor(ChatFormatting.GREEN)
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCoordsCmd))
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.tp_coords"))));
-
-        root.append(Component.literal(" §7| ")).append(coordsComp);
 
         return root;
     }
