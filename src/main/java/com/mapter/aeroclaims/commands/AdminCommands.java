@@ -10,6 +10,7 @@ import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.registry.ModBlocks;
 import com.mapter.aeroclaims.sublevel.RegisteredSublevelManager;
 import com.mapter.aeroclaims.sublevel.SableShipUtils;
+import com.mapter.aeroclaims.sublevel.SubLevelTicketManager;
 import com.mapter.aeroclaims.sublevel.SublevelLoadService;
 import com.mapter.aeroclaims.sublevel.SublevelTeleportService;
 import com.mapter.aeroclaims.sublevel.UnregisteredSublevelManager;
@@ -20,11 +21,22 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
 import java.util.List;
+import dev.ryanhcode.sable.api.sublevel.ServerSubLevelContainer;
+import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.HoverEvent;
+import net.minecraft.network.chat.MutableComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 
@@ -44,7 +56,21 @@ public class AdminCommands {
                                     ctx.getSource(),
                                     StringArgumentType.getString(ctx, "shipUuid")))))
                     .then(Commands.literal("repair")
-                        .executes(ctx -> repairLoadedSublevels(ctx.getSource())))
+                        .executes(ctx -> repairLoadedSublevels(ctx.getSource()))
+                        .then(Commands.literal("claim-blocks")
+                            .executes(ctx -> repairLoadedSublevels(ctx.getSource())))
+                        .then(Commands.literal("phantoms")
+                            .executes(ctx -> checkPhantoms(ctx.getSource()))
+                            .then(Commands.literal("check")
+                                .executes(ctx -> checkPhantoms(ctx.getSource())))
+                            .then(Commands.literal("clear")
+                                .executes(ctx -> {
+                                    ctx.getSource().sendFailure(Component.translatable(
+                                            "commands.aeroclaims.sublevels.repair.phantoms.clear_confirm_needed"));
+                                    return 0;
+                                })
+                                .then(Commands.literal("confirm")
+                                    .executes(ctx -> clearPhantoms(ctx.getSource()))))))
                     .then(Commands.literal("delete")
                         .then(Commands.literal("unclaimed")
                             .then(Commands.literal("confirm")
@@ -65,6 +91,17 @@ public class AdminCommands {
 
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(AdminCommands.class);
+
+    private static long lastRefreshAllTime = 0L;
+    private static final long REFRESH_ALL_COOLDOWN_MS = 5000L;
+
+    private static long lastRepairTime = 0L;
+    private static final long REPAIR_COOLDOWN_MS = 5000L;
+
+    private static long lastPhantomScanTime = 0L;
+    private static final long PHANTOM_COOLDOWN_MS = 5000L;
+
     private enum RefreshResult {
         SUCCESS_TEMP_LOADED,
         SUCCESS_ALREADY_LOADED,
@@ -77,6 +114,16 @@ public class AdminCommands {
     }
 
     private static int adminRefreshAll(CommandSourceStack source) {
+        long now = System.currentTimeMillis();
+        long diff = now - lastRefreshAllTime;
+        if (diff < REFRESH_ALL_COOLDOWN_MS) {
+            long remainingSec = (REFRESH_ALL_COOLDOWN_MS - diff + 999) / 1000;
+            source.sendFailure(Component.translatable(
+                    "commands.aeroclaims.cooldown", remainingSec));
+            return 0;
+        }
+        lastRefreshAllTime = now;
+
         ServerLevel level = source.getLevel();
         List<Claim> claims = List.copyOf(ClaimSavedData.get(level).getClaims());
 
@@ -185,11 +232,11 @@ public class AdminCommands {
             return 1;
         } else {
             String errorDetail = switch (result) {
-                case FAILED_NOT_FOUND -> "клейм не найден в базе данных";
+                case FAILED_NOT_FOUND -> "приват не найден в базе данных";
                 case FAILED_NO_REGISTRATION -> "в реестре нет сохраненных мировых координат сублевела";
                 case FAILED_SUBLEVEL_NOT_LOADED -> "сублевел не удалось загрузить в память (Sable вернул null)";
                 case FAILED_NOT_ON_SHIP -> "блок привата в центре не опознан как находящийся на сублевеле";
-                case FAILED_ZERO_LIMIT -> "лимит блоков для этого клейма равен 0 (нет купленных слотов привата)";
+                case FAILED_ZERO_LIMIT -> "лимит блоков для этого привата равен 0 (нет купленных слотов привата)";
                 case FAILED_RECOUNT_FAILED -> "ошибка при подсчете блоков (recountShipBlocks < 0)";
                 default -> "ошибка обновления";
             };
@@ -286,6 +333,16 @@ public class AdminCommands {
     }
 
     private static int repairLoadedSublevels(CommandSourceStack source) {
+        long now = System.currentTimeMillis();
+        long diff = now - lastRepairTime;
+        if (diff < REPAIR_COOLDOWN_MS) {
+            long remainingSec = (REPAIR_COOLDOWN_MS - diff + 999) / 1000;
+            source.sendFailure(Component.translatable(
+                    "commands.aeroclaims.cooldown", remainingSec));
+            return 0;
+        }
+        lastRepairTime = now;
+
         int checked = 0;
         int repaired = 0;
         int tempLoaded = 0;
@@ -330,6 +387,225 @@ public class AdminCommands {
         source.sendSuccess(() -> Component.translatable(
                 "commands.aeroclaims.sublevels.repair.done", checkedCount, tempLoadedCount, repairedCount), true);
         return 1;
+    }
+
+    private record PhantomClaimEntry(ServerLevel level, Claim claim, String shipId, String displayName, String ownerName) {}
+
+    private static List<PhantomClaimEntry> findPhantomClaims(MinecraftServer server) {
+        List<PhantomClaimEntry> phantoms = new ArrayList<>();
+
+        for (ServerLevel level : server.getAllLevels()) {
+            List<Claim> claims = List.copyOf(ClaimSavedData.get(level).getClaims());
+            for (Claim claim : claims) {
+                String shipId = claim.getShipId();
+                if (shipId == null) continue;
+
+                RegisteredSublevelManager.ShipRegistration reg = RegisteredSublevelManager.getRegistration(shipId);
+                String displayName = reg != null && reg.name != null ? reg.name : shipId;
+                String ownerName = resolveOwnerName(server, claim.getOwner(), reg);
+
+                if (isDefinitivePhantom(server, level, claim, shipId)) {
+                    phantoms.add(new PhantomClaimEntry(level, claim, shipId, displayName, ownerName));
+                }
+            }
+        }
+
+        return phantoms;
+    }
+
+    private static boolean isDefinitivePhantom(MinecraftServer server, ServerLevel homeLevel, Claim claim, String shipId) {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(shipId);
+        } catch (IllegalArgumentException e) {
+            return true;
+        }
+
+        for (ServerLevel anyLevel : server.getAllLevels()) {
+            if (SublevelLoadService.isSublevelLoaded(anyLevel, uuid)) {
+                return false;
+            }
+        }
+
+        if (canLoadInLevel(homeLevel, shipId, claim.getCenter())) {
+            return false;
+        }
+
+        for (ServerLevel otherLevel : server.getAllLevels()) {
+            if (otherLevel == homeLevel) continue;
+            if (canLoadInLevel(otherLevel, shipId, null)) {
+                return false;
+            }
+        }
+
+        // Retry pass: flush pending holding chunk changes to prevent race conditions from recent ticket unloads
+        try {
+            SubLevelContainer container = SubLevelContainer.getContainer(homeLevel);
+            if (container instanceof ServerSubLevelContainer sc) {
+                sc.getHoldingChunkMap().processChanges();
+            }
+        } catch (Throwable ignored) {}
+
+        if (canLoadInLevel(homeLevel, shipId, claim.getCenter())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static boolean canLoadInLevel(ServerLevel level, String shipId, @Nullable BlockPos center) {
+        try (SublevelLoadService.SublevelLoadSession session =
+                     SublevelLoadService.loadTemporarily(level, shipId, center)) {
+            return session.isLoaded();
+        } catch (Throwable t) {
+            // Never assume phantom on I/O or transient errors, protecting valid player claims
+            return true;
+        }
+    }
+
+    private static String resolveOwnerName(MinecraftServer server, UUID ownerUuid, RegisteredSublevelManager.ShipRegistration reg) {
+        if (ownerUuid != null) {
+            ServerPlayer player = server.getPlayerList().getPlayer(ownerUuid);
+            if (player != null) {
+                return player.getGameProfile().getName();
+            }
+        }
+        if (reg != null && reg.owner != null && !reg.owner.isBlank()) {
+            return reg.owner;
+        }
+        return ownerUuid != null ? ownerUuid.toString() : "unknown";
+    }
+
+    private static Component formatPhantomEntry(PhantomClaimEntry p) {
+        String dimPath = p.level().dimension().location().getPath();
+        String fullDim = p.level().dimension().location().toString();
+        BlockPos pos = p.claim().getCenter();
+
+        MutableComponent root = Component.literal(" §7- ")
+                .append(Component.literal(p.displayName()).withStyle(ChatFormatting.YELLOW));
+
+        MutableComponent uuidComp = Component.literal(p.shipId())
+                .withStyle(style -> style
+                        .withColor(ChatFormatting.AQUA)
+                        .withUnderlined(true)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, p.shipId()))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.copy_uuid"))));
+
+        root.append(Component.literal(" §7("))
+                .append(uuidComp)
+                .append(Component.literal("§7)"));
+
+        root.append(Component.literal(" §7| "))
+                .append(Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.owner_prefix"))
+                .append(Component.literal(p.ownerName()).withStyle(ChatFormatting.WHITE));
+
+        String tpCoordsCmd = "/execute in " + fullDim + " run tp @s " + pos.getX() + " " + pos.getY() + " " + pos.getZ();
+        MutableComponent coordsComp = Component.literal("[" + dimPath + ": " + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + "]")
+                .withStyle(style -> style
+                        .withColor(ChatFormatting.GREEN)
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, tpCoordsCmd))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.tp_coords"))));
+
+        root.append(Component.literal(" §7| ")).append(coordsComp);
+
+        return root;
+    }
+
+    private static int checkPhantoms(CommandSourceStack source) {
+        long now = System.currentTimeMillis();
+        long diff = now - lastPhantomScanTime;
+        if (diff < PHANTOM_COOLDOWN_MS) {
+            long remainingSec = (PHANTOM_COOLDOWN_MS - diff + 999) / 1000;
+            source.sendFailure(Component.translatable(
+                    "commands.aeroclaims.cooldown", remainingSec));
+            return 0;
+        }
+        lastPhantomScanTime = now;
+
+        MinecraftServer server = source.getServer();
+        List<PhantomClaimEntry> phantoms = findPhantomClaims(server);
+
+        if (phantoms.isEmpty()) {
+            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.none"), false);
+            return 1;
+        }
+
+        int count = phantoms.size();
+        source.sendSuccess(() -> Component.translatable(
+                "commands.aeroclaims.sublevels.repair.phantoms.header", count), false);
+
+        for (PhantomClaimEntry p : phantoms) {
+            source.sendSuccess(() -> formatPhantomEntry(p), false);
+        }
+
+        source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.clear_hint"), false);
+        return count;
+    }
+
+    private static int clearPhantoms(CommandSourceStack source) {
+        long now = System.currentTimeMillis();
+        long diff = now - lastPhantomScanTime;
+        if (diff < PHANTOM_COOLDOWN_MS) {
+            long remainingSec = (PHANTOM_COOLDOWN_MS - diff + 999) / 1000;
+            source.sendFailure(Component.translatable(
+                    "commands.aeroclaims.cooldown", remainingSec));
+            return 0;
+        }
+        lastPhantomScanTime = now;
+
+        MinecraftServer server = source.getServer();
+        List<PhantomClaimEntry> phantoms = findPhantomClaims(server);
+
+        if (phantoms.isEmpty()) {
+            source.sendSuccess(() -> Component.translatable("commands.aeroclaims.sublevels.repair.phantoms.none"), false);
+            return 1;
+        }
+
+        int cleared = 0;
+        for (PhantomClaimEntry p : phantoms) {
+            if (!isDefinitivePhantom(server, p.level(), p.claim(), p.shipId())) {
+                LOGGER.warn("[AeroClaims] Sublevel {} was loaded/found during clear pass; skipping purge to protect data.", p.shipId());
+                continue;
+            }
+            purgePhantomClaim(p.level(), p.claim());
+            cleared++;
+        }
+
+        RegisteredSublevelManager.saveNow();
+        UnregisteredSublevelManager.saveNow();
+
+        int count = cleared;
+        source.sendSuccess(() -> Component.translatable(
+                "commands.aeroclaims.sublevels.repair.phantoms.cleared", count), true);
+        return cleared;
+    }
+
+    private static void purgePhantomClaim(ServerLevel level, Claim claim) {
+        String shipId = claim.getShipId();
+        UUID ownerId = claim.getOwner();
+        BlockPos center = claim.getCenter();
+
+        AeroClaimManager.releaseAllClaimsForBlock(level, ownerId, center);
+        AeroClaimManager.releaseAllForceloadsForBlock(level, ownerId, center);
+        ClaimManager.removeClaim(level, center);
+
+        if (shipId != null) {
+            RegisteredSublevelManager.unregisterShip(shipId);
+            UnregisteredSublevelManager.removeShip(shipId);
+            try {
+                SubLevelTicketManager.remove(level, UUID.fromString(shipId));
+            } catch (IllegalArgumentException ignored) {}
+        }
+
+        if (level.getBlockState(center).is(ModBlocks.CLAIM_BLOCK.get())) {
+            level.removeBlock(center, false);
+        }
+
+        AeroClaimSavedData data = AeroClaimSavedData.get(level);
+        data.clearCachedShipBlockCount(center);
+        data.clearCachedShipId(center);
     }
 
 

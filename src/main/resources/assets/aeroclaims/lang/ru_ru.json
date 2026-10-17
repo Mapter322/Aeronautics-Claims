@@ -36,7 +36,7 @@
   "commands.aeroclaims.info.entry.hover.coords": "§7Координаты: §f%s, %s, %s",
   "commands.aeroclaims.claim_info.opac_free": "§eСвоб. приватов: §f%s",
   "commands.aeroclaims.claim_info.opac_unavailable": "§7OPAC недоступен",
-  "commands.aeroclaims.sublevels.dump": "§aСубклеймы выгружены. §fОткройте папку minecraft/world/aeroclaims",
+  "commands.aeroclaims.sublevels.dump": "§aПриваты сублевелов выгружены. §fОткройте папку minecraft/world/aeroclaims",
   "message.aeroclaims.foreign_territory": "§cЭто чужая территория",
   "message.aeroclaims.no_access_use_block": "§cНет доступа к использованию блока",
   "message.aeroclaims.only_owner_can_configure": "§cТолько владелец может настраивать доступ",
@@ -96,5 +96,15 @@
   "commands.aeroclaims.teleport.disabled": "Телепортация к сублевелам отключена",
   "commands.aeroclaims.teleport.cooldown": "Следующая телепортация будет доступна через %s сек.",
   "commands.aeroclaims.teleport.position_unknown": "Позиция сублевела неизвестна.",
-  "commands.aeroclaims.sublevels.repair.done": "Проверено сублевелов: %s (подгружено: %s), восстановлено блоков привата: %s."
+  "commands.aeroclaims.sublevels.repair.done": "Проверено сублевелов: %s (подгружено: %s), восстановлено блоков привата: %s.",
+  "commands.aeroclaims.sublevels.repair.phantoms.none": "§aФантомных приватов не обнаружено.",
+  "commands.aeroclaims.sublevels.repair.phantoms.header": "§eОбнаружено фантомных приватов: %s",
+  "commands.aeroclaims.sublevels.repair.phantoms.entry": " §7- §e%s §7(%s) | Владелец: §f%s §7| [%s: %s, %s, %s]",
+  "commands.aeroclaims.sublevels.repair.phantoms.clear_hint": "§7Для очистки используйте: §f/aeroclaims sublevels repair phantoms clear confirm",
+  "commands.aeroclaims.sublevels.repair.phantoms.cleared": "§aУспешно очищено фантомных приватов: %s. Слоты возвращены игрокам.",
+  "commands.aeroclaims.sublevels.repair.phantoms.clear_confirm_needed": "§cДля подтверждения очистки укажите confirm: §f/aeroclaims sublevels repair phantoms clear confirm",
+  "commands.aeroclaims.sublevels.repair.phantoms.copy_uuid": "Нажмите, чтобы скопировать UUID",
+  "commands.aeroclaims.sublevels.repair.phantoms.owner_prefix": "Владелец: ",
+  "commands.aeroclaims.sublevels.repair.phantoms.tp_coords": "Нажмите, чтобы вставить команду телепортации к блоку привата",
+  "commands.aeroclaims.cooldown": "§cПодождите %s сек."
 }

@@ -96,5 +96,15 @@
   "commands.aeroclaims.teleport.disabled": "Sublevel teleportation is disabled",
   "commands.aeroclaims.teleport.cooldown": "You can teleport again in %s seconds",
   "commands.aeroclaims.teleport.position_unknown": "The sublevel position is unknown.",
-  "commands.aeroclaims.sublevels.repair.done": "Checked %s sublevels (%s loaded on demand), repaired %s claim blocks."
+  "commands.aeroclaims.sublevels.repair.done": "Checked %s sublevels (%s loaded on demand), repaired %s claim blocks.",
+  "commands.aeroclaims.sublevels.repair.phantoms.none": "§aNo phantom claims found.",
+  "commands.aeroclaims.sublevels.repair.phantoms.header": "§eFound phantom claims: %s",
+  "commands.aeroclaims.sublevels.repair.phantoms.entry": " §7- §e%s §7(%s) | Owner: §f%s §7| [%s: %s, %s, %s]",
+  "commands.aeroclaims.sublevels.repair.phantoms.clear_hint": "§7To clear them, use: §f/aeroclaims sublevels repair phantoms clear confirm",
+  "commands.aeroclaims.sublevels.repair.phantoms.cleared": "§aSuccessfully purged %s phantom claims. Slots returned to players.",
+  "commands.aeroclaims.sublevels.repair.phantoms.clear_confirm_needed": "§cTo confirm purging, use: §f/aeroclaims sublevels repair phantoms clear confirm",
+  "commands.aeroclaims.sublevels.repair.phantoms.copy_uuid": "Click to copy UUID",
+  "commands.aeroclaims.sublevels.repair.phantoms.owner_prefix": "Owner: ",
+  "commands.aeroclaims.sublevels.repair.phantoms.tp_coords": "Click to suggest command to teleport to claim block",
+  "commands.aeroclaims.cooldown": "§cPlease wait %s seconds."
 }
