@@ -98,16 +98,8 @@ public class ClaimBlock extends BaseEntityBlock {
         if (!level.isClientSide && state.getBlock() != newState.getBlock()) {
             ServerLevel serverLevel = (ServerLevel) level;
 
-            var ship = SableShipUtils.getShipAt(serverLevel, pos);
-            String shipId = SableShipUtils.getShipId(ship);
-            if (shipId != null) {
-                String shipName = SableShipUtils.getShipName(ship);
-                RegisteredSublevelManager.unregisterShip(shipId);
-                UnregisteredSublevelManager.addShip(shipId, shipName);
-                SubLevelTicketManager.remove(serverLevel, UUID.fromString(shipId));
-            }
-
             Claim claim = ClaimManager.getClaimByCenter(serverLevel, pos);
+            boolean wasActive = claim != null && claim.isActive();
             if (claim != null) {
                 AeroClaimManager.releaseAllClaimsForBlock(serverLevel, claim.getOwner(), pos);
                 AeroClaimManager.releaseAllForceloadsForBlock(serverLevel, claim.getOwner(), pos);
@@ -115,10 +107,23 @@ public class ClaimBlock extends BaseEntityBlock {
 
             ClaimManager.removeClaim(serverLevel, pos);
 
-
             AeroClaimSavedData data = AeroClaimSavedData.get(serverLevel);
             data.clearCachedShipBlockCount(pos);
             data.clearCachedShipId(pos);
+
+            if (wasActive) {
+                var ship = SableShipUtils.getShipAt(serverLevel, pos);
+                String shipId = SableShipUtils.getShipId(ship);
+                if (shipId != null) {
+                    Claim remainingClaim = ClaimManager.getClaimByShipId(serverLevel, shipId);
+                    if (remainingClaim == null || !remainingClaim.isActive()) {
+                        String shipName = SableShipUtils.getShipName(ship);
+                        RegisteredSublevelManager.unregisterShip(shipId);
+                        UnregisteredSublevelManager.addShip(shipId, shipName);
+                        SubLevelTicketManager.remove(serverLevel, UUID.fromString(shipId));
+                    }
+                }
+            }
         }
         super.onRemove(state, level, pos, newState, moving);
     }

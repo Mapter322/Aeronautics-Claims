@@ -51,8 +51,9 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
                 return;
             }
 
-            if (hasDuplicateClaimBlock(level, msg.center)) {
+            if (ClaimManager.hasDuplicateClaimBlock(level, msg.center)) {
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.duplicate_claim_block"));
+                sync(player, msg.center, claim, level, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN);
                 return;
             }
 
@@ -153,19 +154,6 @@ public record RefreshClaimPacket(BlockPos center) implements CustomPacketPayload
         }
 
         sync(player, center, claim, level, blockCount);
-    }
-
-    private static boolean hasDuplicateClaimBlock(ServerLevel level, BlockPos center) {
-        var ship = SableShipUtils.getShipAt(level, center);
-        String shipId = SableShipUtils.getShipId(ship);
-        if (shipId == null) return false;
-
-        for (Claim other : ClaimSavedData.get(level).getClaims()) {
-            if (other.getCenter().equals(center)) continue;
-            String otherId = SableShipUtils.getShipId(SableShipUtils.getShipAt(level, other.getCenter()));
-            if (shipId.equals(otherId)) return true;
-        }
-        return false;
     }
 
     private static void cacheShipStructure(ServerLevel level, BlockPos center, int blockCount) {

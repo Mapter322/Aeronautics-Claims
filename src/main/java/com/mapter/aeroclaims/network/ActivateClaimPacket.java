@@ -54,6 +54,12 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                 return;
             }
 
+            if (ClaimManager.hasDuplicateClaimBlock(level, msg.center)) {
+                player.sendSystemMessage(Component.translatable("message.aeroclaims.duplicate_claim_block"));
+                sync(player, msg.center, claim, level, SyncClaimStatePacket.SHIP_BLOCK_COUNT_UNKNOWN);
+                return;
+            }
+
             AeroClaimSavedData data = AeroClaimSavedData.get(level);
             int blocksPerClaim = AeroClaimsConfig.BLOCKS_PER_CLAIM.get();
             int currentClaims = data.getClaimsForBlock(msg.center);

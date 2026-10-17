@@ -1,10 +1,12 @@
 package com.mapter.aeroclaims.claim;
 
+import com.mapter.aeroclaims.block.ClaimBlock;
 import com.mapter.aeroclaims.config.AeroClaimsConfig;
 import com.mapter.aeroclaims.permission.ClaimPermissionResolver;
 import com.mapter.aeroclaims.permission.DefaultPermissionResolver;
 import com.mapter.aeroclaims.permission.FtbTeamsPermissionResolver;
 import com.mapter.aeroclaims.permission.OpacPermissionResolver;
+import com.mapter.aeroclaims.sublevel.SableShipUtils;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -97,6 +99,8 @@ public class ClaimManager {
         Claim claim = getClaimByCenter(level, center);
         if (claim == null) return false;
 
+        if (hasDuplicateClaimBlock(level, center)) return false;
+
         int limit = AeroClaimManager.getBlockLimit(level, center);
         if (limit <= 0) return false;
 
@@ -112,6 +116,8 @@ public class ClaimManager {
         Claim claim = getClaimByCenter(level, center);
         if (claim == null) return false;
 
+        if (hasDuplicateClaimBlock(level, center)) return false;
+
         int limit = AeroClaimManager.getBlockLimit(level, center);
         if (limit <= 0) return false;
 
@@ -120,6 +126,25 @@ public class ClaimManager {
         updateClaimedBlocks(level, claim, center, limit);
         ClaimSavedData.get(level).setDirty();
         return true;
+    }
+
+    public static boolean hasDuplicateClaimBlock(ServerLevel level, BlockPos center) {
+        var ship = SableShipUtils.getShipAt(level, center);
+        String shipId = SableShipUtils.getShipId(ship);
+        if (shipId == null) return false;
+
+        for (Claim other : ClaimSavedData.get(level).getClaims()) {
+            if (other.getCenter().equals(center)) continue;
+            if (level.isLoaded(other.getCenter()) && !(level.getBlockState(other.getCenter()).getBlock() instanceof ClaimBlock)) {
+                continue;
+            }
+            var otherShip = SableShipUtils.getShipAt(level, other.getCenter());
+            String otherId = SableShipUtils.getShipId(otherShip);
+            if (shipId.equals(otherId) || (other.isActive() && shipId.equals(other.getShipId()))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static int recountShipBlocks(ServerLevel level, BlockPos center, boolean deactivateOnOverflow) {
