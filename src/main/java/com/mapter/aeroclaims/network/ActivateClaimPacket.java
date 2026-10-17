@@ -65,11 +65,16 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                     : 0;
             int delta = neededClaims - currentClaims;
 
-            boolean useProvider = ClaimManager.isForceloadActive(claim) && AeroClaimsConfig.PROVIDER_SLOTS_FORCELOAD.get();
+            boolean useProvider = ClaimManager.isForceloadActive(claim) && AeroClaimsConfig.isProviderSlotsForceload();
+
+            int claimNeed = 0;
+            int forceloadNeed = 0;
+            int flDelta = 0;
+            int flDeltaNeed = 0;
 
             if (delta > 0) {
                 int freeSlots = data.getFreeSlots(player.getUUID());
-                int claimNeed = Math.max(0, delta - freeSlots);
+                claimNeed = Math.max(0, delta - freeSlots);
                 if (claimNeed > 0) {
                     TransferResult r = AeroClaimManager.transferFromProvider(player, claimNeed);
                     if (r != TransferResult.SUCCESS) {
@@ -81,9 +86,9 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
 
                 if (useProvider) {
                     int freeFl = data.getFreeForceloads(player.getUUID());
-                    int flNeed = Math.max(0, delta - freeFl);
-                    if (flNeed > 0) {
-                        TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flNeed);
+                    forceloadNeed = Math.max(0, delta - freeFl);
+                    if (forceloadNeed > 0) {
+                        TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, forceloadNeed);
                         if (r != TransferResult.SUCCESS) {
                             if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
                             sendTooLargeMsg(player, msg.center, level, blockCount, currentClaims, blocksPerClaim);
@@ -93,8 +98,24 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
                     }
                 }
 
-                AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
-                if (useProvider) AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
+                if (!AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta)) {
+                    if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
+                    if (forceloadNeed > 0) AeroClaimManager.transferForceloadsToProvider(player, forceloadNeed);
+                    sendTooLargeMsg(player, msg.center, level, blockCount, currentClaims, blocksPerClaim);
+                    sync(player, msg.center, claim, level, blockCount);
+                    return;
+                }
+
+                if (useProvider) {
+                    if (!AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta)) {
+                        AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, -delta);
+                        if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
+                        if (forceloadNeed > 0) AeroClaimManager.transferForceloadsToProvider(player, forceloadNeed);
+                        sendTooLargeMsg(player, msg.center, level, blockCount, currentClaims, blocksPerClaim);
+                        sync(player, msg.center, claim, level, blockCount);
+                        return;
+                    }
+                }
             } else if (delta < 0) {
                 AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, delta);
                 if (useProvider) AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, delta);
@@ -102,17 +123,26 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
 
             if (useProvider && delta <= 0) {
                 int currentFl = data.getForceloadsForBlock(msg.center);
-                int flDelta = neededClaims - currentFl;
+                flDelta = neededClaims - currentFl;
                 if (flDelta > 0) {
                     int freeFl = data.getFreeForceloads(player.getUUID());
-                    int flNeed = Math.max(0, flDelta - freeFl);
-                    if (flNeed > 0) {
-                        TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flNeed);
+                    flDeltaNeed = Math.max(0, flDelta - freeFl);
+                    if (flDeltaNeed > 0) {
+                        TransferResult r = AeroClaimManager.transferForceloadsFromProvider(player, flDeltaNeed);
                         if (r == TransferResult.SUCCESS) {
-                            AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta);
+                            if (!AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta)) {
+                                AeroClaimManager.transferForceloadsToProvider(player, flDeltaNeed);
+                                flDelta = 0;
+                                flDeltaNeed = 0;
+                            }
+                        } else {
+                            flDelta = 0;
+                            flDeltaNeed = 0;
                         }
                     } else {
-                        AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta);
+                        if (!AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, flDelta)) {
+                            flDelta = 0;
+                        }
                     }
                 }
             }
@@ -120,6 +150,24 @@ public record ActivateClaimPacket(BlockPos center) implements CustomPacketPayloa
             int maxSize = AeroClaimManager.getBlockLimit(level, msg.center);
 
             if (!ClaimManager.activateClaim(level, msg.center)) {
+                if (delta > 0) {
+                    AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, -delta);
+                    if (claimNeed > 0) AeroClaimManager.transferToProvider(player, claimNeed);
+                    if (useProvider) {
+                        AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, -delta);
+                        if (forceloadNeed > 0) AeroClaimManager.transferForceloadsToProvider(player, forceloadNeed);
+                    }
+                } else if (delta < 0) {
+                    AeroClaimManager.adjustClaimsForBlock(level, player.getUUID(), msg.center, -delta);
+                    if (useProvider) {
+                        AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, -delta);
+                    }
+                }
+                if (flDelta > 0) {
+                    AeroClaimManager.adjustForceloadsForBlock(level, player.getUUID(), msg.center, -flDelta);
+                    if (flDeltaNeed > 0) AeroClaimManager.transferForceloadsToProvider(player, flDeltaNeed);
+                }
+
                 player.sendSystemMessage(Component.translatable("message.aeroclaims.refresh_failed"));
                 sync(player, msg.center, claim, level, blockCount);
                 return;
